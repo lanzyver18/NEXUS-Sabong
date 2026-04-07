@@ -3,73 +3,148 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NEXUS Sabong & Casino</title>
+    <title>NEXUS | Home Arena</title>
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Goldman:wght@400;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Goldman:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body>
 
     <nav class="top-nav">
         <div class="logo">NEXUS</div>
-        <div class="wallet-display">
-            <span class="label">Balance:</span>
-            <span id="user-balance">₱0.00</span>
+        <div class="user-controls">
+            <div class="balance-display">
+                <small>BALANCE</small>
+                <span>₱<span id="nav-balance">0.00</span></span>
+            </div>
+            <button id="profile-btn" onclick="window.location.href='/profile/'">PROFILE</button>
         </div>
-        <button id="auth-btn" onclick="showView('login')">Login</button>
     </nav>
 
-    <main id="main-content">
+    <header class="hero">
+        <div class="hero-content">
+            <h1>LIVE ARENA IS OPEN</h1>
+            <p>Experience the most reliable Sabong platform in the Philippines.</p>
+            <button class="cta-button" onclick="window.location.href='/games/'">ENTER LIVE ARENA</button>
+        </div>
+    </header>
+
+    <main class="lobby-grid">
+        <div class="category-title">AVAILABLE GAMES</div>
         
-        <section id="view-lobby" class="view">
-            <div class="hero">
-                <h2>LIVE SABONG ARENA</h2>
-                <button class="play-now" onclick="showView('sabong')">Watch & Bet Now</button>
-            </div>
-            <div class="game-grid">
-                <div class="game-card" onclick="showView('sabong')">Live Sabong</div>
-                <div class="game-card dimmed">Online Slots (Coming Soon)</div>
-            </div>
-        </section>
-
-        <section id="view-sabong" class="view" style="display:none;">
-            <div class="arena-container">
-                <div class="video-placeholder">
-                    <p>LIVE STREAM LOADING...</p>
-                </div>
-                <div class="betting-panel">
-                    <div class="odds-row">
-                        <div class="odds-box meron">
-                            <span class="team-name">MERON</span>
-                            <span class="payout">1.90</span>
-                            <button onclick="placeBet('meron')">BET</button>
-                        </div>
-                        <div class="odds-box wala">
-                            <span class="team-name">WALA</span>
-                            <span class="payout">1.80</span>
-                            <button onclick="placeBet('wala')">BET</button>
-                        </div>
-                    </div>
+        <div class="grid-container">
+            <div class="game-card live" onclick="window.location.href='/games/'">
+                <div class="status-tag">LIVE NOW</div>
+                <div class="card-info">
+                    <h3>LIVE SABONG</h3>
+                    <p>Real-time betting & streaming</p>
                 </div>
             </div>
-        </section>
 
-        <section id="view-wallet" class="view" style="display:none;">
-            <h3>Automatic Wallet</h3>
-            <div class="transaction-box">
-                <input type="number" id="amount" placeholder="Enter Amount (₱)">
-                <button class="btn-deposit" onclick="startDeposit()">Deposit (GCash/Maya)</button>
-                <button class="btn-withdraw" onclick="startWithdrawal()">Instant Cashout</button>
+            <div class="game-card locked">
+                <div class="status-tag gray">COMING SOON</div>
+                <div class="card-info">
+                    <h3>DIGITAL SLOTS</h3>
+                    <p>High RTP Digital Games</p>
+                </div>
             </div>
-        </section>
-
+        </div>
     </main>
 
-    <footer class="bottom-nav">
-        <div class="nav-item" onclick="showView('lobby')">Lobby</div>
-        <div class="nav-item" onclick="showView('sabong')">Arena</div>
-        <div class="nav-item" onclick="showView('wallet')">Wallet</div>
-    </footer >
+    <section class="quick-actions">
+        <button onclick="window.location.href='/wallet/'" class="action-btn gold">DEPOSIT FUNDS</button>
+        <button onclick="window.location.href='/wallet/'" class="action-btn">WITHDRAW</button>
+    </section>
 
-    <script src="app.js"></script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
+        import { getFirestore, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+
+        // Your specific Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyCBvOw8HrMhZD0aYSHqFdE196ZITdYBU3Q",
+            authDomain: "nexus-sabong.firebaseapp.com",
+            projectId: "nexus-sabong",
+            storageBucket: "nexus-sabong.firebasestorage.app",
+            messagingSenderId: "421723311",
+            appId: "1:421723311:web:1780f179e7c2a7cc0e285a",
+            measurementId: "G-W2B0R09D8L"
+        };
+
+        // Initialize
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // Security Check & Real-time Balance
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                // Listen to user balance in Firestore
+                onSnapshot(doc(db, "users", user.uid), (doc) => {
+                    if (doc.exists()) {
+                        const balance = doc.data().balance || 0;
+                        document.getElementById('nav-balance').innerText = balance.toLocaleString(undefined, {minimumFractionDigits: 2});
+                    }
+                });
+            } else {
+                // Not logged in? Send them to the login folder
+                window.location.href = "/login/";
+            }
+        });
+    </script>
+
+    <style>
+        /* Hero Section Styling */
+        .hero {
+            height: 40vh;
+            background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), url('https://images.unsplash.com/photo-1511192336575-5a79af67a629?auto=format&fit=crop&q=80');
+            background-size: cover;
+            background-position: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            border-bottom: 2px solid var(--gold);
+        }
+        .hero h1 { font-size: 2.5rem; margin-bottom: 10px; }
+        .cta-button {
+            background: var(--gold);
+            color: black;
+            padding: 15px 40px;
+            font-weight: bold;
+            border: none;
+            border-radius: 30px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            box-shadow: 0 0 20px rgba(212, 175, 55, 0.4);
+        }
+
+        /* Grid Styling */
+        .lobby-grid { padding: 30px 20px; }
+        .category-title { color: var(--gold); font-weight: bold; margin-bottom: 20px; letter-spacing: 2px; }
+        .grid-container { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        
+        .game-card {
+            background: #1a1a1a;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid #333;
+            cursor: pointer;
+            position: relative;
+            min-height: 150px;
+            display: flex;
+            align-items: flex-end;
+            padding: 15px;
+        }
+        .game-card.live { border-color: var(--gold); background: linear-gradient(transparent, #000), url('https://images.unsplash.com/photo-1596727147705-61a532a655bd?auto=format&fit=crop&q=60'); background-size: cover; }
+        .status-tag { position: absolute; top: 10px; left: 10px; background: #ff4444; font-size: 0.6rem; padding: 4px 8px; border-radius: 4px; font-weight: bold; }
+        .status-tag.gray { background: #555; }
+        .game-card.locked { opacity: 0.5; cursor: not-allowed; }
+
+        /* Quick Actions */
+        .quick-actions { display: flex; gap: 10px; padding: 20px; background: #000; position: fixed; bottom: 0; width: 100%; box-sizing: border-box; }
+        .action-btn { flex: 1; padding: 15px; border: 1px solid var(--gold); background: transparent; color: var(--gold); border-radius: 5px; font-weight: bold; }
+        .action-btn.gold { background: var(--gold); color: black; }
+    </style>
 </body>
 </html>
