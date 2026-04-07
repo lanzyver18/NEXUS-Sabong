@@ -3,77 +3,58 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Agent Dashboard | NEXUS</title>
+    <title>Agent Control | NEXUS</title>
     <link rel="stylesheet" href="../style.css">
     <style>
-        /* Force Button Interactivity */
-        .btn-action {
-            display: block;
-            width: 100%;
-            padding: 15px;
-            margin-top: 10px;
-            border: none;
-            border-radius: 8px;
-            font-weight: bold;
-            cursor: pointer !important; /* Forces the hand icon */
-            transition: transform 0.1s, filter 0.2s;
-            text-transform: uppercase;
-        }
-        .btn-action:active { transform: scale(0.98); filter: brightness(0.8); }
-        .gold { background: #D4AF37; color: black; }
-        .search-btn { background: #333; color: white; margin-bottom: 20px; }
-        
-        .admin-box { 
-            background: #111; 
-            padding: 25px; 
-            border-radius: 12px; 
-            border: 1px solid #333; 
-            margin-top: 20px;
-        }
-        .player-preview { 
-            background: #000; 
-            padding: 15px; 
-            border-radius: 8px; 
-            margin: 15px 0; 
-            display: none; 
-            border-left: 4px solid #D4AF37; 
-        }
-        input { width: 100%; padding: 12px; margin: 10px 0; background: #000; border: 1px solid #444; color: white; border-radius: 5px; box-sizing: border-box; }
-        .text-muted { color: #888; font-size: 0.8rem; }
+        .admin-box { background: #111; padding: 25px; border-radius: 15px; border: 1px solid var(--gold); margin-top: 20px; }
+        .player-preview { background: #000; padding: 15px; border-radius: 8px; margin: 15px 0; display: none; border-left: 4px solid var(--gold); }
+        .log-container { margin-top: 30px; background: #111; padding: 15px; border-radius: 10px; border: 1px solid #333; }
+        .log-item { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #222; font-size: 0.85rem; }
+        .log-item:last-child { border: none; }
+        .log-amt { color: #00ff88; font-weight: bold; }
+        .btn-action { cursor: pointer !important; width: 100%; padding: 15px; border: none; border-radius: 8px; font-weight: bold; text-transform: uppercase; margin-top: 10px; transition: 0.2s; }
+        .gold { background: var(--gold); color: black; }
+        .search { background: #333; color: white; margin-bottom: 15px; }
     </style>
 </head>
 <body>
     <nav class="top-nav">
-        <a href="/" style="color: #D4AF37; text-decoration: none;">← LOBBY</a>
-        <div style="color: #00ff88; font-weight: bold;">AGENT MODE</div>
+        <a href="/" style="color: var(--gold); text-decoration: none;">← ARENA LOBBY</a>
+        <div class="balance-box" style="color: #00ff88;">AGENT AUTHORIZED</div>
     </nav>
 
     <div style="max-width: 450px; margin: auto; padding: 20px;">
-        <h2 style="color: #D4AF37; text-align: center;">AGENT TRANSFER TOOL</h2>
+        <h2 style="text-align: center; color: var(--gold);">AGENT TRANSFER TOOL</h2>
         
         <div class="admin-box">
-            <label class="text-muted">1. FIND PLAYER BY ID</label>
+            <label class="text-muted">FIND PLAYER ID</label>
             <input type="text" id="target-uid" placeholder="Paste Player UID here...">
-            <button class="btn-action search-btn" id="btn-search">SEARCH PLAYER</button>
+            <button class="btn-action search" id="btn-search">CHECK PLAYER BALANCE</button>
             
             <div id="player-info" class="player-preview">
                 <strong id="display-name" style="color: white;">---</strong><br>
-                <span class="text-muted">Current Balance: ₱<span id="display-balance" style="color: #00ff88;">0</span></span>
+                <span class="text-muted">Current Wallet: ₱<span id="display-balance" style="color: #00ff88;">0</span></span>
             </div>
 
-            <label class="text-muted">2. AMOUNT TO LOAD</label>
-            <input type="number" id="amount-to-add" placeholder="Example: 500">
+            <label class="text-muted">AMOUNT TO SEND</label>
+            <input type="number" id="amount-to-add" placeholder="Ex: 500">
             
-            <button class="btn-action gold" id="btn-confirm-load">CONFIRM & LOAD CREDITS</button>
+            <button class="btn-action gold" id="btn-confirm-load">CONFIRM & SEND CREDITS</button>
+        </div>
+
+        <div class="log-container">
+            <h3 style="font-size: 0.9rem; color: var(--gold); margin-top: 0;">RECENT LOAD HISTORY</h3>
+            <div id="history-list">
+                <p class="text-muted" style="text-align: center; padding: 10px;">No transfers yet today.</p>
+            </div>
         </div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
-        import { getFirestore, doc, getDoc, updateDoc, increment } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, updateDoc, increment, collection, addDoc, query, where, orderBy, limit, onSnapshot } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
 
-        // Firebase Config (Using your provided keys)
         const firebaseConfig = {
             apiKey: "AIzaSyCBvOw8HrMhZD0aYSHqFdE196ZITdYBU3Q",
             authDomain: "nexus-sabong.firebaseapp.com",
@@ -88,56 +69,79 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // Security Check
+        // 3. SECURITY GATE: Ensure user is Admin
         onAuthStateChanged(auth, async (user) => {
             if (user) {
-                const snap = await getDoc(doc(db, "users", user.uid));
-                if (!snap.exists() || !snap.data().isAdmin) {
-                    alert("Unauthorized! Redirecting...");
+                const adminSnap = await getDoc(doc(db, "users", user.uid));
+                if (!adminSnap.exists() || !adminSnap.data().isAdmin) {
+                    alert("ACCESS DENIED: Agents Only.");
                     window.location.href = "/";
+                } else {
+                    loadHistory(user.uid); // Load the logs once authorized
                 }
             } else { window.location.href = "/login/"; }
         });
 
-        // Search Logic
+        // BALANCE CHECK LOGIC
         document.getElementById('btn-search').onclick = async () => {
             const uid = document.getElementById('target-uid').value.trim();
-            if (!uid) return alert("Paste a UID first");
+            if (!uid) return alert("Please enter a Player ID.");
 
             const playerSnap = await getDoc(doc(db, "users", uid));
             if (playerSnap.exists()) {
-                document.getElementById('display-name').innerText = playerSnap.data().fullName || playerSnap.data().email;
+                document.getElementById('display-name').innerText = playerSnap.data().fullName || "Anonymous Player";
                 document.getElementById('display-balance').innerText = (playerSnap.data().balance || 0).toLocaleString();
                 document.getElementById('player-info').style.display = "block";
             } else {
-                alert("Player not found!");
-                document.getElementById('player-info').style.display = "none";
+                alert("ID not found. Double check the UID.");
             }
         };
 
-        // Transfer Logic
+        // TRANSFER & LOGGING LOGIC
         document.getElementById('btn-confirm-load').onclick = async () => {
             const uid = document.getElementById('target-uid').value.trim();
             const amount = parseInt(document.getElementById('amount-to-add').value);
 
-            if (!uid || isNaN(amount) || amount <= 0) {
-                alert("Please check the ID and Amount.");
-                return;
-            }
+            if (!uid || isNaN(amount) || amount <= 0) return alert("Invalid Amount.");
 
-            if (confirm(`Send ₱${amount} to this player?`)) {
+            if (confirm(`Confirm Transfer of ₱${amount}?`)) {
                 try {
-                    const playerRef = doc(db, "users", uid);
-                    await updateDoc(playerRef, {
-                        balance: increment(amount)
+                    // Update Player
+                    await updateDoc(doc(db, "users", uid), { balance: increment(amount) });
+
+                    // Create Transaction Log
+                    await addDoc(collection(db, "logs"), {
+                        agentId: auth.currentUser.uid,
+                        playerUid: uid,
+                        amount: amount,
+                        timestamp: new Date()
                     });
-                    alert("SUCCESS: Credits Loaded!");
-                    location.reload(); // Refresh to update view
-                } catch (e) {
-                    alert("ERROR: Check your Firestore Rules permissions!");
-                }
+
+                    alert("CREDITS SENT SUCCESSFULLY!");
+                    document.getElementById('amount-to-add').value = "";
+                    document.getElementById('btn-search').click(); // Refresh display
+                } catch (e) { alert("Permission Error! Check Firestore Rules."); }
             }
         };
+
+        // HISTORY LISTENER
+        function loadHistory(agentId) {
+            const q = query(collection(db, "logs"), where("agentId", "==", agentId), orderBy("timestamp", "desc"), limit(5));
+            onSnapshot(q, (snapshot) => {
+                const list = document.getElementById('history-list');
+                if (snapshot.empty) return;
+                list.innerHTML = "";
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    list.innerHTML += `
+                        <div class="log-item">
+                            <span>ID: ...${data.playerUid.slice(-5)}</span>
+                            <span class="log-amt">+₱${data.amount}</span>
+                        </div>
+                    `;
+                });
+            });
+        }
     </script>
 </body>
 </html>
