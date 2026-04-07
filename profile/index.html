@@ -2,48 +2,115 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Profile | NEXUS</title>
     <link rel="stylesheet" href="../style.css">
+    <style>
+        .profile-header { text-align: center; padding: 30px 0; border-bottom: 1px solid #222; margin-bottom: 25px; }
+        .avatar-circle { width: 80px; height: 80px; background: var(--gold); color: black; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: bold; margin: 0 auto 15px; }
+        
+        .stat-row { display: flex; justify-content: space-between; background: #111; padding: 15px; border-radius: 10px; margin-bottom: 10px; border: 1px solid #222; }
+        .stat-label { color: #888; font-size: 0.9rem; }
+        .stat-value { color: var(--gold); font-weight: bold; }
+
+        .menu-list { margin-top: 30px; }
+        .menu-item { display: flex; align-items: center; justify-content: space-between; padding: 18px; background: #161616; border-radius: 10px; margin-bottom: 10px; text-decoration: none; color: white; transition: 0.2s; border: 1px solid transparent; }
+        .menu-item:hover { border-color: var(--gold); background: #1a1a1a; }
+        
+        .logout-btn { width: 100%; padding: 15px; background: transparent; border: 1px solid #ff4444; color: #ff4444; border-radius: 10px; cursor: pointer; font-weight: bold; margin-top: 20px; }
+    </style>
 </head>
 <body>
+
     <nav class="top-nav">
-        <a href="/">← BACK</a>
-        <button onclick="logout()">LOGOUT</button>
+        <a href="/" style="color: var(--gold); text-decoration: none;">← ARENA</a>
+        <div class="balance-box">₱<span id="display-balance">0.00</span></div>
     </nav>
 
-    <div class="profile-container" style="max-width: 600px; margin: 40px auto; padding: 20px;">
-        <div class="auth-card">
-            <h2 id="user-email">Loading...</h2>
-            <p>User ID: <span id="user-id" style="font-size: 0.7rem; color: #777;"></span></p>
-            <div style="font-size: 2rem; margin: 20px 0;">
-                Total Balance: <span style="color:var(--gold)">₱</span><span id="balance">0.00</span>
-            </div>
-            <button onclick="window.location.href='/wallet/'">Add Funds</button>
+    <div style="max-width: 450px; margin: auto; padding: 20px;">
+        
+        <div class="profile-header">
+            <div class="avatar-circle" id="user-initial">-</div>
+            <h2 id="display-username" style="margin: 0; letter-spacing: 2px;">LOADING...</h2>
+            <p class="text-muted" id="user-email" style="font-size: 0.7rem;"></p>
         </div>
 
-        <h3>Recent Transactions</h3>
-        <div id="history-list" style="background: #1a1a1a; padding: 10px; border-radius: 5px;">
-            <p style="color: #555; text-align: center;">No recent transactions found.</p>
+        <div class="stat-row">
+            <span class="stat-label">Account Status</span>
+            <span class="stat-value" style="color: #00ff88;">VERIFIED</span>
         </div>
+
+        <div class="stat-row">
+            <span class="stat-label">Currency</span>
+            <span class="stat-value">PHP (₱)</span>
+        </div>
+
+        <div class="menu-list">
+            <a href="/wallet/" class="menu-item">
+                <span>💰 Deposit & Withdraw</span>
+                <span>→</span>
+            </a>
+            <a href="/games/" class="menu-item">
+                <span>🐓 Enter Live Arena</span>
+                <span>→</span>
+            </a>
+            <button class="logout-btn" id="btn-logout">LOGOUT ACCOUNT</button>
+        </div>
+
     </div>
 
     <script type="module">
-        import { auth, db } from '../firebase-config.js';
-        import { doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
+        import { getFirestore, doc, onSnapshot, getDoc } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
 
-        auth.onAuthStateChanged(user => {
+        const firebaseConfig = {
+            apiKey: "AIzaSyCBvOw8HrMhZD0aYSHqFdE196ZITdYBU3Q",
+            authDomain: "nexus-sabong.firebaseapp.com",
+            projectId: "nexus-sabong",
+            storageBucket: "nexus-sabong.firebasestorage.app",
+            messagingSenderId: "421723311",
+            appId: "1:421723311:web:1780f179e7c2a7cc0e285a",
+            measurementId: "G-W2B0R09D8L"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        onAuthStateChanged(auth, async (user) => {
             if (user) {
-                document.getElementById('user-email').innerText = user.email;
-                document.getElementById('user-id').innerText = user.uid;
+                // Fetch Profile Data
+                const userRef = doc(db, "users", user.uid);
+                const userSnap = await getDoc(userRef);
                 
-                onSnapshot(doc(db, "users", user.uid), (doc) => {
-                    document.getElementById('balance').innerText = doc.data().balance.toLocaleString();
+                if (userSnap.exists()) {
+                    const data = userSnap.data();
+                    const username = data.username || "Player";
+                    
+                    document.getElementById('display-username').innerText = username.toUpperCase();
+                    document.getElementById('user-initial').innerText = username.charAt(0).toUpperCase();
+                    document.getElementById('user-email').innerText = user.email; // The hidden @nexus-sabong.com email
+                }
+
+                // Live Balance Listener
+                onSnapshot(userRef, (snapshot) => {
+                    if (snapshot.exists()) {
+                        const bal = snapshot.data().balance || 0;
+                        document.getElementById('display-balance').innerText = bal.toLocaleString(undefined, {minimumFractionDigits: 2});
+                    }
                 });
-            } else { window.location.href = "/login/"; }
+            } else {
+                window.location.href = "/login/";
+            }
         });
 
-        window.logout = () => {
-            auth.signOut().then(() => window.location.href = "/login/");
+        // Logout Logic
+        document.getElementById('btn-logout').onclick = async () => {
+            if(confirm("Are you sure you want to logout?")) {
+                await signOut(auth);
+                window.location.href = "/login/";
+            }
         };
     </script>
 </body>
