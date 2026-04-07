@@ -1,0 +1,33 @@
+// Function to switch views
+function showView(viewId) {
+    // Hide all views
+    document.querySelectorAll('.view').forEach(view => {
+        view.style.display = 'none';
+    });
+
+    // Show the selected view
+    const target = document.getElementById('view-' + viewId);
+    if (target) {
+        target.style.display = 'block';
+    }
+}
+
+// Placeholder for Betting Logic
+function placeBet(side) {
+    const amount = prompt(`How much would you like to bet on ${side.toUpperCase()}?`);
+    if (amount) {
+        alert(`Bet of ₱${amount} placed on ${side}!`);
+        // Here you would connect to Firebase to deduct the balance
+    }
+}
+
+// Placeholder for Automatic Cashout
+function startWithdrawal() {
+    const amount = document.getElementById('amount').value;
+    if (amount > 0) {
+        alert(`Requesting Automatic Withdrawal of ₱${amount} to your registered GCash...`);
+        // Here you would trigger the Xendit/Maya API via Firebase Functions
+    } else {
+        alert("Please enter a valid amount.");
+    }
+}
