@@ -3,148 +3,148 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NEXUS | Home Arena</title>
+    <title>NEXUS | Live Arena Lobby</title>
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Goldman:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        .hero-section {
+            text-align: center;
+            padding: 40px 20px;
+            background: linear-gradient(to bottom, #1a1a1a, #0a0a0a);
+            border-bottom: 1px solid #222;
+        }
+
+        .welcome-text { color: #888; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 2px; }
+        .user-name { color: var(--gold); font-size: 2rem; font-weight: 900; margin: 10px 0; }
+
+        .lobby-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 15px;
+            max-width: 600px;
+            margin: -30px auto 40px;
+            padding: 0 20px;
+        }
+
+        .nav-card {
+            background: #161616;
+            padding: 25px 15px;
+            border-radius: 15px;
+            text-align: center;
+            text-decoration: none;
+            border: 1px solid #333;
+            transition: 0.3s;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+        }
+
+        .nav-card:hover { 
+            border-color: var(--gold); 
+            transform: translateY(-5px);
+            background: #1a1a1a;
+        }
+
+        .icon { font-size: 2rem; display: block; margin-bottom: 10px; }
+        .label { color: #fff; font-weight: bold; font-size: 0.9rem; text-transform: uppercase; }
+
+        .live-status-bar {
+            max-width: 600px;
+            margin: 0 auto;
+            background: #000;
+            border: 1px solid #222;
+            padding: 15px;
+            border-radius: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .status-indicator { color: #00ff88; font-weight: bold; font-size: 0.8rem; display: flex; align-items: center; gap: 8px; }
+        .dot { width: 8px; height: 8px; background: #00ff88; border-radius: 50%; animation: pulse 1.5s infinite; }
+
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
+    </style>
 </head>
 <body>
 
-    <nav class="top-nav">
-        <div class="logo">NEXUS</div>
-        <div class="user-controls">
-            <div class="balance-display">
-                <small>BALANCE</small>
-                <span>₱<span id="nav-balance">0.00</span></span>
-            </div>
-            <button id="profile-btn" onclick="window.location.href='/profile/'">PROFILE</button>
+    <div class="hero-section">
+        <span class="welcome-text">Welcome Back</span>
+        <h1 class="user-name" id="display-user">PLAYER</h1>
+        <div class="balance-box" style="display:inline-block; margin-top:10px; font-size: 1.2rem;">
+            ₱<span id="display-balance">0.00</span>
         </div>
-    </nav>
+    </div>
 
-    <header class="hero">
-        <div class="hero-content">
-            <h1>LIVE ARENA IS OPEN</h1>
-            <p>Experience the most reliable Sabong platform in the Philippines.</p>
-            <button class="cta-button" onclick="window.location.href='/games/'">ENTER LIVE ARENA</button>
+    <div class="lobby-grid">
+        <a href="/games/" class="nav-card">
+            <span class="icon">🐓</span>
+            <span class="label">Live Arena</span>
+        </a>
+        <a href="/wallet/" class="nav-card">
+            <span class="icon">💰</span>
+            <span class="label">Wallet</span>
+        </a>
+        <a href="/profile/" class="nav-card">
+            <span class="icon">👤</span>
+            <span class="label">Profile</span>
+        </a>
+        <a href="/admin/" class="nav-card" id="admin-link" style="display:none; border-color: #00ff88;">
+            <span class="icon">⚙️</span>
+            <span class="label" style="color: #00ff88;">Admin</span>
+        </a>
+    </div>
+
+    <div class="live-status-bar">
+        <div class="status-indicator">
+            <div class="dot"></div>
+            ARENA #125 IS LIVE
         </div>
-    </header>
-
-    <main class="lobby-grid">
-        <div class="category-title">AVAILABLE GAMES</div>
-        
-        <div class="grid-container">
-            <div class="game-card live" onclick="window.location.href='/games/'">
-                <div class="status-tag">LIVE NOW</div>
-                <div class="card-info">
-                    <h3>LIVE SABONG</h3>
-                    <p>Real-time betting & streaming</p>
-                </div>
-            </div>
-
-            <div class="game-card locked">
-                <div class="status-tag gray">COMING SOON</div>
-                <div class="card-info">
-                    <h3>DIGITAL SLOTS</h3>
-                    <p>High RTP Digital Games</p>
-                </div>
-            </div>
-        </div>
-    </main>
-
-    <section class="quick-actions">
-        <button onclick="window.location.href='/wallet/'" class="action-btn gold">DEPOSIT FUNDS</button>
-        <button onclick="window.location.href='/wallet/'" class="action-btn">WITHDRAW</button>
-    </section>
+        <a href="/games/" style="color: var(--gold); text-decoration: none; font-size: 0.8rem; font-weight: bold;">ENTER NOW →</a>
+    </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
-        import { getFirestore, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+        import { getFirestore, doc, onSnapshot, getDoc } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
 
-        // Your specific Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyCBvOw8HrMhZD0aYSHqFdE196ZITdYBU3Q",
             authDomain: "nexus-sabong.firebaseapp.com",
             projectId: "nexus-sabong",
             storageBucket: "nexus-sabong.firebasestorage.app",
             messagingSenderId: "421723311",
-            appId: "1:421723311:web:1780f179e7c2a7cc0e285a",
-            measurementId: "G-W2B0R09D8L"
+            appId: "1:421723311:web:1780f179e7c2a7cc0e285a"
         };
 
-        // Initialize
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // Security Check & Real-time Balance
-        onAuthStateChanged(auth, (user) => {
+        onAuthStateChanged(auth, async (user) => {
             if (user) {
-                // Listen to user balance in Firestore
-                onSnapshot(doc(db, "users", user.uid), (doc) => {
-                    if (doc.exists()) {
-                        const balance = doc.data().balance || 0;
-                        document.getElementById('nav-balance').innerText = balance.toLocaleString(undefined, {minimumFractionDigits: 2});
+                const userRef = doc(db, "users", user.uid);
+                
+                // Fetch Username & Admin Status
+                const userSnap = await getDoc(userRef);
+                if (userSnap.exists()) {
+                    const data = userSnap.data();
+                    document.getElementById('display-user').innerText = data.username.toUpperCase();
+                    
+                    // Show Admin Link if they are admin
+                    if(data.isAdmin) {
+                        document.getElementById('admin-link').style.display = "block";
+                    }
+                }
+
+                // Live Balance Listener
+                onSnapshot(userRef, (snapshot) => {
+                    if (snapshot.exists()) {
+                        document.getElementById('display-balance').innerText = 
+                            (snapshot.data().balance || 0).toLocaleString(undefined, {minimumFractionDigits: 2});
                     }
                 });
             } else {
-                // Not logged in? Send them to the login folder
                 window.location.href = "/login/";
             }
         });
     </script>
-
-    <style>
-        /* Hero Section Styling */
-        .hero {
-            height: 40vh;
-            background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), url('https://images.unsplash.com/photo-1511192336575-5a79af67a629?auto=format&fit=crop&q=80');
-            background-size: cover;
-            background-position: center;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            border-bottom: 2px solid var(--gold);
-        }
-        .hero h1 { font-size: 2.5rem; margin-bottom: 10px; }
-        .cta-button {
-            background: var(--gold);
-            color: black;
-            padding: 15px 40px;
-            font-weight: bold;
-            border: none;
-            border-radius: 30px;
-            font-size: 1.1rem;
-            cursor: pointer;
-            box-shadow: 0 0 20px rgba(212, 175, 55, 0.4);
-        }
-
-        /* Grid Styling */
-        .lobby-grid { padding: 30px 20px; }
-        .category-title { color: var(--gold); font-weight: bold; margin-bottom: 20px; letter-spacing: 2px; }
-        .grid-container { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        
-        .game-card {
-            background: #1a1a1a;
-            border-radius: 12px;
-            overflow: hidden;
-            border: 1px solid #333;
-            cursor: pointer;
-            position: relative;
-            min-height: 150px;
-            display: flex;
-            align-items: flex-end;
-            padding: 15px;
-        }
-        .game-card.live { border-color: var(--gold); background: linear-gradient(transparent, #000), url('https://images.unsplash.com/photo-1596727147705-61a532a655bd?auto=format&fit=crop&q=60'); background-size: cover; }
-        .status-tag { position: absolute; top: 10px; left: 10px; background: #ff4444; font-size: 0.6rem; padding: 4px 8px; border-radius: 4px; font-weight: bold; }
-        .status-tag.gray { background: #555; }
-        .game-card.locked { opacity: 0.5; cursor: not-allowed; }
-
-        /* Quick Actions */
-        .quick-actions { display: flex; gap: 10px; padding: 20px; background: #000; position: fixed; bottom: 0; width: 100%; box-sizing: border-box; }
-        .action-btn { flex: 1; padding: 15px; border: 1px solid var(--gold); background: transparent; color: var(--gold); border-radius: 5px; font-weight: bold; }
-        .action-btn.gold { background: var(--gold); color: black; }
-    </style>
 </body>
 </html>
