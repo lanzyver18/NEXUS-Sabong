@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register | NEXUS</title>
+    <link rel="stylesheet" href="../style.css">
+</head>
+<body class="auth-page">
+
+    <div class="auth-card">
+        <div class="logo">NEXUS</div>
+        <h2>CREATE ACCOUNT</h2>
+        
+        <input type="text" id="reg-name" placeholder="Full Name (for GCash/Maya)">
+        <input type="email" id="reg-email" placeholder="Email Address">
+        <input type="password" id="reg-pass" placeholder="Create Password">
+        
+        <button id="btn-register">REGISTER NOW</button>
+        
+        <p class="auth-footer">Already have an account? <a href="/login/">Login here</a></p>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
+        import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
+        import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCBvOw8HrMhZD0aYSHqFdE196ZITdYBU3Q",
+            authDomain: "nexus-sabong.firebaseapp.com",
+            projectId: "nexus-sabong",
+            storageBucket: "nexus-sabong.firebasestorage.app",
+            messagingSenderId: "421723311",
+            appId: "1:421723311:web:1780f179e7c2a7cc0e285a",
+            measurementId: "G-W2B0R09D8L"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        document.getElementById('btn-register').onclick = async () => {
+            const name = document.getElementById('reg-name').value;
+            const email = document.getElementById('reg-email').value;
+            const pass = document.getElementById('reg-pass').value;
+
+            if(!name || !email || !pass) return alert("Please fill all fields");
+
+            try {
+                // 1. Create the Auth User
+                const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
+                const user = userCredential.user;
+
+                // 2. Initialize the Wallet in Firestore
+                await setDoc(doc(db, "users", user.uid), {
+                    fullName: name,
+                    email: email,
+                    balance: 0,
+                    isAdmin: false,
+                    createdAt: new Date()
+                });
+
+                alert("Account created! Redirecting to Arena...");
+                window.location.href = "/";
+
+            } catch (error) {
+                alert(error.message);
+            }
+        };
+    </script>
+</body>
+</html>
