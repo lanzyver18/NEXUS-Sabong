@@ -2,90 +2,132 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Live Arena | NEXUS</title>
     <link rel="stylesheet" href="../style.css">
     <style>
-        .arena-grid { display: grid; grid-template-columns: 1fr 350px; gap: 20px; padding: 20px; }
-        .video-box { background: #000; aspect-ratio: 16/9; border: 2px solid #222; position: relative; }
-        .live-indicator { position: absolute; top: 10px; left: 10px; background: red; padding: 5px 10px; font-size: 0.7rem; border-radius: 3px; animation: blink 1s infinite; }
-        @keyframes blink { 50% { opacity: 0.5; } }
+        .arena-container { max-width: 1000px; margin: 20px auto; display: grid; grid-template-columns: 1fr 320px; gap: 20px; padding: 0 15px; }
+        .video-player { background: #000; aspect-ratio: 16/9; border: 2px solid #222; border-radius: 12px; overflow: hidden; position: relative; }
+        .live-tag { position: absolute; top: 15px; left: 15px; background: #ff4444; color: white; padding: 5px 12px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; animation: pulse 1.5s infinite; }
         
-        .betting-sidebar { background: #1a1a1a; padding: 20px; border-radius: 10px; border: 1px solid #333; }
-        .fight-no { color: var(--gold); font-size: 1.2rem; margin-bottom: 20px; text-align: center; }
+        .betting-panel { background: #111; padding: 20px; border-radius: 15px; border: 1px solid #333; }
+        .bet-card { border: 2px solid #333; padding: 20px; border-radius: 10px; margin-bottom: 15px; text-align: center; cursor: pointer; transition: 0.2s; }
+        .meron { border-color: #ff4444; color: #ff4444; }
+        .wala { border-color: #4444ff; color: #4444ff; }
+        .meron:hover { background: #ff4444; color: white; }
+        .wala:hover { background: #4444ff; color: white; }
         
-        .bet-option { margin-bottom: 15px; padding: 15px; border-radius: 8px; text-align: center; cursor: pointer; transition: 0.3s; }
-        .meron-card { border: 2px solid #ff4444; color: #ff4444; }
-        .wala-card { border: 2px solid #4444ff; color: #4444ff; }
-        .meron-card:hover { background: #ff4444; color: white; }
-        .wala-card:hover { background: #4444ff; color: white; }
+        .odds { font-size: 1.8rem; font-weight: bold; display: block; margin: 5px 0; }
+        .bet-input { background: #000; border: 1px solid #444; color: white; padding: 12px; width: 100%; border-radius: 8px; margin-top: 10px; text-align: center; font-size: 1.1rem; }
         
-        .odds { font-size: 2rem; font-weight: bold; display: block; }
-        @media (max-width: 768px) { .arena-grid { grid-template-columns: 1fr; } }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+        @media (max-width: 850px) { .arena-container { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
+
     <nav class="top-nav">
-        <a href="/">← LOBBY</a>
-        <div class="balance-box">₱<span id="balance">0.00</span></div>
+        <a href="/" style="color: var(--gold); text-decoration: none; font-weight: bold;">← LOBBY</a>
+        <div class="balance-box">₱<span id="display-balance">0.00</span></div>
     </nav>
 
-    <div class="arena-grid">
-        <div class="video-box">
-            <div class="live-indicator">LIVE</div>
-            <iframe src="YOUR_STREAM_URL_HERE" width="100%" height="100%" frameborder="0" allowfullscreen></iframe>
+    <div class="arena-container">
+        <div class="video-player">
+            <div class="live-tag">LIVE FEED</div>
+            <iframe width="100%" height="100%" src="https://www.youtube.com/embed/live_stream?channel=YOUR_CHANNEL_ID" frameborder="0" allowfullscreen></iframe>
         </div>
 
-        <div class="betting-sidebar">
-            <div class="fight-no">FIGHT #124</div>
+        <div class="betting-panel">
+            <h3 style="text-align: center; color: var(--gold); margin-top: 0;">FIGHT #125</h3>
             
-            <div class="bet-option meron-card" onclick="placeBet('meron', 1.90)">
-                <span class="label">MERON</span>
-                <span class="odds">1.90</span>
+            <div class="bet-card meron" onclick="placeBet('MERON')">
+                <small>BET ON</small>
+                <span class="odds">MERON</span>
+                <small>Payout: 1.90</small>
             </div>
 
-            <div class="bet-option wala-card" onclick="placeBet('wala', 1.85)">
-                <span class="label">WALA</span>
-                <span class="odds">1.85</span>
+            <div class="bet-card wala" onclick="placeBet('WALA')">
+                <small>BET ON</small>
+                <span class="odds">WALA</span>
+                <small>Payout: 1.80</small>
             </div>
 
-            <div class="bet-option" style="border: 1px solid #555;">
-                <span class="label">DRAW</span>
-                <span class="odds">8.00</span>
-            </div>
+            <input type="number" id="bet-amount" class="bet-input" placeholder="Bet Amount (₱)" value="100">
+            <p style="font-size: 0.65rem; color: #666; text-align: center; margin-top: 10px;">Min Bet: ₱100 | Max Bet: ₱10,000</p>
         </div>
     </div>
 
     <script type="module">
-        import { auth, db } from '../firebase-config.js';
-        import { doc, onSnapshot, updateDoc, increment } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
+        import { getFirestore, doc, onSnapshot, updateDoc, increment, addDoc, collection, getDoc } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCBvOw8HrMhZD0aYSHqFdE196ZITdYBU3Q",
+            authDomain: "nexus-sabong.firebaseapp.com",
+            projectId: "nexus-sabong",
+            storageBucket: "nexus-sabong.firebasestorage.app",
+            messagingSenderId: "421723311",
+            appId: "1:421723311:web:1780f179e7c2a7cc0e285a"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
 
         let currentBalance = 0;
+        let currentUserData = null;
 
-        auth.onAuthStateChanged(user => {
+        onAuthStateChanged(auth, async (user) => {
             if (user) {
-                onSnapshot(doc(db, "users", user.uid), (doc) => {
-                    currentBalance = doc.data().balance;
-                    document.getElementById('balance').innerText = currentBalance.toLocaleString();
+                const userRef = doc(db, "users", user.uid);
+                
+                // Keep track of user data for bet records
+                const userSnap = await getDoc(userRef);
+                currentUserData = userSnap.data();
+
+                // Live Balance Listener
+                onSnapshot(userRef, (snapshot) => {
+                    if (snapshot.exists()) {
+                        currentBalance = snapshot.data().balance || 0;
+                        document.getElementById('display-balance').innerText = currentBalance.toLocaleString(undefined, {minimumFractionDigits: 2});
+                    }
                 });
             } else { window.location.href = "/login/"; }
         });
 
-        window.placeBet = async (side, odds) => {
-            const betAmount = parseInt(prompt(`Enter Bet Amount for ${side.toUpperCase()}:`, "100"));
-            
-            if (betAmount > currentBalance) {
-                alert("Insufficient Balance!");
-                return;
-            }
+        window.placeBet = async (side) => {
+            const amount = parseInt(document.getElementById('bet-amount').value);
 
-            if (betAmount >= 100) {
-                // In a REAL app, you do this via Cloud Functions to prevent hacking.
-                // This is the "Front-end" version for your demo.
-                const userRef = doc(db, "users", auth.currentUser.uid);
-                await updateDoc(userRef, {
-                    balance: increment(-betAmount)
-                });
-                alert(`Bet Placed: ₱${betAmount} on ${side}`);
+            if (isNaN(amount) || amount < 100) return alert("Minimum bet is ₱100");
+            if (amount > currentBalance) return alert("Insufficient Balance!");
+
+            if (confirm(`Confirm ₱${amount} bet on ${side}?`)) {
+                try {
+                    const userRef = doc(db, "users", auth.currentUser.uid);
+                    
+                    // 1. Deduct Balance
+                    await updateDoc(userRef, {
+                        balance: increment(-amount)
+                    });
+
+                    // 2. Create Bet Record (This populates your Admin History)
+                    await addDoc(collection(db, "bets"), {
+                        uid: auth.currentUser.uid,
+                        username: currentUserData.username,
+                        amount: amount,
+                        side: side,
+                        fightId: "125", // In a real app, this comes from a 'currentFight' doc
+                        status: "PENDING",
+                        timestamp: new Date()
+                    });
+
+                    alert(`Bet Placed on ${side}! Good luck!`);
+
+                } catch (e) {
+                    alert("Error placing bet. Please try again.");
+                    console.error(e);
+                }
             }
         };
     </script>
