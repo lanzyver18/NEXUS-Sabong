@@ -18,15 +18,24 @@
         .panel { background: #111; border-radius: 15px; border: 1px solid #333; padding: 20px; margin-bottom: 20px; }
         .panel-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #222; margin-bottom: 15px; padding-bottom: 10px; }
         
-        /* TRANSACTION & PLAY LOGS */
-        .log-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+        /* TABLES */
+        .log-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; color: #eee; }
         .log-table th { text-align: left; color: #555; padding: 10px; border-bottom: 1px solid #222; }
         .log-table td { padding: 12px 10px; border-bottom: 1px solid #1a1a1a; }
         .win { color: #00ff88; font-weight: bold; }
         .loss { color: #ff4444; font-weight: bold; }
+        .pending { color: #ffaa00; font-style: italic; }
+
+        /* FIGHT CONTROL */
+        .ctrl-btn { padding: 15px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; color: white; transition: 0.2s; text-transform: uppercase; }
+        .btn-meron { background: #ff4444; }
+        .btn-wala { background: #4444ff; }
+        .btn-draw { background: #555; }
+        .ctrl-btn:hover { filter: brightness(1.2); transform: translateY(-2px); }
 
         /* SEARCH AREA */
         .search-box { background: #000; border: 1px solid var(--gold); padding: 15px; border-radius: 10px; }
+        input { width: 100%; padding: 12px; margin: 10px 0; background: #000; border: 1px solid #333; color: white; border-radius: 5px; box-sizing: border-box; }
         
         @media (max-width: 900px) { .admin-grid { grid-template-columns: 1fr; } }
     </style>
@@ -45,21 +54,33 @@
             <div class="insight-row">
                 <div class="insight-card"><h4>Total House Bank</h4><span class="val" id="stat-total-bank">₱0</span></div>
                 <div class="insight-card"><h4>Active Players</h4><span class="val" id="stat-players">0</span></div>
-                <div class="insight-card"><h4>Total Loads (24h)</h4><span class="val" id="stat-loads">₱0</span></div>
+                <div class="insight-card"><h4>Fights Settled</h4><span class="val" id="stat-fights">0</span></div>
+            </div>
+
+            <div class="panel" style="border: 1px solid var(--gold);">
+                <div class="panel-header">
+                    <h3 style="margin:0; color: var(--gold);">FIGHT CONTROL CENTER</h3>
+                    <div style="background:#222; padding:5px 10px; border-radius:5px; font-size:0.8rem;">FIGHT #<span id="fight-num-display">125</span></div>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
+                    <button class="ctrl-btn btn-meron" onclick="settleFight('MERON')">MERON WINS</button>
+                    <button class="ctrl-btn btn-wala" onclick="settleFight('WALA')">WALA WINS</button>
+                    <button class="ctrl-btn btn-draw" onclick="settleFight('DRAW')">DRAW / CANCEL</button>
+                </div>
             </div>
 
             <div class="panel">
                 <div class="panel-header">
                     <h3 style="margin:0; color: var(--gold);">LIVE PLAY HISTORY</h3>
-                    <span class="text-muted">Real-time Game Results</span>
+                    <span class="text-muted">Last 15 Bets</span>
                 </div>
                 <table class="log-table">
                     <thead>
                         <tr>
-                            <th>Player</th>
-                            <th>Game/Fight</th>
+                            <th>User</th>
+                            <th>Side</th>
                             <th>Bet</th>
-                            <th>Result</th>
+                            <th>Status</th>
                             <th>Profit/Loss</th>
                         </tr>
                     </thead>
@@ -71,23 +92,22 @@
 
         <div class="sidebar-admin">
             <div class="panel search-box">
-                <h3 style="margin-top:0; font-size: 1rem;">LOAD CREDITS</h3>
+                <h3 style="margin-top:0; font-size: 1rem; color: var(--gold);">AGENT LOAD TOOL</h3>
                 <input type="text" id="target-username" placeholder="Username (e.g. kenny88)">
                 <button class="btn-main btn-dark" id="btn-check" style="width:100%; margin-bottom:10px;">CHECK PLAYER</button>
                 
-                <div id="player-preview" style="display:none; background:#0a0a0a; padding:10px; border-radius:5px; margin-bottom:15px;">
-                    <span id="res-name" style="font-weight:bold; color:var(--gold);">---</span><br>
-                    <small>Balance: </small><span id="res-bal" style="color:#00ff88;">₱0</span>
+                <div id="player-preview" style="display:none; background:#0a0a0a; padding:10px; border-radius:5px; margin-bottom:15px; border-left:3px solid var(--gold);">
+                    <span id="res-name" style="font-weight:bold; color:white;">---</span><br>
+                    <small style="color:#888;">Wallet: </small><span id="res-bal" style="color:#00ff88; font-weight:bold;">₱0</span>
                 </div>
 
-                <input type="number" id="load-amt" placeholder="Amount (e.g. 1000)">
+                <input type="number" id="load-amt" placeholder="Amount (₱)">
                 <button class="btn-main btn-gold" id="btn-confirm" style="width:100%;">SEND CREDITS</button>
             </div>
 
             <div class="panel">
-                <h3 style="margin-top:0; font-size: 1rem;">RECENT AGENT LOADS</h3>
-                <div id="load-history-list">
-                    </div>
+                <h3 style="margin-top:0; font-size: 0.9rem; color: var(--gold);">RECENT AGENT LOADS</h3>
+                <div id="load-history-list"></div>
             </div>
         </div>
     </div>
@@ -95,7 +115,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
-        import { getFirestore, doc, getDoc, getDocs, updateDoc, increment, collection, query, where, orderBy, limit, onSnapshot, addDoc } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, getDocs, updateDoc, increment, collection, query, where, orderBy, limit, onSnapshot, addDoc, writeBatch } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCBvOw8HrMhZD0aYSHqFdE196ZITdYBU3Q",
@@ -111,8 +131,9 @@
         const db = getFirestore(app);
 
         let activePlayerId = null;
+        const currentFightId = "125"; // Matches Arena ID
 
-        // 1. SECURITY GATE
+        // 1. SECURITY & INITIALIZATION
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 const adminSnap = await getDoc(doc(db, "users", user.uid));
@@ -125,72 +146,73 @@
         });
 
         function initDashboard() {
-            // STATS: Active Players & Total Bank
+            // INSIGHTS: Users and Bank
             onSnapshot(collection(db, "users"), (snap) => {
                 let totalBank = 0;
                 document.getElementById('stat-players').innerText = snap.size;
-                snap.forEach(user => {
-                    totalBank += (user.data().balance || 0);
-                });
+                snap.forEach(user => totalBank += (user.data().balance || 0));
                 document.getElementById('stat-total-bank').innerText = "₱" + totalBank.toLocaleString();
             });
 
-            // LOGS: Recent Plays (Wins/Losses)
-            // Note: You must create a 'bets' collection when users play
-            onSnapshot(query(collection(db, "bets"), orderBy("timestamp", "desc"), limit(10)), (snap) => {
+            // INSIGHTS: Fight Count (Approximation from Logs)
+            onSnapshot(query(collection(db, "bets"), where("status", "!=", "PENDING")), (snap) => {
+                document.getElementById('stat-fights').innerText = snap.size;
+            });
+
+            // LIVE PLAY HISTORY
+            onSnapshot(query(collection(db, "bets"), orderBy("timestamp", "desc"), limit(15)), (snap) => {
                 const list = document.getElementById('play-history-list');
                 list.innerHTML = "";
                 snap.forEach(bet => {
                     const d = bet.data();
-                    const profitClass = d.status === "WIN" ? "win" : "loss";
+                    let statusClass = d.status.toLowerCase();
+                    let profitHtml = d.status === 'WIN' ? `+₱${d.payout - d.amount}` : `-₱${d.amount}`;
+                    if(d.status === 'PENDING') profitHtml = '---';
+                    if(d.status === 'DRAW') profitHtml = '₱0 (Refund)';
+
                     list.innerHTML += `
                         <tr>
                             <td>${d.username}</td>
-                            <td>Fight #${d.fightId}</td>
+                            <td>${d.side}</td>
                             <td>₱${d.amount}</td>
-                            <td>${d.status}</td>
-                            <td class="${profitClass}">${d.status === 'WIN' ? '+₱'+d.payout : '-₱'+d.amount}</td>
+                            <td class="${statusClass}">${d.status}</td>
+                            <td class="${statusClass}">${profitHtml}</td>
                         </tr>
                     `;
                 });
             });
 
-            // LOGS: Recent Agent Transfers
+            // RECENT LOADS
             onSnapshot(query(collection(db, "logs"), orderBy("timestamp", "desc"), limit(5)), (snap) => {
                 const list = document.getElementById('load-history-list');
                 list.innerHTML = "";
                 snap.forEach(log => {
                     const d = log.data();
-                    list.innerHTML += `
-                        <div style="font-size:0.75rem; padding:8px 0; border-bottom:1px solid #222;">
-                            Sent <strong>₱${d.amount}</strong> to <strong>${d.toUsername}</strong>
-                        </div>
-                    `;
+                    list.innerHTML += `<div style="font-size:0.75rem; padding:8px 0; border-bottom:1px solid #222; color:#bbb;">
+                        Sent <b style="color:#00ff88">₱${d.amount}</b> to <b>${d.toUsername}</b>
+                    </div>`;
                 });
             });
         }
 
-        // AGENT TOOL: Search Player
+        // AGENT TOOLS: Search & Transfer
         document.getElementById('btn-check').onclick = async () => {
             const username = document.getElementById('target-username').value.trim().toLowerCase();
             const q = query(collection(db, "users"), where("username", "==", username));
             const snap = await getDocs(q);
-            
             if(!snap.empty) {
                 const player = snap.docs[0];
                 activePlayerId = player.id;
                 document.getElementById('res-name').innerText = player.data().username.toUpperCase();
                 document.getElementById('res-bal').innerText = "₱" + (player.data().balance || 0).toLocaleString();
                 document.getElementById('player-preview').style.display = "block";
-            } else { alert("Player not found!"); }
+            } else { alert("User not found!"); }
         };
 
-        // AGENT TOOL: Transfer
         document.getElementById('btn-confirm').onclick = async () => {
             const amount = parseInt(document.getElementById('load-amt').value);
-            if(!activePlayerId || isNaN(amount)) return alert("Search player and enter amount");
-
-            if(confirm(`Transfer ₱${amount}?`)) {
+            if(!activePlayerId || isNaN(amount)) return alert("Select user and amount!");
+            if(confirm(`Confirm ₱${amount} transfer?`)) {
                 await updateDoc(doc(db, "users", activePlayerId), { balance: increment(amount) });
                 await addDoc(collection(db, "logs"), {
                     agent: auth.currentUser.uid,
@@ -198,9 +220,40 @@
                     amount: amount,
                     timestamp: new Date()
                 });
-                alert("Transfer Successful");
-                location.reload();
+                alert("Success!");
+                document.getElementById('load-amt').value = "";
             }
+        };
+
+        // FIGHT SETTLEMENT (Payout Logic)
+        window.settleFight = async (winner) => {
+            if(!confirm(`Declare ${winner} as winner for Fight #${currentFightId}?`)) return;
+            
+            try {
+                const q = query(collection(db, "bets"), where("fightId", "==", currentFightId), where("status", "==", "PENDING"));
+                const snap = await getDocs(q);
+                if(snap.empty) return alert("No pending bets found.");
+
+                const batch = writeBatch(db); // For atomic updates
+
+                for (const betDoc of snap.docs) {
+                    const d = betDoc.data();
+                    const betRef = doc(db, "bets", betDoc.id);
+                    const userRef = doc(db, "users", d.uid);
+
+                    if(d.side === winner) {
+                        const payout = Math.floor(d.amount * 1.90);
+                        await updateDoc(userRef, { balance: increment(payout) });
+                        await updateDoc(betRef, { status: "WIN", payout: payout });
+                    } else if (winner === "DRAW") {
+                        await updateDoc(userRef, { balance: increment(d.amount) });
+                        await updateDoc(betRef, { status: "DRAW", payout: d.amount });
+                    } else {
+                        await updateDoc(betRef, { status: "LOSS", payout: 0 });
+                    }
+                }
+                alert(`SUCCESS! Fight #${currentFightId} settled.`);
+            } catch (e) { alert("Error settling fight."); console.error(e); }
         };
     </script>
 </body>
