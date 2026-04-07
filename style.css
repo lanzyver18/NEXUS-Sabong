@@ -59,3 +59,40 @@ h1, h2, .logo { font-family: 'Goldman', cursive; color: var(--gold); }
     border-top: 1px solid var(--gold);
 }
 .nav-item { flex: 1; padding: 15px; text-align: center; cursor: pointer; font-size: 0.8rem; }
+
+.auth-page {
+    background: radial-gradient(circle, #1a1a1a 0%, #000 100%);
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.auth-card {
+    background: #111;
+    padding: 40px;
+    border-radius: 15px;
+    border: 1px solid var(--gold);
+    width: 100%;
+    max-width: 350px;
+    text-align: center;
+    box-shadow: 0 0 30px rgba(0,0,0,0.5);
+}
+
+.auth-card h2 {
+    margin-bottom: 25px;
+    font-size: 1.2rem;
+    letter-spacing: 2px;
+}
+
+.auth-footer {
+    margin-top: 20px;
+    font-size: 0.8rem;
+    color: #888;
+}
+
+.auth-footer a {
+    color: var(--gold);
+    text-decoration: none;
+    font-weight: bold;
+}
