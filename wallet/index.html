@@ -6,85 +6,33 @@
     <title>Wallet | NEXUS Sabong</title>
     <link rel="stylesheet" href="../style.css">
     <style>
-        /* CSS TO FIX THE "WONKY" ALIGNMENT */
-        .wallet-wrapper {
-            max-width: 450px;
-            margin: 40px auto;
-            padding: 0 20px;
-        }
+        .wallet-wrapper { max-width: 450px; margin: 40px auto; padding: 0 20px; }
+        .wallet-card { background: #151515; padding: 25px; border-radius: 16px; border: 1px solid #222; margin-bottom: 25px; text-align: center; }
+        .gold-title { color: #D4AF37; text-transform: uppercase; letter-spacing: 2px; font-size: 1.1rem; margin-top: 0; margin-bottom: 10px; }
+        
+        /* ID BOX */
+        .id-box { background: #000; padding: 15px; border: 2px dashed #333; border-radius: 12px; margin: 15px 0; cursor: pointer; }
+        .id-box code { font-size: 1.4rem; color: #D4AF37; font-family: 'Courier New', monospace; font-weight: bold; }
 
-        .wallet-card {
-            background: #151515;
-            padding: 30px;
-            border-radius: 16px;
-            border: 1px solid #222;
-            margin-bottom: 25px;
-            text-align: center;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        /* WITHDRAWAL FORM */
+        .form-group { text-align: left; margin-bottom: 15px; }
+        label { display: block; color: #888; font-size: 0.7rem; text-transform: uppercase; margin-bottom: 5px; }
+        select, input { width: 100%; padding: 12px; background: #000; border: 1px solid #333; color: white; border-radius: 8px; box-sizing: border-box; outline: none; }
+        select:focus, input:focus { border-color: #D4AF37; }
+        
+        .btn-withdraw { 
+            background: #D4AF37; color: black; width: 100%; padding: 15px; 
+            border-radius: 10px; border: none; font-weight: bold; cursor: pointer; 
+            text-transform: uppercase; margin-top: 10px; transition: 0.2s;
         }
+        .btn-withdraw:disabled { background: #444; color: #777; cursor: not-allowed; }
 
-        .gold-title {
-            color: #D4AF37;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            font-size: 1.1rem;
-            margin-top: 0;
-            margin-bottom: 10px;
-        }
+        .agent-container { display: flex; flex-direction: column; gap: 12px; margin-top: 20px; }
+        .btn-agent { display: block; padding: 15px; border-radius: 10px; font-weight: bold; text-decoration: none; text-align: center; color: white; font-size: 0.9rem; }
+        .btn-messenger { background: #0084FF; }
+        .btn-telegram { background: #229ED9; }
 
-        /* THE ID BOX FIX */
-        .id-box {
-            background: #000;
-            padding: 20px;
-            border: 2px dashed #333;
-            border-radius: 12px;
-            margin: 20px 0;
-            cursor: pointer;
-            transition: 0.3s;
-        }
-        .id-box:hover { border-color: #D4AF37; }
-        .id-box code { 
-            font-size: 1.6rem; 
-            color: #D4AF37; 
-            font-family: 'Courier New', Courier, monospace; 
-            font-weight: bold;
-        }
-        .tap-hint { font-size: 0.65rem; color: #555; margin-top: 10px; letter-spacing: 1px; }
-
-        /* THE BUTTON FIX (No more touching!) */
-        .agent-container {
-            display: flex;
-            flex-direction: column;
-            gap: 15px; /* THE GAP YOU WERE MISSING */
-            margin-top: 25px;
-        }
-
-        .btn-agent {
-            display: block;
-            padding: 18px;
-            border-radius: 10px;
-            font-weight: bold;
-            text-decoration: none;
-            text-align: center;
-            font-size: 0.95rem;
-            transition: all 0.2s ease;
-            border: none;
-            color: white;
-            text-transform: uppercase;
-        }
-
-        .btn-messenger { background: #0084FF; box-shadow: 0 4px 15px rgba(0, 132, 255, 0.2); }
-        .btn-telegram { background: #229ED9; box-shadow: 0 4px 15px rgba(34, 158, 217, 0.2); }
-
-        .btn-agent:hover { transform: translateY(-3px); filter: brightness(1.1); }
-        .btn-agent:active { transform: translateY(0); }
-
-        /* TOAST NOTIFICATION */
-        #toast {
-            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
-            background: #D4AF37; color: black; padding: 12px 25px;
-            border-radius: 30px; font-weight: bold; display: none; z-index: 1000;
-        }
+        #toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: #D4AF37; color: black; padding: 10px 20px; border-radius: 20px; display: none; z-index: 1000; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -98,25 +46,49 @@
         
         <div class="wallet-card">
             <h3 class="gold-title">MY PLAYER ID</h3>
-            <p class="text-muted" style="font-size: 0.85rem;">Give this Username to your Agent to load or withdraw credits.</p>
             <div class="id-box" onclick="copyUsername()">
                 <code id="user-id">LOADING...</code>
-                <div class="tap-hint">TAP TO COPY USERNAME</div>
             </div>
+            <p class="text-muted" style="font-size: 0.75rem;">Give this to Agent for manual Cash-In.</p>
+        </div>
+
+        <div class="wallet-card">
+            <h3 class="gold-title">WITHDRAW FUNDS</h3>
+            
+            <div class="form-group">
+                <label>Select Bank / Wallet</label>
+                <select id="w-bank">
+                    <option value="GCASH">GCASH</option>
+                    <option value="MAYA">MAYA</option>
+                    <option value="BDO">BDO</option>
+                    <option value="BPI">BPI</option>
+                    <option value="GOTYME">GOTYME</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Account Name</label>
+                <input type="text" id="w-name" placeholder="Name on Account">
+            </div>
+
+            <div class="form-group">
+                <label>Account / Mobile Number</label>
+                <input type="text" id="w-number" placeholder="Number or Account #">
+            </div>
+
+            <div class="form-group">
+                <label>Withdraw Amount</label>
+                <input type="number" id="w-amount" placeholder="Minimum ₱100">
+            </div>
+
+            <button class="btn-withdraw" id="btn-submit-w">SUBMIT WITHDRAWAL</button>
         </div>
 
         <div class="wallet-card">
             <h3 class="gold-title">CONTACT AGENT</h3>
-            <p class="text-muted" style="font-size: 0.85rem;">Message an official agent to process your GCash or Maya transaction.</p>
-            
             <div class="agent-container">
-                <a href="https://m.me/YOUR_FB_PAGE" target="_blank" class="btn-agent btn-messenger">
-                    CASH-IN / WITHDRAW (FB)
-                </a>
-                
-                <a href="https://t.me/YOUR_TG_USERNAME" target="_blank" class="btn-agent btn-telegram">
-                    CASH-IN / WITHDRAW (TG)
-                </a>
+                <a href="https://m.me/YOUR_PAGE" target="_blank" class="btn-agent btn-messenger">CASH-IN VIA FB</a>
+                <a href="https://t.me/YOUR_TG" target="_blank" class="btn-agent btn-telegram">CASH-IN VIA TG</a>
             </div>
         </div>
 
@@ -127,7 +99,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
-        import { getFirestore, doc, onSnapshot, getDoc } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+        import { getFirestore, doc, onSnapshot, getDoc, addDoc, collection, updateDoc, increment } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCBvOw8HrMhZD0aYSHqFdE196ZITdYBU3Q",
@@ -135,47 +107,64 @@
             projectId: "nexus-sabong",
             storageBucket: "nexus-sabong.firebasestorage.app",
             messagingSenderId: "421723311",
-            appId: "1:421723311:web:1780f179e7c2a7cc0e285a",
-            measurementId: "G-W2B0R09D8L"
+            appId: "1:421723311:web:1780f179e7c2a7cc0e285a"
         };
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
 
+        let currentBal = 0;
+        let myUser = "";
+
         onAuthStateChanged(auth, async (user) => {
             if (user) {
-                // Fetch Username from Firestore
                 const userRef = doc(db, "users", user.uid);
                 const userSnap = await getDoc(userRef);
-                
-                if (userSnap.exists()) {
-                    const username = userSnap.data().username || "NO_NAME";
-                    document.getElementById('user-id').innerText = username.toUpperCase();
-                } else {
-                    document.getElementById('user-id').innerText = "ERROR";
-                }
+                myUser = userSnap.data().username;
+                document.getElementById('user-id').innerText = myUser.toUpperCase();
 
-                // Live Balance Listener
-                onSnapshot(userRef, (snapshot) => {
-                    if (snapshot.exists()) {
-                        const bal = snapshot.data().balance || 0;
-                        document.getElementById('display-balance').innerText = bal.toLocaleString(undefined, {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2
-                        });
-                    }
+                onSnapshot(userRef, (snap) => {
+                    currentBal = snap.data().balance || 0;
+                    document.getElementById('display-balance').innerText = currentBal.toLocaleString(undefined, {minimumFractionDigits: 2});
                 });
-            } else {
-                window.location.href = "/login/";
-            }
+            } else { window.location.href = "/login/"; }
         });
 
-        // Copy Username Function
+        document.getElementById('btn-submit-w').onclick = async () => {
+            const bank = document.getElementById('w-bank').value;
+            const name = document.getElementById('w-name').value.trim();
+            const num = document.getElementById('w-number').value.trim();
+            const amt = parseInt(document.getElementById('w-amount').value);
+
+            if (!name || !num || isNaN(amt) || amt < 100) return alert("Please fill all fields. Min ₱100.");
+            if (amt > currentBal) return alert("Insufficient balance!");
+
+            if(confirm(`Withdraw ₱${amt} to ${bank}? Credits will be locked until approved.`)) {
+                try {
+                    // 1. Lock funds
+                    await updateDoc(doc(db, "users", auth.currentUser.uid), { balance: increment(-amt) });
+
+                    // 2. Log request
+                    await addDoc(collection(db, "withdrawals"), {
+                        uid: auth.currentUser.uid,
+                        username: myUser,
+                        bank: bank,
+                        accountName: name,
+                        accountNumber: num,
+                        amount: amt,
+                        status: "PENDING",
+                        timestamp: new Date()
+                    });
+
+                    alert("Withdrawal request sent to Admin.");
+                    location.reload();
+                } catch (e) { alert("Error sending request."); }
+            }
+        };
+
         window.copyUsername = () => {
             const username = document.getElementById('user-id').innerText;
-            if(username === "LOADING..." || username === "ERROR") return;
-            
             navigator.clipboard.writeText(username).then(() => {
                 const toast = document.getElementById('toast');
                 toast.style.display = "block";
