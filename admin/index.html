@@ -3,49 +3,57 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Agent Control | NEXUS</title>
+    <title>Agent Dashboard | NEXUS</title>
     <link rel="stylesheet" href="../style.css">
     <style>
-        .admin-box { background: #111; padding: 25px; border-radius: 15px; border: 1px solid var(--gold); margin-top: 20px; }
-        .player-preview { background: #000; padding: 15px; border-radius: 8px; margin: 15px 0; display: none; border-left: 4px solid var(--gold); }
-        .log-container { margin-top: 30px; background: #111; padding: 15px; border-radius: 10px; border: 1px solid #333; }
-        .log-item { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #222; font-size: 0.85rem; }
-        .log-item:last-child { border: none; }
+        .admin-wrapper { max-width: 450px; margin: 40px auto; padding: 0 20px; }
+        .admin-card { background: #111; padding: 25px; border-radius: 15px; border: 1px solid #333; margin-bottom: 20px; }
+        .player-info-box { background: #000; padding: 15px; border-radius: 10px; border-left: 4px solid #D4AF37; margin: 15px 0; display: none; }
+        
+        .input-label { color: #888; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 5px; }
+        input { width: 100%; padding: 12px; margin-bottom: 15px; background: #000; border: 1px solid #333; color: white; border-radius: 8px; box-sizing: border-box; font-size: 1rem; }
+        
+        .btn-main { width: 100%; padding: 15px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; text-transform: uppercase; transition: 0.2s; margin-bottom: 10px; }
+        .btn-gold { background: #D4AF37; color: black; }
+        .btn-dark { background: #333; color: white; }
+        .btn-main:hover { filter: brightness(1.2); transform: translateY(-2px); }
+        .btn-main:active { transform: translateY(0); }
+
+        .log-container { background: #111; padding: 15px; border-radius: 15px; border: 1px solid #222; }
+        .log-item { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #222; font-size: 0.8rem; color: #ccc; }
         .log-amt { color: #00ff88; font-weight: bold; }
-        .btn-action { cursor: pointer !important; width: 100%; padding: 15px; border: none; border-radius: 8px; font-weight: bold; text-transform: uppercase; margin-top: 10px; transition: 0.2s; }
-        .gold { background: var(--gold); color: black; }
-        .search { background: #333; color: white; margin-bottom: 15px; }
     </style>
 </head>
 <body>
+
     <nav class="top-nav">
-        <a href="/" style="color: var(--gold); text-decoration: none;">← ARENA LOBBY</a>
-        <div class="balance-box" style="color: #00ff88;">AGENT AUTHORIZED</div>
+        <a href="/" style="color: #D4AF37; text-decoration: none; font-weight: bold;">← ARENA</a>
+        <div style="color: #00ff88; font-weight: bold; font-size: 0.8rem;">AGENT AUTHORIZED</div>
     </nav>
 
-    <div style="max-width: 450px; margin: auto; padding: 20px;">
-        <h2 style="text-align: center; color: var(--gold);">AGENT TRANSFER TOOL</h2>
-        
-        <div class="admin-box">
-            <label class="text-muted">FIND PLAYER ID</label>
-            <input type="text" id="target-uid" placeholder="Paste Player UID here...">
-            <button class="btn-action search" id="btn-search">CHECK PLAYER BALANCE</button>
-            
-            <div id="player-info" class="player-preview">
-                <strong id="display-name" style="color: white;">---</strong><br>
-                <span class="text-muted">Current Wallet: ₱<span id="display-balance" style="color: #00ff88;">0</span></span>
+    <div class="admin-wrapper">
+        <h2 style="color: #D4AF37; text-align: center; letter-spacing: 2px;">AGENT TRANSFER</h2>
+
+        <div class="admin-card">
+            <span class="input-label">1. Find Player by Username</span>
+            <input type="text" id="search-username" placeholder="Enter Username (e.g. bosskenny)">
+            <button class="btn-main btn-dark" id="btn-lookup">CHECK BALANCE</button>
+
+            <div id="player-preview" class="player-info-box">
+                <strong id="res-name" style="color: white; font-size: 1.1rem;">---</strong><br>
+                <span style="color: #888;">Current Wallet: </span>
+                <span id="res-balance" style="color: #00ff88; font-weight: bold;">₱0.00</span>
             </div>
 
-            <label class="text-muted">AMOUNT TO SEND</label>
-            <input type="number" id="amount-to-add" placeholder="Ex: 500">
-            
-            <button class="btn-action gold" id="btn-confirm-load">CONFIRM & SEND CREDITS</button>
+            <span class="input-label">2. Amount to Transfer</span>
+            <input type="number" id="load-amount" placeholder="Enter Amount (e.g. 500)">
+            <button class="btn-main btn-gold" id="btn-send">CONFIRM & SEND CREDITS</button>
         </div>
 
         <div class="log-container">
-            <h3 style="font-size: 0.9rem; color: var(--gold); margin-top: 0;">RECENT LOAD HISTORY</h3>
+            <h3 style="color: #D4AF37; font-size: 0.9rem; margin-top: 0;">RECENT LOAD HISTORY</h3>
             <div id="history-list">
-                <p class="text-muted" style="text-align: center; padding: 10px;">No transfers yet today.</p>
+                <p style="color: #555; text-align: center; font-size: 0.8rem;">No transfers recorded today.</p>
             </div>
         </div>
     </div>
@@ -53,7 +61,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
-        import { getFirestore, doc, getDoc, updateDoc, increment, collection, addDoc, query, where, orderBy, limit, onSnapshot } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, updateDoc, increment, collection, query, where, getDocs, addDoc, orderBy, limit, onSnapshot } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCBvOw8HrMhZD0aYSHqFdE196ZITdYBU3Q",
@@ -61,82 +69,92 @@
             projectId: "nexus-sabong",
             storageBucket: "nexus-sabong.firebasestorage.app",
             messagingSenderId: "421723311",
-            appId: "1:421723311:web:1780f179e7c2a7cc0e285a",
-            measurementId: "G-W2B0R09D8L"
+            appId: "1:421723311:web:1780f179e7c2a7cc0e285a"
         };
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // 3. SECURITY GATE: Ensure user is Admin
+        let activePlayerUid = null;
+
+        // 1. SECURITY GATE: Ensure user is Admin
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 const adminSnap = await getDoc(doc(db, "users", user.uid));
-                if (!adminSnap.exists() || !adminSnap.data().isAdmin) {
+                if (!adminSnap.exists() || adminSnap.data().isAdmin !== true) {
                     alert("ACCESS DENIED: Agents Only.");
                     window.location.href = "/";
                 } else {
-                    loadHistory(user.uid); // Load the logs once authorized
+                    loadHistory(user.uid);
                 }
             } else { window.location.href = "/login/"; }
         });
 
-        // BALANCE CHECK LOGIC
-        document.getElementById('btn-search').onclick = async () => {
-            const uid = document.getElementById('target-uid').value.trim();
-            if (!uid) return alert("Please enter a Player ID.");
+        // 2. SEARCH PLAYER LOGIC
+        document.getElementById('btn-lookup').onclick = async () => {
+            const usernameInput = document.getElementById('search-username').value.trim().toLowerCase();
+            if (!usernameInput) return alert("Please type a username.");
 
-            const playerSnap = await getDoc(doc(db, "users", uid));
-            if (playerSnap.exists()) {
-                document.getElementById('display-name').innerText = playerSnap.data().fullName || "Anonymous Player";
-                document.getElementById('display-balance').innerText = (playerSnap.data().balance || 0).toLocaleString();
-                document.getElementById('player-info').style.display = "block";
+            const q = query(collection(db, "users"), where("username", "==", usernameInput));
+            const querySnapshot = await getDocs(q);
+
+            if (!querySnapshot.empty) {
+                const playerDoc = querySnapshot.docs[0];
+                activePlayerUid = playerDoc.id;
+                document.getElementById('res-name').innerText = playerDoc.data().username.toUpperCase();
+                document.getElementById('res-balance').innerText = "₱" + (playerDoc.data().balance || 0).toLocaleString();
+                document.getElementById('player-preview').style.display = "block";
             } else {
-                alert("ID not found. Double check the UID.");
+                alert("Player username not found!");
+                document.getElementById('player-preview').style.display = "none";
+                activePlayerUid = null;
             }
         };
 
-        // TRANSFER & LOGGING LOGIC
-        document.getElementById('btn-confirm-load').onclick = async () => {
-            const uid = document.getElementById('target-uid').value.trim();
-            const amount = parseInt(document.getElementById('amount-to-add').value);
+        // 3. TRANSFER LOGIC
+        document.getElementById('btn-send').onclick = async () => {
+            const amount = parseInt(document.getElementById('load-amount').value);
+            if (!activePlayerUid) return alert("Find a player first!");
+            if (isNaN(amount) || amount === 0) return alert("Enter a valid amount.");
 
-            if (!uid || isNaN(amount) || amount <= 0) return alert("Invalid Amount.");
-
-            if (confirm(`Confirm Transfer of ₱${amount}?`)) {
+            if (confirm(`Send ₱${amount} to ${document.getElementById('res-name').innerText}?`)) {
                 try {
-                    // Update Player
-                    await updateDoc(doc(db, "users", uid), { balance: increment(amount) });
+                    // Update Player Balance
+                    await updateDoc(doc(db, "users", activePlayerUid), {
+                        balance: increment(amount)
+                    });
 
-                    // Create Transaction Log
+                    // Create History Log
                     await addDoc(collection(db, "logs"), {
                         agentId: auth.currentUser.uid,
-                        playerUid: uid,
+                        toUsername: document.getElementById('res-name').innerText,
                         amount: amount,
                         timestamp: new Date()
                     });
 
-                    alert("CREDITS SENT SUCCESSFULLY!");
-                    document.getElementById('amount-to-add').value = "";
-                    document.getElementById('btn-search').click(); // Refresh display
-                } catch (e) { alert("Permission Error! Check Firestore Rules."); }
+                    alert("CREDITS TRANSFERRED SUCCESSFULLY!");
+                    document.getElementById('load-amount').value = "";
+                    document.getElementById('btn-lookup').click(); // Refresh display
+                } catch (e) {
+                    alert("Error: Check your Firestore Permissions.");
+                }
             }
         };
 
-        // HISTORY LISTENER
+        // 4. LOAD HISTORY LOGS
         function loadHistory(agentId) {
-            const q = query(collection(db, "logs"), where("agentId", "==", agentId), orderBy("timestamp", "desc"), limit(5));
-            onSnapshot(q, (snapshot) => {
-                const list = document.getElementById('history-list');
-                if (snapshot.empty) return;
-                list.innerHTML = "";
-                snapshot.forEach(doc => {
-                    const data = doc.data();
-                    list.innerHTML += `
+            const logQ = query(collection(db, "logs"), where("agentId", "==", agentId), orderBy("timestamp", "desc"), limit(5));
+            onSnapshot(logQ, (snap) => {
+                const logDiv = document.getElementById('history-list');
+                if (snap.empty) return;
+                logDiv.innerHTML = "";
+                snap.forEach(doc => {
+                    const d = doc.data();
+                    logDiv.innerHTML += `
                         <div class="log-item">
-                            <span>ID: ...${data.playerUid.slice(-5)}</span>
-                            <span class="log-amt">+₱${data.amount}</span>
+                            <span>To: ${d.toUsername}</span>
+                            <span class="log-amt">${d.amount > 0 ? '+' : ''}₱${d.amount}</span>
                         </div>
                     `;
                 });
