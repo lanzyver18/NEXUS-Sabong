@@ -7,7 +7,41 @@
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Goldman:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        /* Keep your Hero Section Styling */
+        :root { --gold: #D4AF37; }
+
+        /* NAVIGATION FIXES */
+        .top-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 20px;
+            background: #000;
+            border-bottom: 2px solid #222;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        .user-controls { display: flex; align-items: center; gap: 15px; }
+        .balance-display { text-align: right; display: flex; flex-direction: column; }
+        .balance-display small { color: #888; font-size: 0.6rem; letter-spacing: 1px; }
+        .balance-display span { color: #00ff88; font-weight: bold; font-size: 1.1rem; }
+        
+        .nav-profile-btn {
+            background: transparent;
+            color: var(--gold);
+            border: 1px solid var(--gold);
+            padding: 8px 15px;
+            border-radius: 6px;
+            font-family: 'Goldman', sans-serif;
+            font-size: 0.7rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+            text-transform: uppercase;
+        }
+        .nav-profile-btn:active { transform: scale(0.95); background: var(--gold); color: black; }
+
+        /* HERO SECTION */
         .hero {
             height: 40vh;
             background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), url('https://images.unsplash.com/photo-1511192336575-5a79af67a629?auto=format&fit=crop&q=80');
@@ -19,25 +53,24 @@
             text-align: center;
             border-bottom: 2px solid var(--gold);
         }
-        .hero h1 { font-size: 2.5rem; margin-bottom: 10px; color: white; text-transform: uppercase; }
-        .hero p { color: #ccc; margin-bottom: 20px; }
-        
+        .hero h1 { font-size: 2.2rem; margin: 0; color: white; text-transform: uppercase; font-family: 'Goldman'; }
+        .hero p { color: #ccc; margin: 10px 0 20px; font-size: 0.9rem; }
         .cta-button {
             background: var(--gold);
             color: black;
-            padding: 15px 40px;
+            padding: 15px 35px;
             font-weight: bold;
             border: none;
             border-radius: 30px;
-            font-size: 1.1rem;
+            font-size: 1rem;
             cursor: pointer;
             box-shadow: 0 0 20px rgba(212, 175, 55, 0.4);
             text-transform: uppercase;
         }
 
-        /* Grid Styling */
-        .lobby-grid { padding: 30px 20px 100px; } /* Added padding for bottom nav */
-        .category-title { color: var(--gold); font-weight: bold; margin-bottom: 20px; letter-spacing: 2px; text-transform: uppercase; }
+        /* LOBBY GRID */
+        .lobby-grid { padding: 30px 20px 120px; max-width: 800px; margin: auto; }
+        .category-title { color: var(--gold); font-weight: bold; margin-bottom: 20px; letter-spacing: 2px; text-transform: uppercase; font-size: 0.8rem; }
         .grid-container { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
         
         .game-card {
@@ -47,70 +80,74 @@
             border: 1px solid #333;
             cursor: pointer;
             position: relative;
-            min-height: 150px;
+            min-height: 160px;
             display: flex;
             align-items: flex-end;
             padding: 15px;
             transition: 0.3s;
+            text-decoration: none;
         }
-        .game-card:hover { border-color: var(--gold); transform: translateY(-3px); }
         .game-card.live { border-color: var(--gold); background: linear-gradient(transparent, #000), url('https://images.unsplash.com/photo-1596727147705-61a532a655bd?auto=format&fit=crop&q=60'); background-size: cover; }
         .status-tag { position: absolute; top: 10px; left: 10px; background: #ff4444; color: white; font-size: 0.6rem; padding: 4px 8px; border-radius: 4px; font-weight: bold; }
         .status-tag.gray { background: #555; }
         .game-card.locked { opacity: 0.5; cursor: not-allowed; }
+        .card-info h3 { margin: 0; color: white; font-size: 1rem; }
+        .card-info p { margin: 5px 0 0; color: #aaa; font-size: 0.75rem; }
 
-        /* Quick Actions - Bottom Bar */
-        .quick-actions { display: flex; gap: 10px; padding: 20px; background: #000; position: fixed; bottom: 0; left: 0; width: 100%; box-sizing: border-box; border-top: 1px solid #222; z-index: 100; }
-        .action-btn { flex: 1; padding: 15px; border: 1px solid var(--gold); background: transparent; color: var(--gold); border-radius: 8px; font-weight: bold; text-transform: uppercase; cursor: pointer; }
+        /* BOTTOM ACTIONS */
+        .quick-actions { 
+            display: flex; gap: 10px; padding: 15px 20px; 
+            background: #000; position: fixed; bottom: 0; left: 0; 
+            width: 100%; box-sizing: border-box; border-top: 1px solid #222; z-index: 100; 
+        }
+        .action-btn { flex: 1; padding: 15px; border: 1px solid var(--gold); background: transparent; color: var(--gold); border-radius: 8px; font-weight: bold; text-transform: uppercase; cursor: pointer; font-size: 0.8rem; }
         .action-btn.gold { background: var(--gold); color: black; }
-        .action-btn.admin-btn { border-color: #00ff88; color: #00ff88; display: none; }
+        .admin-action { border-color: #00ff88; color: #00ff88; display: none; }
     </style>
 </head>
 <body>
 
     <nav class="top-nav">
-        <div class="logo">NEXUS</div>
+        <div class="logo" style="color:var(--gold); font-family:'Goldman'; font-weight:bold; font-size:1.4rem;">NEXUS</div>
         <div class="user-controls">
             <div class="balance-display">
                 <small id="user-display">LOADING...</small>
                 <span>₱<span id="nav-balance">0.00</span></span>
             </div>
-            <button id="profile-btn" onclick="window.location.href='/profile/'">PROFILE</button>
+            <button class="nav-profile-btn" onclick="window.location.href='/profile/'">PROFILE</button>
         </div>
     </nav>
 
     <header class="hero">
         <div class="hero-content">
-            <h1>LIVE ARENA IS OPEN</h1>
-            <p>Experience the most reliable Sabong platform in the Philippines.</p>
-            <button class="cta-button" onclick="window.location.href='/games/'">ENTER LIVE ARENA</button>
+            <h1>LIVE ARENA OPEN</h1>
+            <p>Reliable Sabong betting in the Philippines.</p>
+            <button class="cta-button" onclick="window.location.href='/games/'">PLAY NOW</button>
         </div>
     </header>
 
     <main class="lobby-grid">
         <div class="category-title">AVAILABLE GAMES</div>
-        
         <div class="grid-container">
-            <div class="game-card live" onclick="window.location.href='/games/'">
+            <a href="/games/" class="game-card live">
                 <div class="status-tag">LIVE NOW</div>
                 <div class="card-info">
-                    <h3 style="margin:0; color:white;">LIVE SABONG</h3>
-                    <p style="margin:5px 0 0; color:#ccc; font-size:0.8rem;">Real-time betting & streaming</p>
+                    <h3>LIVE SABONG</h3>
+                    <p>Real-time betting</p>
                 </div>
-            </div>
-
+            </a>
             <div class="game-card locked">
                 <div class="status-tag gray">COMING SOON</div>
                 <div class="card-info">
-                    <h3 style="margin:0; color:white;">DIGITAL SLOTS</h3>
-                    <p style="margin:5px 0 0; color:#ccc; font-size:0.8rem;">High RTP Digital Games</p>
+                    <h3>DIGITAL SLOTS</h3>
+                    <p>High RTP Games</p>
                 </div>
             </div>
         </div>
     </main>
 
     <section class="quick-actions">
-        <button onclick="window.location.href='/admin/'" id="admin-action" class="action-btn admin-btn">ADMIN</button>
+        <button onclick="window.location.href='/admin/'" id="admin-btn" class="action-btn admin-action">ADMIN</button>
         <button onclick="window.location.href='/wallet/'" class="action-btn gold">CASH IN</button>
         <button onclick="window.location.href='/wallet/'" class="action-btn">WITHDRAW</button>
     </section>
@@ -126,8 +163,7 @@
             projectId: "nexus-sabong",
             storageBucket: "nexus-sabong.firebasestorage.app",
             messagingSenderId: "421723311",
-            appId: "1:421723311:web:1780f179e7c2a7cc0e285a",
-            measurementId: "G-W2B0R09D8L"
+            appId: "1:421723311:web:1780f179e7c2a7cc0e285a"
         };
 
         const app = initializeApp(firebaseConfig);
@@ -138,24 +174,21 @@
             if (user) {
                 const userRef = doc(db, "users", user.uid);
                 
-                // Fetch Username and Admin status
-                const userSnap = await getDoc(userRef);
-                if (userSnap.exists()) {
-                    const data = userSnap.data();
-                    document.getElementById('user-display').innerText = data.username.toUpperCase();
-                    
-                    // Show Admin button if the user is an admin
+                // Load Username & Admin status once
+                const snap = await getDoc(userRef);
+                if (snap.exists()) {
+                    const data = snap.data();
+                    document.getElementById('user-display').innerText = data.username ? data.username.toUpperCase() : "PLAYER";
                     if (data.isAdmin === true) {
-                        document.getElementById('admin-action').style.display = "block";
+                        document.getElementById('admin-btn').style.display = "block";
                     }
                 }
 
-                // Listen to user balance in real-time
-                onSnapshot(userRef, (snapshot) => {
-                    if (snapshot.exists()) {
-                        const balance = snapshot.data().balance || 0;
-                        document.getElementById('nav-balance').innerText = 
-                            balance.toLocaleString(undefined, {minimumFractionDigits: 2});
+                // Live balance listener
+                onSnapshot(userRef, (doc) => {
+                    if (doc.exists()) {
+                        const bal = doc.data().balance || 0;
+                        document.getElementById('nav-balance').innerText = bal.toLocaleString(undefined, {minimumFractionDigits: 2});
                     }
                 });
             } else {
