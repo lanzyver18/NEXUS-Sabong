@@ -7,33 +7,28 @@
     <link rel="stylesheet" href="../style.css">
     <style>
         .admin-grid { display: grid; grid-template-columns: 1fr 350px; gap: 20px; max-width: 1200px; margin: 20px auto; padding: 0 20px; }
-        
-        /* INSIGHT CARDS */
         .insight-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
         .insight-card { background: #111; padding: 20px; border-radius: 12px; border: 1px solid #222; text-align: center; }
         .insight-card h4 { color: #888; font-size: 0.7rem; margin: 0; text-transform: uppercase; }
         .insight-card .val { color: var(--gold); font-size: 1.5rem; font-weight: bold; margin-top: 5px; display: block; }
 
-        /* PANELS */
         .panel { background: #111; border-radius: 15px; border: 1px solid #333; padding: 20px; margin-bottom: 20px; }
         .panel-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #222; margin-bottom: 15px; padding-bottom: 10px; }
         
-        /* TABLES */
+        /* WITHDRAWAL TICKETS */
+        .w-request { background: #000; padding: 15px; border-radius: 10px; border-left: 4px solid var(--gold); margin-bottom: 12px; position: relative; }
+        .w-details { font-size: 0.8rem; color: #ccc; margin-top: 5px; line-height: 1.4; }
+        .w-actions { display: flex; gap: 10px; margin-top: 12px; }
+        .btn-sm { padding: 8px 12px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 0.7rem; }
+        .btn-approve { background: #00ff88; color: black; }
+        .btn-reject { background: #ff4444; color: white; }
+
         .log-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; color: #eee; }
         .log-table th { text-align: left; color: #555; padding: 10px; border-bottom: 1px solid #222; }
         .log-table td { padding: 12px 10px; border-bottom: 1px solid #1a1a1a; }
         .win { color: #00ff88; font-weight: bold; }
         .loss { color: #ff4444; font-weight: bold; }
-        .pending { color: #ffaa00; font-style: italic; }
 
-        /* FIGHT CONTROL */
-        .ctrl-btn { padding: 15px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; color: white; transition: 0.2s; text-transform: uppercase; }
-        .btn-meron { background: #ff4444; }
-        .btn-wala { background: #4444ff; }
-        .btn-draw { background: #555; }
-        .ctrl-btn:hover { filter: brightness(1.2); transform: translateY(-2px); }
-
-        /* SEARCH AREA */
         .search-box { background: #000; border: 1px solid var(--gold); padding: 15px; border-radius: 10px; }
         input { width: 100%; padding: 12px; margin: 10px 0; background: #000; border: 1px solid #333; color: white; border-radius: 5px; box-sizing: border-box; }
         
@@ -43,71 +38,58 @@
 <body>
 
     <nav class="top-nav">
-        <div class="logo">NEXUS ADMIN</div>
+        <div class="logo" style="color:var(--gold); font-family:'Goldman';">NEXUS ADMIN</div>
         <div style="color: #00ff88; font-size: 0.8rem;">● SYSTEM ONLINE</div>
     </nav>
 
     <div class="admin-grid">
-        
         <div class="main-admin">
             
             <div class="insight-row">
-                <div class="insight-card"><h4>Total House Bank</h4><span class="val" id="stat-total-bank">₱0</span></div>
+                <div class="insight-card"><h4>House Bank</h4><span class="val" id="stat-total-bank">₱0</span></div>
                 <div class="insight-card"><h4>Active Players</h4><span class="val" id="stat-players">0</span></div>
-                <div class="insight-card"><h4>Fights Settled</h4><span class="val" id="stat-fights">0</span></div>
-            </div>
-
-            <div class="panel" style="border: 1px solid var(--gold);">
-                <div class="panel-header">
-                    <h3 style="margin:0; color: var(--gold);">FIGHT CONTROL CENTER</h3>
-                    <div style="background:#222; padding:5px 10px; border-radius:5px; font-size:0.8rem;">FIGHT #<span id="fight-num-display">125</span></div>
-                </div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
-                    <button class="ctrl-btn btn-meron" onclick="settleFight('MERON')">MERON WINS</button>
-                    <button class="ctrl-btn btn-wala" onclick="settleFight('WALA')">WALA WINS</button>
-                    <button class="ctrl-btn btn-draw" onclick="settleFight('DRAW')">DRAW / CANCEL</button>
-                </div>
+                <div class="insight-card"><h4>Pending Payout</h4><span class="val" id="stat-pending-w" style="color:#ffaa00;">₱0</span></div>
             </div>
 
             <div class="panel">
                 <div class="panel-header">
-                    <h3 style="margin:0; color: var(--gold);">LIVE PLAY HISTORY</h3>
-                    <span class="text-muted">Last 15 Bets</span>
+                    <h3 style="margin:0; color: var(--gold);">WITHDRAWAL REQUESTS</h3>
+                    <span class="text-muted" id="w-count">0 PENDING</span>
                 </div>
+                <div id="withdrawal-list">
+                    <p style="text-align:center; color:#444; padding:20px;">No pending withdrawals.</p>
+                </div>
+            </div>
+
+            <div class="panel" style="border: 1px solid var(--gold);">
+                <div class="panel-header"><h3 style="margin:0; color: var(--gold);">FIGHT CONTROL</h3></div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
+                    <button class="btn-main" onclick="settleFight('MERON')" style="background:#ff4444; color:white; padding:15px; border-radius:8px; border:none; font-weight:bold;">MERON</button>
+                    <button class="btn-main" onclick="settleFight('WALA')" style="background:#4444ff; color:white; padding:15px; border-radius:8px; border:none; font-weight:bold;">WALA</button>
+                    <button class="btn-main" onclick="settleFight('DRAW')" style="background:#333; color:white; padding:15px; border-radius:8px; border:none; font-weight:bold;">DRAW</button>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header"><h3 style="margin:0; color: var(--gold);">LIVE BETS</h3></div>
                 <table class="log-table">
-                    <thead>
-                        <tr>
-                            <th>User</th>
-                            <th>Side</th>
-                            <th>Bet</th>
-                            <th>Status</th>
-                            <th>Profit/Loss</th>
-                        </tr>
-                    </thead>
-                    <tbody id="play-history-list">
-                        </tbody>
+                    <thead><tr><th>User</th><th>Side</th><th>Bet</th><th>Status</th><th>Profit</th></tr></thead>
+                    <tbody id="play-history-list"></tbody>
                 </table>
             </div>
         </div>
 
         <div class="sidebar-admin">
             <div class="panel search-box">
-                <h3 style="margin-top:0; font-size: 1rem; color: var(--gold);">AGENT LOAD TOOL</h3>
-                <input type="text" id="target-username" placeholder="Username (e.g. kenny88)">
-                <button class="btn-main btn-dark" id="btn-check" style="width:100%; margin-bottom:10px;">CHECK PLAYER</button>
-                
+                <h3 style="margin-top:0; font-size: 1rem; color: var(--gold);">CASH-IN TOOL</h3>
+                <input type="text" id="target-username" placeholder="Username">
+                <button class="btn-main btn-dark" id="btn-check" style="width:100%; margin-bottom:10px; background:#222; color:white; padding:10px; border:none; border-radius:5px;">SEARCH</button>
                 <div id="player-preview" style="display:none; background:#0a0a0a; padding:10px; border-radius:5px; margin-bottom:15px; border-left:3px solid var(--gold);">
                     <span id="res-name" style="font-weight:bold; color:white;">---</span><br>
-                    <small style="color:#888;">Wallet: </small><span id="res-bal" style="color:#00ff88; font-weight:bold;">₱0</span>
+                    <span id="res-bal" style="color:#00ff88; font-weight:bold;">₱0</span>
                 </div>
-
-                <input type="number" id="load-amt" placeholder="Amount (₱)">
-                <button class="btn-main btn-gold" id="btn-confirm" style="width:100%;">SEND CREDITS</button>
-            </div>
-
-            <div class="panel">
-                <h3 style="margin-top:0; font-size: 0.9rem; color: var(--gold);">RECENT AGENT LOADS</h3>
-                <div id="load-history-list"></div>
+                <input type="number" id="load-amt" placeholder="Amount">
+                <button class="btn-main btn-gold" id="btn-confirm" style="width:100%; background:var(--gold); padding:15px; border:none; border-radius:5px; font-weight:bold;">SEND CREDITS</button>
             </div>
         </div>
     </div>
@@ -115,7 +97,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
-        import { getFirestore, doc, getDoc, getDocs, updateDoc, increment, collection, query, where, orderBy, limit, onSnapshot, addDoc, writeBatch } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, getDocs, updateDoc, increment, collection, query, where, orderBy, limit, onSnapshot, addDoc } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCBvOw8HrMhZD0aYSHqFdE196ZITdYBU3Q",
@@ -131,129 +113,124 @@
         const db = getFirestore(app);
 
         let activePlayerId = null;
-        const currentFightId = "125"; // Matches Arena ID
 
-        // 1. SECURITY & INITIALIZATION
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 const adminSnap = await getDoc(doc(db, "users", user.uid));
-                if (!adminSnap.exists() || !adminSnap.data().isAdmin) {
-                    window.location.href = "/";
-                } else {
+                if (adminSnap.exists() && adminSnap.data().isAdmin) {
                     initDashboard();
-                }
+                } else { window.location.href = "/"; }
             } else { window.location.href = "/login/"; }
         });
 
         function initDashboard() {
-            // INSIGHTS: Users and Bank
+            // Stats
             onSnapshot(collection(db, "users"), (snap) => {
-                let totalBank = 0;
+                let total = 0;
                 document.getElementById('stat-players').innerText = snap.size;
-                snap.forEach(user => totalBank += (user.data().balance || 0));
-                document.getElementById('stat-total-bank').innerText = "₱" + totalBank.toLocaleString();
+                snap.forEach(u => total += (u.data().balance || 0));
+                document.getElementById('stat-total-bank').innerText = "₱" + total.toLocaleString();
             });
 
-            // INSIGHTS: Fight Count (Approximation from Logs)
-            onSnapshot(query(collection(db, "bets"), where("status", "!=", "PENDING")), (snap) => {
-                document.getElementById('stat-fights').innerText = snap.size;
-            });
+            // Withdrawal Listener
+            onSnapshot(query(collection(db, "withdrawals"), where("status", "==", "PENDING"), orderBy("timestamp", "asc")), (snap) => {
+                const list = document.getElementById('withdrawal-list');
+                const count = document.getElementById('w-count');
+                const statPending = document.getElementById('stat-pending-w');
+                let totalPending = 0;
+                
+                list.innerHTML = snap.empty ? '<p style="text-align:center; color:#444; padding:20px;">No pending withdrawals.</p>' : '';
+                count.innerText = snap.size + " PENDING";
 
-            // LIVE PLAY HISTORY
-            onSnapshot(query(collection(db, "bets"), orderBy("timestamp", "desc"), limit(15)), (snap) => {
-                const list = document.getElementById('play-history-list');
-                list.innerHTML = "";
-                snap.forEach(bet => {
-                    const d = bet.data();
-                    let statusClass = d.status.toLowerCase();
-                    let profitHtml = d.status === 'WIN' ? `+₱${d.payout - d.amount}` : `-₱${d.amount}`;
-                    if(d.status === 'PENDING') profitHtml = '---';
-                    if(d.status === 'DRAW') profitHtml = '₱0 (Refund)';
-
+                snap.forEach(req => {
+                    const d = req.data();
+                    totalPending += d.amount;
                     list.innerHTML += `
-                        <tr>
-                            <td>${d.username}</td>
-                            <td>${d.side}</td>
-                            <td>₱${d.amount}</td>
-                            <td class="${statusClass}">${d.status}</td>
-                            <td class="${statusClass}">${profitHtml}</td>
-                        </tr>
+                        <div class="w-request">
+                            <strong style="color:var(--gold)">${d.username.toUpperCase()}</strong> 
+                            <span style="float:right; font-weight:bold; color:#00ff88;">₱${d.amount.toLocaleString()}</span>
+                            <div class="w-details">
+                                BANK: ${d.bank}<br>
+                                NAME: ${d.accountName}<br>
+                                ACCT: ${d.accountNumber}
+                            </div>
+                            <div class="w-actions">
+                                <button class="btn-sm btn-approve" onclick="handleWithdraw('${req.id}', 'APPROVED')">PAID & CLOSE</button>
+                                <button class="btn-sm btn-reject" onclick="handleWithdraw('${req.id}', 'REJECTED', '${d.uid}', ${d.amount})">REJECT & REFUND</button>
+                            </div>
+                        </div>
                     `;
                 });
+                statPending.innerText = "₱" + totalPending.toLocaleString();
             });
 
-            // RECENT LOADS
-            onSnapshot(query(collection(db, "logs"), orderBy("timestamp", "desc"), limit(5)), (snap) => {
-                const list = document.getElementById('load-history-list');
-                list.innerHTML = "";
-                snap.forEach(log => {
-                    const d = log.data();
-                    list.innerHTML += `<div style="font-size:0.75rem; padding:8px 0; border-bottom:1px solid #222; color:#bbb;">
-                        Sent <b style="color:#00ff88">₱${d.amount}</b> to <b>${d.toUsername}</b>
-                    </div>`;
+            // Play History
+            onSnapshot(query(collection(db, "bets"), orderBy("timestamp", "desc"), limit(10)), (snap) => {
+                const h = document.getElementById('play-history-list');
+                h.innerHTML = "";
+                snap.forEach(b => {
+                    const d = b.data();
+                    const statusClass = d.status.toLowerCase();
+                    h.innerHTML += `<tr><td>${d.username}</td><td>${d.side}</td><td>₱${d.amount}</td><td class="${statusClass}">${d.status}</td><td>${d.status==='WIN' ? '+₱'+(d.payout-d.amount) : '---'}</td></tr>`;
                 });
             });
         }
 
-        // AGENT TOOLS: Search & Transfer
+        // Global functions for buttons
+        window.handleWithdraw = async (id, status, pUid, amt) => {
+            if(!confirm(`Mark as ${status}?`)) return;
+            try {
+                if(status === 'REJECTED') {
+                    await updateDoc(doc(db, "users", pUid), { balance: increment(amt) });
+                }
+                await updateDoc(doc(db, "withdrawals", id), { status: status });
+                alert("Request processed.");
+            } catch (e) { alert("Error."); }
+        };
+
+        // Standard Search & Cash-In (Unchanged logic)
         document.getElementById('btn-check').onclick = async () => {
-            const username = document.getElementById('target-username').value.trim().toLowerCase();
-            const q = query(collection(db, "users"), where("username", "==", username));
+            const user = document.getElementById('target-username').value.trim().toLowerCase();
+            const q = query(collection(db, "users"), where("username", "==", user));
             const snap = await getDocs(q);
             if(!snap.empty) {
-                const player = snap.docs[0];
-                activePlayerId = player.id;
-                document.getElementById('res-name').innerText = player.data().username.toUpperCase();
-                document.getElementById('res-bal').innerText = "₱" + (player.data().balance || 0).toLocaleString();
+                const p = snap.docs[0];
+                activePlayerId = p.id;
+                document.getElementById('res-name').innerText = p.data().username.toUpperCase();
+                document.getElementById('res-bal').innerText = "₱" + (p.data().balance || 0).toLocaleString();
                 document.getElementById('player-preview').style.display = "block";
-            } else { alert("User not found!"); }
+            } else { alert("User not found."); }
         };
 
         document.getElementById('btn-confirm').onclick = async () => {
-            const amount = parseInt(document.getElementById('load-amt').value);
-            if(!activePlayerId || isNaN(amount)) return alert("Select user and amount!");
-            if(confirm(`Confirm ₱${amount} transfer?`)) {
-                await updateDoc(doc(db, "users", activePlayerId), { balance: increment(amount) });
-                await addDoc(collection(db, "logs"), {
-                    agent: auth.currentUser.uid,
-                    toUsername: document.getElementById('res-name').innerText,
-                    amount: amount,
-                    timestamp: new Date()
-                });
-                alert("Success!");
-                document.getElementById('load-amt').value = "";
+            const amt = parseInt(document.getElementById('load-amt').value);
+            if(!activePlayerId || isNaN(amt)) return alert("Select user and amount.");
+            if(confirm(`Send ₱${amt}?`)) {
+                await updateDoc(doc(db, "users", activePlayerId), { balance: increment(amt) });
+                await addDoc(collection(db, "logs"), { agent: auth.currentUser.uid, toUsername: document.getElementById('res-name').innerText, amount: amt, timestamp: new Date() });
+                alert("Success.");
             }
         };
 
-        // FIGHT SETTLEMENT (Payout Logic)
         window.settleFight = async (winner) => {
-            if(!confirm(`Declare ${winner} as winner for Fight #${currentFightId}?`)) return;
-            
-            try {
-                const q = query(collection(db, "bets"), where("fightId", "==", currentFightId), where("status", "==", "PENDING"));
-                const snap = await getDocs(q);
-                if(snap.empty) return alert("No pending bets found.");
-
-                const batch = writeBatch(db); // For atomic updates
-
-                for (const betDoc of snap.docs) {
-                    const d = betDoc.data();
-                    const betRef = doc(db, "bets", betDoc.id);
-                    const userRef = doc(db, "users", d.uid);
-
-                    if(d.side === winner) {
-                        const payout = Math.floor(d.amount * 1.90);
-                        await updateDoc(userRef, { balance: increment(payout) });
-                        await updateDoc(betRef, { status: "WIN", payout: payout });
-                    } else if (winner === "DRAW") {
-                        await updateDoc(userRef, { balance: increment(d.amount) });
-                        await updateDoc(betRef, { status: "DRAW", payout: d.amount });
-                    } else {
-                        await updateDoc(betRef, { status: "LOSS", payout: 0 });
-                    }
+            const fightId = "125"; // Change this for new fights
+            if(!confirm(`Declare ${winner} winner?`)) return;
+            const q = query(collection(db, "bets"), where("fightId", "==", fightId), where("status", "==", "PENDING"));
+            const snap = await getDocs(q);
+            for (const b of snap.docs) {
+                const bd = b.data();
+                if(bd.side === winner) {
+                    const pay = Math.floor(bd.amount * 1.9);
+                    await updateDoc(doc(db, "users", bd.uid), { balance: increment(pay) });
+                    await updateDoc(doc(db, "bets", b.id), { status: "WIN", payout: pay });
+                } else if(winner === "DRAW") {
+                    await updateDoc(doc(db, "users", bd.uid), { balance: increment(bd.amount) });
+                    await updateDoc(doc(db, "bets", b.id), { status: "DRAW", payout: bd.amount });
+                } else {
+                    await updateDoc(doc(db, "bets", b.id), { status: "LOSS", payout: 0 });
                 }
-                alert(`SUCCESS! Fight #${currentFightId} settled.`);
-            } catch (e) { alert("Error settling fight."); console.error(e); }
+            }
+            alert("Fight Settled.");
         };
     </script>
 </body>
