@@ -178,3 +178,45 @@ a {
     cursor: not-allowed !important;
     transform: none !important;
 }
+
+/* Color Fixes */
+.gold-text { color: #D4AF37; letter-spacing: 1px; margin-bottom: 10px; }
+
+/* The "Wonky" Button Fix */
+.agent-button-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px; /* This creates the space between buttons */
+    margin-top: 20px;
+}
+
+.agent-btn {
+    display: block;
+    padding: 18px;
+    border-radius: 12px;
+    font-weight: bold;
+    text-decoration: none;
+    text-align: center;
+    font-size: 0.9rem;
+    transition: 0.3s;
+    border: none;
+}
+
+/* Authentic Brand Colors */
+.messenger-blue { background: #0084FF; color: white; box-shadow: 0 4px 15px rgba(0, 132, 255, 0.3); }
+.telegram-blue { background: #229ED9; color: white; box-shadow: 0 4px 15px rgba(34, 158, 217, 0.3); }
+
+.agent-btn:hover { transform: translateY(-2px); filter: brightness(1.1); }
+
+/* ID Box Styling */
+.id-box {
+    background: #000;
+    padding: 20px;
+    border: 2px dashed #333;
+    border-radius: 12px;
+    margin: 15px 0;
+    transition: 0.3s;
+}
+.id-box:hover { border-color: #D4AF37; }
+.id-box code { font-size: 1.5rem; color: #D4AF37; font-family: 'Goldman', sans-serif; }
+.tap-hint { font-size: 0.6rem; color: #555; margin-top: 10px; text-transform: uppercase; letter-spacing: 1px; }
