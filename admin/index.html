@@ -3,57 +3,91 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Agent Dashboard | NEXUS</title>
+    <title>Management Suite | NEXUS</title>
     <link rel="stylesheet" href="../style.css">
     <style>
-        .admin-wrapper { max-width: 450px; margin: 40px auto; padding: 0 20px; }
-        .admin-card { background: #111; padding: 25px; border-radius: 15px; border: 1px solid #333; margin-bottom: 20px; }
-        .player-info-box { background: #000; padding: 15px; border-radius: 10px; border-left: 4px solid #D4AF37; margin: 15px 0; display: none; }
+        .admin-grid { display: grid; grid-template-columns: 1fr 350px; gap: 20px; max-width: 1200px; margin: 20px auto; padding: 0 20px; }
         
-        .input-label { color: #888; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 5px; }
-        input { width: 100%; padding: 12px; margin-bottom: 15px; background: #000; border: 1px solid #333; color: white; border-radius: 8px; box-sizing: border-box; font-size: 1rem; }
-        
-        .btn-main { width: 100%; padding: 15px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; text-transform: uppercase; transition: 0.2s; margin-bottom: 10px; }
-        .btn-gold { background: #D4AF37; color: black; }
-        .btn-dark { background: #333; color: white; }
-        .btn-main:hover { filter: brightness(1.2); transform: translateY(-2px); }
-        .btn-main:active { transform: translateY(0); }
+        /* INSIGHT CARDS */
+        .insight-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
+        .insight-card { background: #111; padding: 20px; border-radius: 12px; border: 1px solid #222; text-align: center; }
+        .insight-card h4 { color: #888; font-size: 0.7rem; margin: 0; text-transform: uppercase; }
+        .insight-card .val { color: var(--gold); font-size: 1.5rem; font-weight: bold; margin-top: 5px; display: block; }
 
-        .log-container { background: #111; padding: 15px; border-radius: 15px; border: 1px solid #222; }
-        .log-item { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #222; font-size: 0.8rem; color: #ccc; }
-        .log-amt { color: #00ff88; font-weight: bold; }
+        /* PANELS */
+        .panel { background: #111; border-radius: 15px; border: 1px solid #333; padding: 20px; margin-bottom: 20px; }
+        .panel-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #222; margin-bottom: 15px; padding-bottom: 10px; }
+        
+        /* TRANSACTION & PLAY LOGS */
+        .log-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+        .log-table th { text-align: left; color: #555; padding: 10px; border-bottom: 1px solid #222; }
+        .log-table td { padding: 12px 10px; border-bottom: 1px solid #1a1a1a; }
+        .win { color: #00ff88; font-weight: bold; }
+        .loss { color: #ff4444; font-weight: bold; }
+
+        /* SEARCH AREA */
+        .search-box { background: #000; border: 1px solid var(--gold); padding: 15px; border-radius: 10px; }
+        
+        @media (max-width: 900px) { .admin-grid { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
 
     <nav class="top-nav">
-        <a href="/" style="color: #D4AF37; text-decoration: none; font-weight: bold;">← ARENA</a>
-        <div style="color: #00ff88; font-weight: bold; font-size: 0.8rem;">AGENT AUTHORIZED</div>
+        <div class="logo">NEXUS ADMIN</div>
+        <div style="color: #00ff88; font-size: 0.8rem;">● SYSTEM ONLINE</div>
     </nav>
 
-    <div class="admin-wrapper">
-        <h2 style="color: #D4AF37; text-align: center; letter-spacing: 2px;">AGENT TRANSFER</h2>
-
-        <div class="admin-card">
-            <span class="input-label">1. Find Player by Username</span>
-            <input type="text" id="search-username" placeholder="Enter Username (e.g. bosskenny)">
-            <button class="btn-main btn-dark" id="btn-lookup">CHECK BALANCE</button>
-
-            <div id="player-preview" class="player-info-box">
-                <strong id="res-name" style="color: white; font-size: 1.1rem;">---</strong><br>
-                <span style="color: #888;">Current Wallet: </span>
-                <span id="res-balance" style="color: #00ff88; font-weight: bold;">₱0.00</span>
+    <div class="admin-grid">
+        
+        <div class="main-admin">
+            
+            <div class="insight-row">
+                <div class="insight-card"><h4>Total House Bank</h4><span class="val" id="stat-total-bank">₱0</span></div>
+                <div class="insight-card"><h4>Active Players</h4><span class="val" id="stat-players">0</span></div>
+                <div class="insight-card"><h4>Total Loads (24h)</h4><span class="val" id="stat-loads">₱0</span></div>
             </div>
 
-            <span class="input-label">2. Amount to Transfer</span>
-            <input type="number" id="load-amount" placeholder="Enter Amount (e.g. 500)">
-            <button class="btn-main btn-gold" id="btn-send">CONFIRM & SEND CREDITS</button>
+            <div class="panel">
+                <div class="panel-header">
+                    <h3 style="margin:0; color: var(--gold);">LIVE PLAY HISTORY</h3>
+                    <span class="text-muted">Real-time Game Results</span>
+                </div>
+                <table class="log-table">
+                    <thead>
+                        <tr>
+                            <th>Player</th>
+                            <th>Game/Fight</th>
+                            <th>Bet</th>
+                            <th>Result</th>
+                            <th>Profit/Loss</th>
+                        </tr>
+                    </thead>
+                    <tbody id="play-history-list">
+                        </tbody>
+                </table>
+            </div>
         </div>
 
-        <div class="log-container">
-            <h3 style="color: #D4AF37; font-size: 0.9rem; margin-top: 0;">RECENT LOAD HISTORY</h3>
-            <div id="history-list">
-                <p style="color: #555; text-align: center; font-size: 0.8rem;">No transfers recorded today.</p>
+        <div class="sidebar-admin">
+            <div class="panel search-box">
+                <h3 style="margin-top:0; font-size: 1rem;">LOAD CREDITS</h3>
+                <input type="text" id="target-username" placeholder="Username (e.g. kenny88)">
+                <button class="btn-main btn-dark" id="btn-check" style="width:100%; margin-bottom:10px;">CHECK PLAYER</button>
+                
+                <div id="player-preview" style="display:none; background:#0a0a0a; padding:10px; border-radius:5px; margin-bottom:15px;">
+                    <span id="res-name" style="font-weight:bold; color:var(--gold);">---</span><br>
+                    <small>Balance: </small><span id="res-bal" style="color:#00ff88;">₱0</span>
+                </div>
+
+                <input type="number" id="load-amt" placeholder="Amount (e.g. 1000)">
+                <button class="btn-main btn-gold" id="btn-confirm" style="width:100%;">SEND CREDITS</button>
+            </div>
+
+            <div class="panel">
+                <h3 style="margin-top:0; font-size: 1rem;">RECENT AGENT LOADS</h3>
+                <div id="load-history-list">
+                    </div>
             </div>
         </div>
     </div>
@@ -61,7 +95,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
-        import { getFirestore, doc, getDoc, updateDoc, increment, collection, query, where, getDocs, addDoc, orderBy, limit, onSnapshot } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, getDocs, updateDoc, increment, collection, query, where, orderBy, limit, onSnapshot, addDoc } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCBvOw8HrMhZD0aYSHqFdE196ZITdYBU3Q",
@@ -76,90 +110,98 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        let activePlayerUid = null;
+        let activePlayerId = null;
 
-        // 1. SECURITY GATE: Ensure user is Admin
+        // 1. SECURITY GATE
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 const adminSnap = await getDoc(doc(db, "users", user.uid));
-                if (!adminSnap.exists() || adminSnap.data().isAdmin !== true) {
-                    alert("ACCESS DENIED: Agents Only.");
+                if (!adminSnap.exists() || !adminSnap.data().isAdmin) {
                     window.location.href = "/";
                 } else {
-                    loadHistory(user.uid);
+                    initDashboard();
                 }
             } else { window.location.href = "/login/"; }
         });
 
-        // 2. SEARCH PLAYER LOGIC
-        document.getElementById('btn-lookup').onclick = async () => {
-            const usernameInput = document.getElementById('search-username').value.trim().toLowerCase();
-            if (!usernameInput) return alert("Please type a username.");
+        function initDashboard() {
+            // STATS: Active Players & Total Bank
+            onSnapshot(collection(db, "users"), (snap) => {
+                let totalBank = 0;
+                document.getElementById('stat-players').innerText = snap.size;
+                snap.forEach(user => {
+                    totalBank += (user.data().balance || 0);
+                });
+                document.getElementById('stat-total-bank').innerText = "₱" + totalBank.toLocaleString();
+            });
 
-            const q = query(collection(db, "users"), where("username", "==", usernameInput));
-            const querySnapshot = await getDocs(q);
+            // LOGS: Recent Plays (Wins/Losses)
+            // Note: You must create a 'bets' collection when users play
+            onSnapshot(query(collection(db, "bets"), orderBy("timestamp", "desc"), limit(10)), (snap) => {
+                const list = document.getElementById('play-history-list');
+                list.innerHTML = "";
+                snap.forEach(bet => {
+                    const d = bet.data();
+                    const profitClass = d.status === "WIN" ? "win" : "loss";
+                    list.innerHTML += `
+                        <tr>
+                            <td>${d.username}</td>
+                            <td>Fight #${d.fightId}</td>
+                            <td>₱${d.amount}</td>
+                            <td>${d.status}</td>
+                            <td class="${profitClass}">${d.status === 'WIN' ? '+₱'+d.payout : '-₱'+d.amount}</td>
+                        </tr>
+                    `;
+                });
+            });
 
-            if (!querySnapshot.empty) {
-                const playerDoc = querySnapshot.docs[0];
-                activePlayerUid = playerDoc.id;
-                document.getElementById('res-name').innerText = playerDoc.data().username.toUpperCase();
-                document.getElementById('res-balance').innerText = "₱" + (playerDoc.data().balance || 0).toLocaleString();
-                document.getElementById('player-preview').style.display = "block";
-            } else {
-                alert("Player username not found!");
-                document.getElementById('player-preview').style.display = "none";
-                activePlayerUid = null;
-            }
-        };
-
-        // 3. TRANSFER LOGIC
-        document.getElementById('btn-send').onclick = async () => {
-            const amount = parseInt(document.getElementById('load-amount').value);
-            if (!activePlayerUid) return alert("Find a player first!");
-            if (isNaN(amount) || amount === 0) return alert("Enter a valid amount.");
-
-            if (confirm(`Send ₱${amount} to ${document.getElementById('res-name').innerText}?`)) {
-                try {
-                    // Update Player Balance
-                    await updateDoc(doc(db, "users", activePlayerUid), {
-                        balance: increment(amount)
-                    });
-
-                    // Create History Log
-                    await addDoc(collection(db, "logs"), {
-                        agentId: auth.currentUser.uid,
-                        toUsername: document.getElementById('res-name').innerText,
-                        amount: amount,
-                        timestamp: new Date()
-                    });
-
-                    alert("CREDITS TRANSFERRED SUCCESSFULLY!");
-                    document.getElementById('load-amount').value = "";
-                    document.getElementById('btn-lookup').click(); // Refresh display
-                } catch (e) {
-                    alert("Error: Check your Firestore Permissions.");
-                }
-            }
-        };
-
-        // 4. LOAD HISTORY LOGS
-        function loadHistory(agentId) {
-            const logQ = query(collection(db, "logs"), where("agentId", "==", agentId), orderBy("timestamp", "desc"), limit(5));
-            onSnapshot(logQ, (snap) => {
-                const logDiv = document.getElementById('history-list');
-                if (snap.empty) return;
-                logDiv.innerHTML = "";
-                snap.forEach(doc => {
-                    const d = doc.data();
-                    logDiv.innerHTML += `
-                        <div class="log-item">
-                            <span>To: ${d.toUsername}</span>
-                            <span class="log-amt">${d.amount > 0 ? '+' : ''}₱${d.amount}</span>
+            // LOGS: Recent Agent Transfers
+            onSnapshot(query(collection(db, "logs"), orderBy("timestamp", "desc"), limit(5)), (snap) => {
+                const list = document.getElementById('load-history-list');
+                list.innerHTML = "";
+                snap.forEach(log => {
+                    const d = log.data();
+                    list.innerHTML += `
+                        <div style="font-size:0.75rem; padding:8px 0; border-bottom:1px solid #222;">
+                            Sent <strong>₱${d.amount}</strong> to <strong>${d.toUsername}</strong>
                         </div>
                     `;
                 });
             });
         }
+
+        // AGENT TOOL: Search Player
+        document.getElementById('btn-check').onclick = async () => {
+            const username = document.getElementById('target-username').value.trim().toLowerCase();
+            const q = query(collection(db, "users"), where("username", "==", username));
+            const snap = await getDocs(q);
+            
+            if(!snap.empty) {
+                const player = snap.docs[0];
+                activePlayerId = player.id;
+                document.getElementById('res-name').innerText = player.data().username.toUpperCase();
+                document.getElementById('res-bal').innerText = "₱" + (player.data().balance || 0).toLocaleString();
+                document.getElementById('player-preview').style.display = "block";
+            } else { alert("Player not found!"); }
+        };
+
+        // AGENT TOOL: Transfer
+        document.getElementById('btn-confirm').onclick = async () => {
+            const amount = parseInt(document.getElementById('load-amt').value);
+            if(!activePlayerId || isNaN(amount)) return alert("Search player and enter amount");
+
+            if(confirm(`Transfer ₱${amount}?`)) {
+                await updateDoc(doc(db, "users", activePlayerId), { balance: increment(amount) });
+                await addDoc(collection(db, "logs"), {
+                    agent: auth.currentUser.uid,
+                    toUsername: document.getElementById('res-name').innerText,
+                    amount: amount,
+                    timestamp: new Date()
+                });
+                alert("Transfer Successful");
+                location.reload();
+            }
+        };
     </script>
 </body>
 </html>
