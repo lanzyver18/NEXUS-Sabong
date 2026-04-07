@@ -6,50 +6,123 @@
     <title>Wallet | NEXUS Sabong</title>
     <link rel="stylesheet" href="../style.css">
     <style>
-        .wallet-card { background: #111; padding: 25px; border-radius: 15px; border: 1px solid #333; margin-bottom: 20px; text-align: center; }
-        .id-box { background: #000; padding: 15px; border: 1px dashed var(--gold); border-radius: 8px; margin: 15px 0; cursor: pointer; position: relative; }
-        .id-box code { color: var(--gold); font-family: 'Goldman', monospace; font-size: 1.4rem; letter-spacing: 2px; }
-        .agent-btn { display: block; width: 100%; padding: 18px; margin-top: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; text-decoration: none; text-align: center; transition: 0.2s; font-size: 1rem; }
-        .messenger { background: #0084FF; color: white; }
-        .telegram { background: #229ED9; color: white; }
-        .copy-toast { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); background: var(--gold); color: black; padding: 10px 20px; border-radius: 20px; display: none; font-weight: bold; z-index: 1000; }
-        .text-muted { color: #888; font-size: 0.85rem; line-height: 1.4; }
+        /* CSS TO FIX THE "WONKY" ALIGNMENT */
+        .wallet-wrapper {
+            max-width: 450px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        .wallet-card {
+            background: #151515;
+            padding: 30px;
+            border-radius: 16px;
+            border: 1px solid #222;
+            margin-bottom: 25px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        .gold-title {
+            color: #D4AF37;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-size: 1.1rem;
+            margin-top: 0;
+            margin-bottom: 10px;
+        }
+
+        /* THE ID BOX FIX */
+        .id-box {
+            background: #000;
+            padding: 20px;
+            border: 2px dashed #333;
+            border-radius: 12px;
+            margin: 20px 0;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .id-box:hover { border-color: #D4AF37; }
+        .id-box code { 
+            font-size: 1.6rem; 
+            color: #D4AF37; 
+            font-family: 'Courier New', Courier, monospace; 
+            font-weight: bold;
+        }
+        .tap-hint { font-size: 0.65rem; color: #555; margin-top: 10px; letter-spacing: 1px; }
+
+        /* THE BUTTON FIX (No more touching!) */
+        .agent-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px; /* THE GAP YOU WERE MISSING */
+            margin-top: 25px;
+        }
+
+        .btn-agent {
+            display: block;
+            padding: 18px;
+            border-radius: 10px;
+            font-weight: bold;
+            text-decoration: none;
+            text-align: center;
+            font-size: 0.95rem;
+            transition: all 0.2s ease;
+            border: none;
+            color: white;
+            text-transform: uppercase;
+        }
+
+        .btn-messenger { background: #0084FF; box-shadow: 0 4px 15px rgba(0, 132, 255, 0.2); }
+        .btn-telegram { background: #229ED9; box-shadow: 0 4px 15px rgba(34, 158, 217, 0.2); }
+
+        .btn-agent:hover { transform: translateY(-3px); filter: brightness(1.1); }
+        .btn-agent:active { transform: translateY(0); }
+
+        /* TOAST NOTIFICATION */
+        #toast {
+            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+            background: #D4AF37; color: black; padding: 12px 25px;
+            border-radius: 30px; font-weight: bold; display: none; z-index: 1000;
+        }
     </style>
 </head>
 <body>
 
     <nav class="top-nav">
-        <a href="/" style="color: var(--gold); text-decoration: none; font-weight: bold;">← ARENA</a>
+        <a href="/" style="color: #D4AF37; text-decoration: none; font-weight: bold;">← ARENA</a>
         <div class="balance-box">₱<span id="display-balance">0.00</span></div>
     </nav>
 
-    <div style="max-width: 450px; margin: auto; padding: 20px;">
+    <div class="wallet-wrapper">
         
         <div class="wallet-card">
-            <h3 style="color: var(--gold); margin-top: 0; letter-spacing: 1px;">MY PLAYER ID</h3>
-            <p class="text-muted">Give this Username to your Agent to load or withdraw credits.</p>
+            <h3 class="gold-title">MY PLAYER ID</h3>
+            <p class="text-muted" style="font-size: 0.85rem;">Give this Username to your Agent to load or withdraw credits.</p>
             <div class="id-box" onclick="copyUsername()">
-                <code id="user-display">LOADING...</code>
-                <div style="font-size: 0.6rem; color: #555; margin-top: 8px;">TAP TO COPY USERNAME</div>
+                <code id="user-id">LOADING...</code>
+                <div class="tap-hint">TAP TO COPY USERNAME</div>
             </div>
         </div>
 
         <div class="wallet-card">
-            <h3 style="color: var(--gold); margin-top: 0; letter-spacing: 1px;">CONTACT AGENT</h3>
-            <p class="text-muted">Message an official agent to process your transaction via GCash or Maya.</p>
+            <h3 class="gold-title">CONTACT AGENT</h3>
+            <p class="text-muted" style="font-size: 0.85rem;">Message an official agent to process your GCash or Maya transaction.</p>
             
-            <a href="https://m.me/YOUR_FB_PAGE" target="_blank" class="agent-btn messenger">
-                CASH-IN / WITHDRAW (FB)
-            </a>
-            
-            <a href="https://t.me/YOUR_TG_USERNAME" target="_blank" class="agent-btn telegram">
-                CASH-IN / WITHDRAW (TG)
-            </a>
+            <div class="agent-container">
+                <a href="https://m.me/YOUR_FB_PAGE" target="_blank" class="btn-agent btn-messenger">
+                    CASH-IN / WITHDRAW (FB)
+                </a>
+                
+                <a href="https://t.me/YOUR_TG_USERNAME" target="_blank" class="btn-agent btn-telegram">
+                    CASH-IN / WITHDRAW (TG)
+                </a>
+            </div>
         </div>
 
     </div>
 
-    <div id="copy-toast" class="copy-toast">USERNAME COPIED!</div>
+    <div id="toast">USERNAME COPIED!</div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
@@ -72,15 +145,18 @@
 
         onAuthStateChanged(auth, async (user) => {
             if (user) {
-                // 1. Fetch Username from Firestore
+                // Fetch Username from Firestore
                 const userRef = doc(db, "users", user.uid);
                 const userSnap = await getDoc(userRef);
                 
                 if (userSnap.exists()) {
-                    document.getElementById('user-display').innerText = userSnap.data().username.toUpperCase();
+                    const username = userSnap.data().username || "NO_NAME";
+                    document.getElementById('user-id').innerText = username.toUpperCase();
+                } else {
+                    document.getElementById('user-id').innerText = "ERROR";
                 }
 
-                // 2. Real-time Balance Listener
+                // Live Balance Listener
                 onSnapshot(userRef, (snapshot) => {
                     if (snapshot.exists()) {
                         const bal = snapshot.data().balance || 0;
@@ -91,18 +167,17 @@
                     }
                 });
             } else {
-                // If not logged in, boot to login page
                 window.location.href = "/login/";
             }
         });
 
-        // Copy Function
+        // Copy Username Function
         window.copyUsername = () => {
-            const username = document.getElementById('user-display').innerText;
-            if(username === "LOADING...") return;
+            const username = document.getElementById('user-id').innerText;
+            if(username === "LOADING..." || username === "ERROR") return;
             
             navigator.clipboard.writeText(username).then(() => {
-                const toast = document.getElementById('copy-toast');
+                const toast = document.getElementById('toast');
                 toast.style.display = "block";
                 setTimeout(() => { toast.style.display = "none"; }, 2000);
             });
@@ -110,4 +185,3 @@
     </script>
 </body>
 </html>
-
