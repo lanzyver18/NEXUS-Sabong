@@ -31,19 +31,3 @@ function startWithdrawal() {
         alert("Please enter a valid amount.");
     }
 }
-
-// Ensure this is inside your <script type="module">
-document.getElementById('btn-confirm-load').addEventListener('click', async () => {
-    console.log("Confirm button clicked!"); // Check your 'Inspect > Console' for this message
-    
-    const uid = document.getElementById('target-uid').value.trim();
-    const amount = parseInt(document.getElementById('amount-to-add').value);
-
-    if (!uid || isNaN(amount)) {
-        alert("Please enter a valid UID and Amount.");
-        return;
-    }
-
-    // Process the transfer...
-    // (Insert the updateDoc and increment logic here)
-});
