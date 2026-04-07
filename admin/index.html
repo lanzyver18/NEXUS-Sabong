@@ -2,92 +2,137 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Admin Panel | NEXUS</title>
+    <title>Agent Control | NEXUS</title>
     <link rel="stylesheet" href="../style.css">
     <style>
-        .admin-container { padding: 20px; max-width: 1000px; margin: auto; }
-        .request-card { 
-            background: #1a1a1a; border-left: 5px solid var(--gold); 
-            padding: 15px; margin-bottom: 10px; display: flex; 
-            justify-content: space-between; align-items: center; 
-        }
-        .approve-btn { background: #00ff88; color: black; }
-        .reject-btn { background: #ff4444; color: white; margin-left: 5px; }
-        .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 30px; }
-        .stat-card { background: #222; padding: 20px; border-radius: 8px; text-align: center; }
+        .admin-box { background: #111; padding: 25px; border-radius: 15px; border: 1px solid var(--gold); margin-top: 20px; }
+        .player-preview { background: #000; padding: 15px; border-radius: 8px; margin: 15px 0; display: none; border-left: 4px solid var(--gold); }
+        .log-item { font-size: 0.8rem; padding: 10px; border-bottom: 1px solid #222; display: flex; justify-content: space-between; }
+        .log-amount { color: #00ff88; font-weight: bold; }
     </style>
 </head>
 <body>
-    <div class="admin-container">
-        <h1>Admin Control Center</h1>
+    <nav class="top-nav">
+        <a href="/">← ARENA LOBBY</a>
+        <div class="balance-box">AGENT MODE</div>
+    </nav>
+
+    <div class="admin-container" style="max-width: 500px; margin: auto; padding: 20px;">
+        <h2>AGENT TRANSFER TOOL</h2>
         
-        <div class="stat-grid">
-            <div class="stat-card"><h3>Active Players</h3><p id="total-players">0</p></div>
-            <div class="stat-card"><h3>Pending Deposits</h3><p id="pending-count">0</p></div>
-            <div class="stat-card"><h3>Total House Bank</h3><p id="total-bank">₱0</p></div>
+        <div class="admin-box">
+            <label class="text-muted">STEP 1: FIND PLAYER</label>
+            <input type="text" id="target-uid" placeholder="Paste Player UID here..." oninput="lookupPlayer()">
+            
+            <div id="player-info" class="player-preview">
+                <strong id="display-name">---</strong><br>
+                <span class="text-muted">Current Balance: ₱<span id="display-balance">0</span></span>
+            </div>
+
+            <label class="text-muted">STEP 2: ENTER AMOUNT</label>
+            <input type="number" id="amount-to-add" placeholder="Example: 500">
+            
+            <button class="btn-action gold" id="btn-confirm-load" disabled>CONFIRM & LOAD CREDITS</button>
         </div>
 
-        <h2>Pending Deposit Requests</h2>
-        <div id="deposit-list">
-            <p>Scanning for new GCash/Maya transactions...</p>
+        <div class="admin-box" style="margin-top: 30px;">
+            <h3>RECENT LOADS</h3>
+            <div id="transfer-logs">
+                <p class="text-muted" style="font-size: 0.8rem;">Waiting for transactions...</p>
+            </div>
         </div>
     </div>
 
     <script type="module">
         import { auth, db } from '../firebase-config.js';
-        import { collection, query, where, onSnapshot, doc, updateDoc, increment, deleteDoc } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+        import { doc, getDoc, updateDoc, increment, collection, addDoc, query, orderBy, limit, onSnapshot } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
 
-        // Verify Admin Status
-        auth.onAuthStateChanged(user => {
-            if (!user) window.location.href = "/login/";
+        // 1. SECURITY CHECK (Redirect if not Admin)
+        auth.onAuthStateChanged(async (user) => {
+            if (user) {
+                const userSnap = await getDoc(doc(db, "users", user.uid));
+                if (!userSnap.exists() || !userSnap.data().isAdmin) {
+                    alert("ACCESS DENIED: Not an Agent.");
+                    window.location.href = "/";
+                }
+            } else { window.location.href = "/login/"; }
         });
 
-        // 1. Listen for Pending Deposits
-        const q = query(collection(db, "deposits"), where("status", "==", "pending"));
-        onSnapshot(q, (snapshot) => {
-            const list = document.getElementById('deposit-list');
-            document.getElementById('pending-count').innerText = snapshot.size;
-            list.innerHTML = "";
+        // 2. LIVE PLAYER LOOKUP
+        window.lookupPlayer = async () => {
+            const uid = document.getElementById('target-uid').value.trim();
+            const infoBox = document.getElementById('player-info');
+            const btn = document.getElementById('btn-confirm-load');
 
-            snapshot.forEach((request) => {
-                const data = request.data();
-                const div = document.createElement('div');
-                div.className = "request-card";
-                div.innerHTML = `
-                    <div>
-                        <strong>User:</strong> ${data.email} <br>
-                        <strong>Amount:</strong> ₱${data.amount} <br>
-                        <strong>Ref No:</strong> ${data.refNo}
-                    </div>
-                    <div>
-                        <button class="approve-btn" onclick="approveDeposit('${request.id}', '${data.uid}', ${data.amount})">APPROVE</button>
-                        <button class="reject-btn" onclick="rejectDeposit('${request.id}')">X</button>
-                    </div>
-                `;
-                list.appendChild(div);
-            });
-        });
+            if (uid.length < 20) { // Standard Firebase UIDs are ~28 chars
+                infoBox.style.display = "none";
+                btn.disabled = true;
+                return;
+            }
 
-        // 2. Approve Function (The "Manual-Automatic" Bridge)
-        window.approveDeposit = async (docId, userId, amount) => {
+            const playerSnap = await getDoc(doc(db, "users", uid));
+            if (playerSnap.exists()) {
+                document.getElementById('display-name').innerText = playerSnap.data().fullName || playerSnap.data().email;
+                document.getElementById('display-balance').innerText = (playerSnap.data().balance || 0).toLocaleString();
+                infoBox.style.display = "block";
+                btn.disabled = false;
+            } else {
+                infoBox.style.display = "none";
+                btn.disabled = true;
+            }
+        };
+
+        // 3. EXECUTE TRANSFER
+        document.getElementById('btn-confirm-load').onclick = async () => {
+            const uid = document.getElementById('target-uid').value.trim();
+            const amount = parseInt(document.getElementById('amount-to-add').value);
+
+            if (!uid || isNaN(amount) || amount <= 0) return alert("Invalid Amount");
+
+            const btn = document.getElementById('btn-confirm-load');
+            btn.innerText = "PROCESSING...";
+            btn.disabled = true;
+
             try {
-                // Update User Balance
-                const userRef = doc(db, "users", userId);
-                await updateDoc(userRef, {
+                // Update Player Balance
+                await updateDoc(doc(db, "users", uid), {
                     balance: increment(amount)
                 });
 
-                // Remove the request
-                await deleteDoc(doc(db, "deposits", docId));
-                alert("Balance Updated Successfully!");
-            } catch (e) { alert("Error: " + e.message); }
-        };
+                // Record in History
+                await addDoc(collection(db, "logs"), {
+                    agentId: auth.currentUser.uid,
+                    targetUid: uid,
+                    amount: amount,
+                    timestamp: new Date()
+                });
 
-        window.rejectDeposit = async (docId) => {
-            if(confirm("Reject this request?")) {
-                await deleteDoc(doc(db, "deposits", docId));
+                alert(`SUCCESS: Added ₱${amount} to player.`);
+                document.getElementById('amount-to-add').value = "";
+                lookupPlayer(); // Refresh the display
+            } catch (e) {
+                alert("Permission Error: Check Firestore Rules!");
+            } finally {
+                btn.innerText = "CONFIRM & LOAD CREDITS";
+                btn.disabled = false;
             }
         };
+
+        // 4. LIVE LOGS (Show last 5 transfers)
+        const logQuery = query(collection(db, "logs"), orderBy("timestamp", "desc"), limit(5));
+        onSnapshot(logQuery, (snap) => {
+            const logDiv = document.getElementById('transfer-logs');
+            logDiv.innerHTML = "";
+            snap.forEach(log => {
+                const d = log.data();
+                logDiv.innerHTML += `
+                    <div class="log-item">
+                        <span>ID: ...${d.targetUid.slice(-5)}</span>
+                        <span class="log-amount">+₱${d.amount}</span>
+                    </div>
+                `;
+            });
+        });
     </script>
 </body>
 </html>
