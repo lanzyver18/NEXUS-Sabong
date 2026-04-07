@@ -1,0 +1,61 @@
+:root {
+    --gold: #D4AF37;
+    --dark: #0a0a0a;
+    --gray: #1a1a1a;
+    --red: #ff4444;
+    --blue: #4444ff;
+}
+
+body {
+    margin: 0; padding: 0;
+    background-color: var(--dark);
+    color: white;
+    font-family: 'Inter', sans-serif;
+}
+
+h1, h2, .logo { font-family: 'Goldman', cursive; color: var(--gold); }
+
+/* Navigation */
+.top-nav {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 15px 20px; background: var(--gray);
+    border-bottom: 1px solid var(--gold);
+}
+
+.wallet-display { background: black; padding: 5px 15px; border-radius: 20px; border: 1px solid #333; }
+#user-balance { color: #00ff88; font-weight: bold; margin-left: 10px; }
+
+/* Grid & Layout */
+.view { padding: 20px; margin-bottom: 70px; } /* Space for bottom nav */
+
+.game-card {
+    background: var(--gray); border: 1px solid #333;
+    padding: 40px; border-radius: 10px; text-align: center;
+    cursor: pointer; transition: 0.3s;
+}
+.game-card:hover { border-color: var(--gold); transform: scale(1.02); }
+
+/* Sabong Specific */
+.video-placeholder {
+    width: 100%; aspect-ratio: 16/9;
+    background: #000; border: 2px solid #222;
+    display: flex; align-items: center; justify-content: center;
+}
+
+.odds-row { display: flex; gap: 10px; margin-top: 20px; }
+.odds-box { flex: 1; padding: 20px; border-radius: 8px; text-align: center; }
+.meron { background: var(--red); }
+.wala { background: var(--blue); }
+
+.odds-box button {
+    margin-top: 10px; padding: 10px 20px;
+    background: white; border: none; font-weight: bold; cursor: pointer;
+}
+
+/* Bottom Nav */
+.bottom-nav {
+    position: fixed; bottom: 0; width: 100%;
+    display: flex; background: var(--gray);
+    border-top: 1px solid var(--gold);
+}
+.nav-item { flex: 1; padding: 15px; text-align: center; cursor: pointer; font-size: 0.8rem; }
