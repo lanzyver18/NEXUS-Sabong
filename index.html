@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEXUS Sabong & Casino</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Goldman:wght@400;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <nav class="top-nav">
+        <div class="logo">NEXUS</div>
+        <div class="wallet-display">
+            <span class="label">Balance:</span>
+            <span id="user-balance">₱0.00</span>
+        </div>
+        <button id="auth-btn" onclick="showView('login')">Login</button>
+    </nav>
+
+    <main id="main-content">
+        
+        <section id="view-lobby" class="view">
+            <div class="hero">
+                <h2>LIVE SABONG ARENA</h2>
+                <button class="play-now" onclick="showView('sabong')">Watch & Bet Now</button>
+            </div>
+            <div class="game-grid">
+                <div class="game-card" onclick="showView('sabong')">Live Sabong</div>
+                <div class="game-card dimmed">Online Slots (Coming Soon)</div>
+            </div>
+        </section>
+
+        <section id="view-sabong" class="view" style="display:none;">
+            <div class="arena-container">
+                <div class="video-placeholder">
+                    <p>LIVE STREAM LOADING...</p>
+                </div>
+                <div class="betting-panel">
+                    <div class="odds-row">
+                        <div class="odds-box meron">
+                            <span class="team-name">MERON</span>
+                            <span class="payout">1.90</span>
+                            <button onclick="placeBet('meron')">BET</button>
+                        </div>
+                        <div class="odds-box wala">
+                            <span class="team-name">WALA</span>
+                            <span class="payout">1.80</span>
+                            <button onclick="placeBet('wala')">BET</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="view-wallet" class="view" style="display:none;">
+            <h3>Automatic Wallet</h3>
+            <div class="transaction-box">
+                <input type="number" id="amount" placeholder="Enter Amount (₱)">
+                <button class="btn-deposit" onclick="startDeposit()">Deposit (GCash/Maya)</button>
+                <button class="btn-withdraw" onclick="startWithdrawal()">Instant Cashout</button>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bottom-nav">
+        <div class="nav-item" onclick="showView('lobby')">Lobby</div>
+        <div class="nav-item" onclick="showView('sabong')">Arena</div>
+        <div class="nav-item" onclick="showView('wallet')">Wallet</div>
+    </footer >
+
+    <script src="app.js"></script>
+</body>
+</html>
