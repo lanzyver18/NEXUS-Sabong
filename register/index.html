@@ -7,18 +7,16 @@
     <link rel="stylesheet" href="../style.css">
 </head>
 <body class="auth-page">
-
     <div class="auth-card">
         <div class="logo">NEXUS</div>
-        <h2>CREATE ACCOUNT</h2>
+        <h2>CREATE USERNAME</h2>
+        <p class="text-muted">Choose a unique name to use as your ID.</p>
         
-        <input type="text" id="reg-name" placeholder="Full Name (for GCash/Maya)">
-        <input type="email" id="reg-email" placeholder="Email Address">
+        <input type="text" id="reg-username" placeholder="Enter Username (e.g. BossKenny)">
         <input type="password" id="reg-pass" placeholder="Create Password">
         
-        <button id="btn-register">REGISTER NOW</button>
-        
-        <p class="auth-footer">Already have an account? <a href="/login/">Login here</a></p>
+        <button class="btn-action gold" id="btn-register">REGISTER & ENTER</button>
+        <p class="auth-footer">Existing player? <a href="/login/">Login here</a></p>
     </div>
 
     <script type="module">
@@ -32,8 +30,7 @@
             projectId: "nexus-sabong",
             storageBucket: "nexus-sabong.firebasestorage.app",
             messagingSenderId: "421723311",
-            appId: "1:421723311:web:1780f179e7c2a7cc0e285a",
-            measurementId: "G-W2B0R09D8L"
+            appId: "1:421723311:web:1780f179e7c2a7cc0e285a"
         };
 
         const app = initializeApp(firebaseConfig);
@@ -41,32 +38,26 @@
         const db = getFirestore(app);
 
         document.getElementById('btn-register').onclick = async () => {
-            const name = document.getElementById('reg-name').value;
-            const email = document.getElementById('reg-email').value;
+            const user = document.getElementById('reg-username').value.trim().toLowerCase();
             const pass = document.getElementById('reg-pass').value;
 
-            if(!name || !email || !pass) return alert("Please fill all fields");
+            if(user.length < 4) return alert("Username too short!");
 
             try {
-                // 1. Create the Auth User
-                const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
-                const user = userCredential.user;
-
-                // 2. Initialize the Wallet in Firestore
-                await setDoc(doc(db, "users", user.uid), {
-                    fullName: name,
-                    email: email,
+                // Convert username to a fake email for Firebase Auth compatibility
+                const fakeEmail = `${user}@nexus-sabong.com`;
+                const userCredential = await createUserWithEmailAndPassword(auth, fakeEmail, pass);
+                
+                // Save profile using the Username as the document ID
+                await setDoc(doc(db, "users", userCredential.user.uid), {
+                    username: user,
                     balance: 0,
                     isAdmin: false,
                     createdAt: new Date()
                 });
 
-                alert("Account created! Redirecting to Arena...");
                 window.location.href = "/";
-
-            } catch (error) {
-                alert(error.message);
-            }
+            } catch (error) { alert("Username already taken or invalid."); }
         };
     </script>
 </body>
