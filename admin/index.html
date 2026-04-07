@@ -1,1 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Panel | NEXUS</title>
+    <link rel="stylesheet" href="../style.css">
+    <style>
+        .admin-container { padding: 20px; max-width: 1000px; margin: auto; }
+        .request-card { 
+            background: #1a1a1a; border-left: 5px solid var(--gold); 
+            padding: 15px; margin-bottom: 10px; display: flex; 
+            justify-content: space-between; align-items: center; 
+        }
+        .approve-btn { background: #00ff88; color: black; }
+        .reject-btn { background: #ff4444; color: white; margin-left: 5px; }
+        .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 30px; }
+        .stat-card { background: #222; padding: 20px; border-radius: 8px; text-align: center; }
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <h1>Admin Control Center</h1>
+        
+        <div class="stat-grid">
+            <div class="stat-card"><h3>Active Players</h3><p id="total-players">0</p></div>
+            <div class="stat-card"><h3>Pending Deposits</h3><p id="pending-count">0</p></div>
+            <div class="stat-card"><h3>Total House Bank</h3><p id="total-bank">₱0</p></div>
+        </div>
 
+        <h2>Pending Deposit Requests</h2>
+        <div id="deposit-list">
+            <p>Scanning for new GCash/Maya transactions...</p>
+        </div>
+    </div>
+
+    <script type="module">
+        import { auth, db } from '../firebase-config.js';
+        import { collection, query, where, onSnapshot, doc, updateDoc, increment, deleteDoc } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+
+        // Verify Admin Status
+        auth.onAuthStateChanged(user => {
+            if (!user) window.location.href = "/login/";
+        });
+
+        // 1. Listen for Pending Deposits
+        const q = query(collection(db, "deposits"), where("status", "==", "pending"));
+        onSnapshot(q, (snapshot) => {
+            const list = document.getElementById('deposit-list');
+            document.getElementById('pending-count').innerText = snapshot.size;
+            list.innerHTML = "";
+
+            snapshot.forEach((request) => {
+                const data = request.data();
+                const div = document.createElement('div');
+                div.className = "request-card";
+                div.innerHTML = `
+                    <div>
+                        <strong>User:</strong> ${data.email} <br>
+                        <strong>Amount:</strong> ₱${data.amount} <br>
+                        <strong>Ref No:</strong> ${data.refNo}
+                    </div>
+                    <div>
+                        <button class="approve-btn" onclick="approveDeposit('${request.id}', '${data.uid}', ${data.amount})">APPROVE</button>
+                        <button class="reject-btn" onclick="rejectDeposit('${request.id}')">X</button>
+                    </div>
+                `;
+                list.appendChild(div);
+            });
+        });
+
+        // 2. Approve Function (The "Manual-Automatic" Bridge)
+        window.approveDeposit = async (docId, userId, amount) => {
+            try {
+                // Update User Balance
+                const userRef = doc(db, "users", userId);
+                await updateDoc(userRef, {
+                    balance: increment(amount)
+                });
+
+                // Remove the request
+                await deleteDoc(doc(db, "deposits", docId));
+                alert("Balance Updated Successfully!");
+            } catch (e) { alert("Error: " + e.message); }
+        };
+
+        window.rejectDeposit = async (docId) => {
+            if(confirm("Reject this request?")) {
+                await deleteDoc(doc(db, "deposits", docId));
+            }
+        };
+    </script>
+</body>
+</html>
