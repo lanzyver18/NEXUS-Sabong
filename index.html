@@ -3,184 +3,131 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NEXUS Casino | The High Life</title>
+    <title>NEXUS | Home Arena</title>
     <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Goldman:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --platinum: #e5e5e5;
-            --dark-card: #1c1c1c;
-            --brushed-metal: linear-gradient(145deg, #1c1c1c, #2a2a2a);
-            --gold-glow: 0 0 25px rgba(212, 175, 55, 0.4);
-        }
-
-        /* BACKGROUND & TEXTURE */
-        body {
-            background-color: #030303;
-            background-image: 
-                linear-gradient(rgba(10,10,10,0.9), rgba(0,0,0,0.95)),
-                url('https://www.transparenttextures.com/patterns/dark-circles.png'); /* Subtle texture */
-            margin: 0; padding: 0;
-            color: white; font-family: 'Inter', sans-serif;
-        }
-
-        /* HEADER & BALANCE SECTION */
-        .casino-header {
-            text-align: center;
-            padding: 50px 20px 70px;
-            background: radial-gradient(circle at top, #222, #000);
-            border-bottom: 2px solid #222;
-        }
-
-        .user-greeting { color: var(--platinum); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 3px; font-weight: bold; }
-        .user-name { color: white; font-size: 2.2rem; font-weight: 900; margin: 15px 0 20px; text-shadow: 0 2px 10px rgba(0,0,0,0.8); }
-
-        .balance-chip {
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-            background: #000;
-            padding: 12px 30px;
-            border-radius: 50px;
-            border: 2px solid var(--gold);
-            font-size: 1.4rem;
-            font-weight: 900;
-            color: #00ff88; /* Winner Green */
-            box-shadow: 0 5px 20px rgba(0,0,0,0.6);
-            position: relative;
-        }
-
-        .chip-icon { width: 20px; height: 20px; background: #00ff88; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 10px #00ff88; }
-
-        /* CASINO GAME GRID */
-        .casino-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 20px;
-            max-width: 900px;
-            margin: -40px auto 50px;
-            padding: 0 20px;
-        }
-
-        .game-card {
-            background: var(--brushed-metal);
-            border-radius: 18px;
-            border: 2px solid #2a2a2a;
-            padding: 30px 20px;
-            text-align: center;
-            text-decoration: none;
-            transition: 0.3s;
-            position: relative;
-            overflow: hidden;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+        /* Keep your Hero Section Styling */
+        .hero {
+            height: 40vh;
+            background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), url('https://images.unsplash.com/photo-1511192336575-5a79af67a629?auto=format&fit=crop&q=80');
+            background-size: cover;
+            background-position: center;
             display: flex;
-            flex-direction: column;
             align-items: center;
+            justify-content: center;
+            text-align: center;
+            border-bottom: 2px solid var(--gold);
         }
-
-        /* The Gold Shine Effect on Hover */
-        .game-card:hover {
-            border-color: var(--gold);
-            transform: translateY(-8px) scale(1.02);
-            box-shadow: var(--gold-glow);
-        }
-
-        /* Inner Reflection effect */
-        .game-card::before {
-            content: "";
-            position: absolute;
-            top: -100%; left: -100%;
-            width: 50%; height: 300%;
-            background: rgba(255,255,255,0.05);
-            transform: rotate(45deg);
-            transition: 0.5s;
-        }
-        .game-card:hover::before { top: 100%; left: 100%; }
-
-        .game-icon { font-size: 3rem; display: block; margin-bottom: 15px; text-shadow: 0 0 15px currentColor; }
-        .game-label { color: var(--platinum); font-weight: bold; font-size: 1rem; text-transform: uppercase; letter-spacing: 1px; }
-        .game-hint { color: #666; font-size: 0.7rem; margin-top: 5px; }
-
-        /* ACTIVE ARENA TICKET */
-        .arena-ticket {
-            max-width: 900px;
-            margin: 0 auto;
-            background: var(--brushed-metal);
-            border: 2px solid #222;
-            padding: 18px;
-            border-radius: 12px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            cursor: pointer;
-            transition: 0.2s;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
-        }
-        .arena-ticket:hover { border-color: #ff4444; }
-
-        .live-status { display: flex; align-items: center; gap: 10px; color: #ff4444; font-weight: bold; font-size: 0.9rem; }
-        .dot { width: 10px; height: 10px; background: #ff4444; border-radius: 50%; animation: livePulse 1.2s infinite; box-shadow: 0 0 10px #ff4444; }
-
-        @keyframes livePulse { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
+        .hero h1 { font-size: 2.5rem; margin-bottom: 10px; color: white; text-transform: uppercase; }
+        .hero p { color: #ccc; margin-bottom: 20px; }
         
-        @media (max-width: 600px) { .casino-grid { grid-template-columns: 1fr; } }
+        .cta-button {
+            background: var(--gold);
+            color: black;
+            padding: 15px 40px;
+            font-weight: bold;
+            border: none;
+            border-radius: 30px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            box-shadow: 0 0 20px rgba(212, 175, 55, 0.4);
+            text-transform: uppercase;
+        }
+
+        /* Grid Styling */
+        .lobby-grid { padding: 30px 20px 100px; } /* Added padding for bottom nav */
+        .category-title { color: var(--gold); font-weight: bold; margin-bottom: 20px; letter-spacing: 2px; text-transform: uppercase; }
+        .grid-container { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        
+        .game-card {
+            background: #1a1a1a;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid #333;
+            cursor: pointer;
+            position: relative;
+            min-height: 150px;
+            display: flex;
+            align-items: flex-end;
+            padding: 15px;
+            transition: 0.3s;
+        }
+        .game-card:hover { border-color: var(--gold); transform: translateY(-3px); }
+        .game-card.live { border-color: var(--gold); background: linear-gradient(transparent, #000), url('https://images.unsplash.com/photo-1596727147705-61a532a655bd?auto=format&fit=crop&q=60'); background-size: cover; }
+        .status-tag { position: absolute; top: 10px; left: 10px; background: #ff4444; color: white; font-size: 0.6rem; padding: 4px 8px; border-radius: 4px; font-weight: bold; }
+        .status-tag.gray { background: #555; }
+        .game-card.locked { opacity: 0.5; cursor: not-allowed; }
+
+        /* Quick Actions - Bottom Bar */
+        .quick-actions { display: flex; gap: 10px; padding: 20px; background: #000; position: fixed; bottom: 0; left: 0; width: 100%; box-sizing: border-box; border-top: 1px solid #222; z-index: 100; }
+        .action-btn { flex: 1; padding: 15px; border: 1px solid var(--gold); background: transparent; color: var(--gold); border-radius: 8px; font-weight: bold; text-transform: uppercase; cursor: pointer; }
+        .action-btn.gold { background: var(--gold); color: black; }
+        .action-btn.admin-btn { border-color: #00ff88; color: #00ff88; display: none; }
     </style>
 </head>
 <body>
 
-    <div class="casino-header">
-        <span class="user-greeting">WELCOME BACK, HUSTLER</span>
-        <h1 class="user-name" id="display-user">PLAYER</h1>
+    <nav class="top-nav">
+        <div class="logo">NEXUS</div>
+        <div class="user-controls">
+            <div class="balance-display">
+                <small id="user-display">LOADING...</small>
+                <span>₱<span id="nav-balance">0.00</span></span>
+            </div>
+            <button id="profile-btn" onclick="window.location.href='/profile/'">PROFILE</button>
+        </div>
+    </nav>
+
+    <header class="hero">
+        <div class="hero-content">
+            <h1>LIVE ARENA IS OPEN</h1>
+            <p>Experience the most reliable Sabong platform in the Philippines.</p>
+            <button class="cta-button" onclick="window.location.href='/games/'">ENTER LIVE ARENA</button>
+        </div>
+    </header>
+
+    <main class="lobby-grid">
+        <div class="category-title">AVAILABLE GAMES</div>
         
-        <div class="balance-chip">
-            <div class="chip-icon"></div>
-            ₱<span id="display-balance">0.00</span>
-        </div>
-    </div>
+        <div class="grid-container">
+            <div class="game-card live" onclick="window.location.href='/games/'">
+                <div class="status-tag">LIVE NOW</div>
+                <div class="card-info">
+                    <h3 style="margin:0; color:white;">LIVE SABONG</h3>
+                    <p style="margin:5px 0 0; color:#ccc; font-size:0.8rem;">Real-time betting & streaming</p>
+                </div>
+            </div>
 
-    <div class="casino-grid">
-        <a href="/games/" class="game-card" style="color: #ff4444;">
-            <span class="game-icon">🐓</span>
-            <span class="game-label">Sabong Arena</span>
-            <span class="game-hint">Live 24/7</span>
-        </a>
-        <a href="/wallet/" class="game-card" style="color: #ffaa00;">
-            <span class="game-icon">💰</span>
-            <span class="game-label">Cash-In / Out</span>
-            <span class="game-hint">Via Official Agents</span>
-        </a>
-        <a href="/profile/" class="game-card" style="color: #e5e5e5;">
-            <span class="game-icon">👤</span>
-            <span class="game-label">My Account</span>
-            <span class="game-hint">Status & Settings</span>
-        </a>
-        <a href="/admin/" class="game-card" id="admin-link" style="display:none; color: #00ff88;">
-            <span class="game-icon">⚙️</span>
-            <span class="game-label">Admin Panel</span>
-            <span class="game-hint">Authorized Only</span>
-        </a>
-    </div>
-
-    <div class="arena-ticket" onclick="window.location.href='/games/'">
-        <div class="live-status">
-            <div class="dot"></div>
-            FIGHT #125: MERON vs WALA
+            <div class="game-card locked">
+                <div class="status-tag gray">COMING SOON</div>
+                <div class="card-info">
+                    <h3 style="margin:0; color:white;">DIGITAL SLOTS</h3>
+                    <p style="margin:5px 0 0; color:#ccc; font-size:0.8rem;">High RTP Digital Games</p>
+                </div>
+            </div>
         </div>
-        <div style="color: var(--gold); font-weight: bold; font-size: 0.9rem;">ENTER ARENA →</div>
-    </div>
+    </main>
+
+    <section class="quick-actions">
+        <button onclick="window.location.href='/admin/'" id="admin-action" class="action-btn admin-btn">ADMIN</button>
+        <button onclick="window.location.href='/wallet/'" class="action-btn gold">CASH IN</button>
+        <button onclick="window.location.href='/wallet/'" class="action-btn">WITHDRAW</button>
+    </section>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
         import { getFirestore, doc, onSnapshot, getDoc } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
 
-        // Your standard Firebase config
         const firebaseConfig = {
             apiKey: "AIzaSyCBvOw8HrMhZD0aYSHqFdE196ZITdYBU3Q",
             authDomain: "nexus-sabong.firebaseapp.com",
             projectId: "nexus-sabong",
             storageBucket: "nexus-sabong.firebasestorage.app",
             messagingSenderId: "421723311",
-            appId: "1:421723311:web:1780f179e7c2a7cc0e285a"
+            appId: "1:421723311:web:1780f179e7c2a7cc0e285a",
+            measurementId: "G-W2B0R09D8L"
         };
 
         const app = initializeApp(firebaseConfig);
@@ -191,26 +138,24 @@
             if (user) {
                 const userRef = doc(db, "users", user.uid);
                 
-                // Fetch Username & Admin Status
+                // Fetch Username and Admin status
                 const userSnap = await getDoc(userRef);
                 if (userSnap.exists()) {
                     const data = userSnap.data();
-                    document.getElementById('display-user').innerText = data.username.toUpperCase();
+                    document.getElementById('user-display').innerText = data.username.toUpperCase();
                     
-                    // Show Admin Link if they are admin
-                    if(data.isAdmin) {
-                        document.getElementById('admin-link').style.display = "flex";
+                    // Show Admin button if the user is an admin
+                    if (data.isAdmin === true) {
+                        document.getElementById('admin-action').style.display = "block";
                     }
                 }
 
-                // Live Balance Listener
+                // Listen to user balance in real-time
                 onSnapshot(userRef, (snapshot) => {
                     if (snapshot.exists()) {
-                        document.getElementById('display-balance').innerText = 
-                            (snapshot.data().balance || 0).toLocaleString(undefined, {
-                                minimumFractionDigits: 2,
-                                maximumFractionDigits: 2
-                            });
+                        const balance = snapshot.data().balance || 0;
+                        document.getElementById('nav-balance').innerText = 
+                            balance.toLocaleString(undefined, {minimumFractionDigits: 2});
                     }
                 });
             } else {
