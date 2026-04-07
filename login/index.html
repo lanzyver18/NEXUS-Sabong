@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Login | NEXUS</title>
+    <link rel="stylesheet" href="../style.css">
+</head>
+<body class="auth-page">
+    <div class="auth-card">
+        <h2>NEXUS LOGIN</h2>
+        <input type="email" id="email" placeholder="Email Address">
+        <input type="password" id="password" placeholder="Password">
+        <button id="login-btn">ENTER ARENA</button>
+        <p>Don't have an account? <a href="/register/">Register</a></p>
+    </div>
+
+    <script type="module">
+        import { auth } from '../firebase-config.js';
+        import { signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
+
+        document.getElementById('login-btn').onclick = async () => {
+            const email = document.getElementById('email').value;
+            const pass = document.getElementById('password').value;
+            try {
+                await signInWithEmailAndPassword(auth, email, pass);
+                window.location.href = "/";
+            } catch (error) { alert(error.message); }
+        };
+    </script>
+</body>
+</html>
