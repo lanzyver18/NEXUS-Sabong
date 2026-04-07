@@ -157,3 +157,24 @@ a {
     color: var(--gold);
     text-decoration: none;
 }
+/* Force the button to look interactive */
+.btn-action {
+    cursor: pointer !important;
+    display: block;
+    width: 100%;
+    transition: opacity 0.2s, transform 0.1s;
+    user-select: none;
+}
+
+.btn-action:active {
+    transform: scale(0.98); /* Shrinks slightly when clicked */
+    filter: brightness(0.8);
+}
+
+/* If the button is truly disabled by JS, make it look grey */
+.btn-action:disabled {
+    background: #444 !important;
+    color: #888 !important;
+    cursor: not-allowed !important;
+    transform: none !important;
+}
