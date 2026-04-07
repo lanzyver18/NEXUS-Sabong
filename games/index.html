@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Live Arena | NEXUS</title>
+    <link rel="stylesheet" href="../style.css">
+    <style>
+        .arena-grid { display: grid; grid-template-columns: 1fr 350px; gap: 20px; padding: 20px; }
+        .video-box { background: #000; aspect-ratio: 16/9; border: 2px solid #222; position: relative; }
+        .live-indicator { position: absolute; top: 10px; left: 10px; background: red; padding: 5px 10px; font-size: 0.7rem; border-radius: 3px; animation: blink 1s infinite; }
+        @keyframes blink { 50% { opacity: 0.5; } }
+        
+        .betting-sidebar { background: #1a1a1a; padding: 20px; border-radius: 10px; border: 1px solid #333; }
+        .fight-no { color: var(--gold); font-size: 1.2rem; margin-bottom: 20px; text-align: center; }
+        
+        .bet-option { margin-bottom: 15px; padding: 15px; border-radius: 8px; text-align: center; cursor: pointer; transition: 0.3s; }
+        .meron-card { border: 2px solid #ff4444; color: #ff4444; }
+        .wala-card { border: 2px solid #4444ff; color: #4444ff; }
+        .meron-card:hover { background: #ff4444; color: white; }
+        .wala-card:hover { background: #4444ff; color: white; }
+        
+        .odds { font-size: 2rem; font-weight: bold; display: block; }
+        @media (max-width: 768px) { .arena-grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <nav class="top-nav">
+        <a href="/">← LOBBY</a>
+        <div class="balance-box">₱<span id="balance">0.00</span></div>
+    </nav>
+
+    <div class="arena-grid">
+        <div class="video-box">
+            <div class="live-indicator">LIVE</div>
+            <iframe src="YOUR_STREAM_URL_HERE" width="100%" height="100%" frameborder="0" allowfullscreen></iframe>
+        </div>
+
+        <div class="betting-sidebar">
+            <div class="fight-no">FIGHT #124</div>
+            
+            <div class="bet-option meron-card" onclick="placeBet('meron', 1.90)">
+                <span class="label">MERON</span>
+                <span class="odds">1.90</span>
+            </div>
+
+            <div class="bet-option wala-card" onclick="placeBet('wala', 1.85)">
+                <span class="label">WALA</span>
+                <span class="odds">1.85</span>
+            </div>
+
+            <div class="bet-option" style="border: 1px solid #555;">
+                <span class="label">DRAW</span>
+                <span class="odds">8.00</span>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { auth, db } from '../firebase-config.js';
+        import { doc, onSnapshot, updateDoc, increment } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+
+        let currentBalance = 0;
+
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                onSnapshot(doc(db, "users", user.uid), (doc) => {
+                    currentBalance = doc.data().balance;
+                    document.getElementById('balance').innerText = currentBalance.toLocaleString();
+                });
+            } else { window.location.href = "/login/"; }
+        });
+
+        window.placeBet = async (side, odds) => {
+            const betAmount = parseInt(prompt(`Enter Bet Amount for ${side.toUpperCase()}:`, "100"));
+            
+            if (betAmount > currentBalance) {
+                alert("Insufficient Balance!");
+                return;
+            }
+
+            if (betAmount >= 100) {
+                // In a REAL app, you do this via Cloud Functions to prevent hacking.
+                // This is the "Front-end" version for your demo.
+                const userRef = doc(db, "users", auth.currentUser.uid);
+                await updateDoc(userRef, {
+                    balance: increment(-betAmount)
+                });
+                alert(`Bet Placed: ₱${betAmount} on ${side}`);
+            }
+        };
+    </script>
+</body>
+</html>
