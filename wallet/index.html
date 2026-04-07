@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Wallet | NEXUS</title>
+    <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+    <nav class="top-nav">
+        <a href="/">← BACK</a>
+        <div class="balance-box">₱<span id="balance">0.00</span></div>
+    </nav>
+
+    <div class="wallet-container">
+        <h3>AUTOMATIC CASH-IN</h3>
+        <div class="method-grid">
+            <button onclick="pay('GCASH')">GCash Auto</button>
+            <button onclick="pay('MAYA')">Maya Auto</button>
+        </div>
+
+        <hr>
+
+        <h3>INSTANT CASHOUT</h3>
+        <input type="number" id="withdraw-amount" placeholder="Amount (₱)">
+        <button id="withdraw-btn" class="danger">SEND TO MY GCASH</button>
+    </div>
+
+    <script type="module">
+        import { auth, db } from '../firebase-config.js';
+        import { doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+
+        // Real-time balance listener
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                onSnapshot(doc(db, "users", user.uid), (doc) => {
+                    document.getElementById('balance').innerText = doc.data().balance.toLocaleString();
+                });
+            } else { window.location.href = "/login/"; }
+        });
+    </script>
+</body>
+</html>
