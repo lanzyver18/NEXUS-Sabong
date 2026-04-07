@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Wallet | NEXUS</title>
+    <title>Load Credits | NEXUS</title>
     <link rel="stylesheet" href="../style.css">
 </head>
 <body>
@@ -12,31 +12,57 @@
     </nav>
 
     <div class="wallet-container">
-        <h3>AUTOMATIC CASH-IN</h3>
-        <div class="method-grid">
-            <button onclick="pay('GCASH')">GCash Auto</button>
-            <button onclick="pay('MAYA')">Maya Auto</button>
+        <div class="wallet-section">
+            <h3>MY PLAYER ID</h3>
+            <p class="text-muted">Give this ID to your agent to receive credits:</p>
+            <div class="id-display" onclick="copyUID()">
+                <code id="user-id">Loading...</code>
+                <span class="copy-hint">Click to Copy</span>
+            </div>
         </div>
 
-        <hr>
-
-        <h3>INSTANT CASHOUT</h3>
-        <input type="number" id="withdraw-amount" placeholder="Amount (₱)">
-        <button id="withdraw-btn" class="danger">SEND TO MY GCASH</button>
+        <div class="wallet-section">
+            <h3>AVAILABLE AGENTS</h3>
+            <p class="text-muted">Message an agent to Cash-In via GCash/Maya.</p>
+            
+            <div class="agent-list">
+                <div class="agent-card">
+                    <div class="agent-info">
+                        <strong>CHIEF KENNY (Main)</strong>
+                        <span class="status-online">● ONLINE</span>
+                    </div>
+                    <button class="btn-contact gcash" onclick="window.open('https://m.me/YOUR_FB_PAGE')">LOAD VIA FB</button>
+                </div>
+                
+                <div class="agent-card">
+                    <div class="agent-info">
+                        <strong>LUCKY AGENT 77</strong>
+                        <span class="status-online">● ONLINE</span>
+                    </div>
+                    <button class="btn-contact maya" onclick="window.open('https://t.me/YOUR_TELEGRAM')">LOAD VIA TG</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script type="module">
         import { auth, db } from '../firebase-config.js';
         import { doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
 
-        // Real-time balance listener
         auth.onAuthStateChanged(user => {
             if (user) {
+                document.getElementById('user-id').innerText = user.uid;
                 onSnapshot(doc(db, "users", user.uid), (doc) => {
-                    document.getElementById('balance').innerText = doc.data().balance.toLocaleString();
+                    document.getElementById('balance').innerText = (doc.data().balance || 0).toLocaleString();
                 });
             } else { window.location.href = "/login/"; }
         });
+
+        window.copyUID = () => {
+            const uid = document.getElementById('user-id').innerText;
+            navigator.clipboard.writeText(uid);
+            alert("ID Copied! Send this to your Agent.");
+        };
     </script>
 </body>
 </html>
