@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>My Profile | NEXUS</title>
+    <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+    <nav class="top-nav">
+        <a href="/">← BACK</a>
+        <button onclick="logout()">LOGOUT</button>
+    </nav>
+
+    <div class="profile-container" style="max-width: 600px; margin: 40px auto; padding: 20px;">
+        <div class="auth-card">
+            <h2 id="user-email">Loading...</h2>
+            <p>User ID: <span id="user-id" style="font-size: 0.7rem; color: #777;"></span></p>
+            <div style="font-size: 2rem; margin: 20px 0;">
+                Total Balance: <span style="color:var(--gold)">₱</span><span id="balance">0.00</span>
+            </div>
+            <button onclick="window.location.href='/wallet/'">Add Funds</button>
+        </div>
+
+        <h3>Recent Transactions</h3>
+        <div id="history-list" style="background: #1a1a1a; padding: 10px; border-radius: 5px;">
+            <p style="color: #555; text-align: center;">No recent transactions found.</p>
+        </div>
+    </div>
+
+    <script type="module">
+        import { auth, db } from '../firebase-config.js';
+        import { doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                document.getElementById('user-email').innerText = user.email;
+                document.getElementById('user-id').innerText = user.uid;
+                
+                onSnapshot(doc(db, "users", user.uid), (doc) => {
+                    document.getElementById('balance').innerText = doc.data().balance.toLocaleString();
+                });
+            } else { window.location.href = "/login/"; }
+        });
+
+        window.logout = () => {
+            auth.signOut().then(() => window.location.href = "/login/");
+        };
+    </script>
+</body>
+</html>
