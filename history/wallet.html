@@ -1,1 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wallet History | NEXUS</title>
+    <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="../menu.css">
+    <script src="../menu.js" type="module"></script>
+    <style>
+        .history-container { max-width: 800px; margin: 40px auto; padding: 20px; }
+        .history-item { 
+            background: #111; border: 1px solid #222; border-radius: 10px; 
+            padding: 15px; margin-bottom: 10px; display: flex; 
+            justify-content: space-between; align-items: center; 
+        }
+        .item-left { display: flex; flex-direction: column; }
+        .item-left span { font-weight: bold; color: #eee; }
+        .item-left small { color: #666; font-size: 0.75rem; margin-top: 4px; }
+        .item-right { text-align: right; }
+        .amount { font-family: 'Goldman', sans-serif; font-weight: bold; }
+        .status-badge { font-size: 0.65rem; padding: 3px 8px; border-radius: 4px; text-transform: uppercase; }
+        .pending { background: #555; color: white; }
+        .approved { background: #00ff88; color: black; }
+        .rejected { background: #ff4444; color: white; }
+    </style>
+</head>
+<body>
+    <div class="history-container">
+        <h3 style="color: var(--gold); font-family: 'Goldman'; margin-bottom: 25px;">TRANSACTION LOGS</h3>
+        <div id="wallet-history-list">
+            <p style="color: #444; text-align: center;">Fetching transactions...</p>
+        </div>
+    </div>
 
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
+        import { getFirestore, collection, query, where, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+        import { injectMenu } from "../menu.js";
+
+        const firebaseConfig = { /* YOUR CONFIG */ };
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        window.firebaseAuth = auth;
+        injectMenu();
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                const q = query(collection(db, "wallet_logs"), where("uid", "==", user.uid), orderBy("timestamp", "desc"));
+                
+                onSnapshot(q, (snap) => {
+                    const list = document.getElementById('wallet-history-list');
+                    list.innerHTML = "";
+                    
+                    if (snap.empty) {
+                        list.innerHTML = "<p style='color:#444; text-align:center;'>No transactions found.</p>";
+                        return;
+                    }
+
+                    snap.forEach(doc => {
+                        const d = doc.data();
+                        const isCashIn = d.type === "CASH-IN";
+                        list.innerHTML += `
+                            <div class="history-item">
+                                <div class="item-left">
+                                    <span>${d.type}</span>
+                                    <small>${d.timestamp?.toDate().toLocaleString() || 'Recent'}</small>
+                                </div>
+                                <div class="item-right">
+                                    <div class="amount" style="color: ${isCashIn ? '#00ff88' : '#ff4444'}">
+                                        ${isCashIn ? '+' : '-'}₱${parseFloat(d.amount).toLocaleString()}
+                                    </div>
+                                    <span class="status-badge ${d.status.toLowerCase()}">${d.status}</span>
+                                </div>
+                            </div>
+                        `;
+                    });
+                });
+            } else { window.location.href = "/login/"; }
+        });
+    </script>
+</body>
+</html>
