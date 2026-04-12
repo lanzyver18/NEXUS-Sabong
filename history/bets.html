@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Bet History | NEXUS</title>
+    <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="../menu.css">
+    <script src="../menu.js" type="module"></script>
+    <style>
+        .bet-container { max-width: 800px; margin: 40px auto; padding: 20px; }
+        .bet-card { 
+            background: #111; border: 1px solid #333; border-radius: 12px; 
+            margin-bottom: 15px; padding: 15px; border-left: 5px solid #444;
+        }
+        .bet-card.win { border-left-color: #00ff88; }
+        .bet-card.loss { border-left-color: #ff4444; }
+        .bet-header { display: flex; justify-content: space-between; margin-bottom: 10px; }
+        .bet-details { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.85rem; }
+        .label { color: #666; }
+        .value { color: #eee; font-weight: bold; }
+        .win-amt { color: #00ff88; font-family: 'Goldman'; }
+    </style>
+</head>
+<body>
+    <div class="bet-container">
+        <h3 style="color: var(--gold); font-family: 'Goldman';">BETTING HISTORY</h3>
+        <div id="bet-list"></div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
+        import { getFirestore, collection, query, where, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+        import { injectMenu } from "../menu.js";
+
+        // ... Firebase Config & Auth Init ...
+        injectMenu();
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                const q = query(collection(db, "bets"), where("uid", "==", user.uid), orderBy("timestamp", "desc"));
+                
+                onSnapshot(q, (snap) => {
+                    const list = document.getElementById('bet-list');
+                    list.innerHTML = "";
+
+                    snap.forEach(doc => {
+                        const b = doc.data();
+                        const resultClass = b.status === "WIN" ? "win" : (b.status === "LOSS" ? "loss" : "");
+                        
+                        list.innerHTML += `
+                            <div class="bet-card ${resultClass}">
+                                <div class="bet-header">
+                                    <span style="color: var(--gold); font-weight: bold;">FIGHT #${b.fightNumber || '---'}</span>
+                                    <span class="status-badge">${b.status}</span>
+                                </div>
+                                <div class="bet-details">
+                                    <div><span class="label">Side:</span> <span class="value" style="color:${b.side === 'MERON' ? '#ff4444' : '#3498db'}">${b.side}</span></div>
+                                    <div><span class="label">Bet:</span> <span class="value">₱${b.amount}</span></div>
+                                    <div><span class="label">Date:</span> <span class="value">${b.timestamp?.toDate().toLocaleDateString()}</span></div>
+                                    <div><span class="label">Payout:</span> <span class="win-amt">${b.status === 'WIN' ? '₱' + b.payout : '---'}</span></div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                });
+            }
+        });
+    </script>
+</body>
+</html>
