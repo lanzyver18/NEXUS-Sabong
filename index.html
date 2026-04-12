@@ -9,7 +9,7 @@
     <style>
         :root { --gold: #D4AF37; }
 
-        /* NAVIGATION FIXES */
+        /* NAVIGATION */
         .top-nav {
             display: flex;
             justify-content: space-between;
@@ -43,7 +43,7 @@
 
         /* HERO SECTION */
         .hero {
-            height: 40vh;
+            height: 35vh;
             background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), url('https://images.unsplash.com/photo-1511192336575-5a79af67a629?auto=format&fit=crop&q=80');
             background-size: cover;
             background-position: center;
@@ -53,46 +53,64 @@
             text-align: center;
             border-bottom: 2px solid var(--gold);
         }
-        .hero h1 { font-size: 2.2rem; margin: 0; color: white; text-transform: uppercase; font-family: 'Goldman'; }
+        .hero h1 { font-size: 2.2rem; margin: 0; color: white; text-transform: uppercase; font-family: 'Goldman'; letter-spacing: 2px; }
         .hero p { color: #ccc; margin: 10px 0 20px; font-size: 0.9rem; }
-        .cta-button {
-            background: var(--gold);
-            color: black;
-            padding: 15px 35px;
-            font-weight: bold;
-            border: none;
-            border-radius: 30px;
-            font-size: 1rem;
-            cursor: pointer;
-            box-shadow: 0 0 20px rgba(212, 175, 55, 0.4);
-            text-transform: uppercase;
-        }
 
-        /* LOBBY GRID */
-        .lobby-grid { padding: 30px 20px 120px; max-width: 800px; margin: auto; }
-        .category-title { color: var(--gold); font-weight: bold; margin-bottom: 20px; letter-spacing: 2px; text-transform: uppercase; font-size: 0.8rem; }
-        .grid-container { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        /* SINGLE GAME DISPLAY */
+        .lobby-grid { padding: 40px 20px 120px; max-width: 600px; margin: auto; }
         
         .game-card {
             background: #1a1a1a;
-            border-radius: 12px;
+            border-radius: 16px;
             overflow: hidden;
-            border: 1px solid #333;
+            border: 2px solid var(--gold);
             cursor: pointer;
             position: relative;
-            min-height: 160px;
+            min-height: 220px;
             display: flex;
             align-items: flex-end;
-            padding: 15px;
+            padding: 25px;
             transition: 0.3s;
             text-decoration: none;
+            background: linear-gradient(transparent, #000), url('https://images.unsplash.com/photo-1596727147705-61a532a655bd?auto=format&fit=crop&q=60');
+            background-size: cover;
+            background-position: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
-        .game-card.live { border-color: var(--gold); background: linear-gradient(transparent, #000), url('https://images.unsplash.com/photo-1596727147705-61a532a655bd?auto=format&fit=crop&q=60'); background-size: cover; }
-        .status-tag { position: absolute; top: 10px; left: 10px; background: #ff4444; color: white; font-size: 0.6rem; padding: 4px 8px; border-radius: 4px; font-weight: bold; }
-        .status-tag.gray { background: #555; }
-        .game-card.locked { opacity: 0.5; cursor: not-allowed; }
-        .card-info h3 { margin: 0; color: white; font-size: 1rem; }
-        .card-info p { margin: 5px 0 0; color: #aaa; font-size: 0.75rem; }
+        
+        .game-card:hover { transform: translateY(-5px); box-shadow: 0 15px 40px rgba(212, 175, 55, 0.2); }
+
+        .status-tag { 
+            position: absolute; 
+            top: 20px; 
+            left: 20px; 
+            background: #ff4444; 
+            color: white; 
+            font-size: 0.7rem; 
+            padding: 5px 12px; 
+            border-radius: 4px; 
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .pulse {
+            width: 8px;
+            height: 8px;
+            background: white;
+            border-radius: 50%;
+            animation: pulse-animation 1.5s infinite;
+        }
+
+        @keyframes pulse-animation {
+            0% { transform: scale(0.95); opacity: 1; }
+            70% { transform: scale(1.5); opacity: 0; }
+            100% { transform: scale(0.95); opacity: 0; }
+        }
+
+        .card-info h3 { margin: 0; color: white; font-size: 1.5rem; font-family: 'Goldman'; }
+        .card-info p { margin: 5px 0 0; color: var(--gold); font-size: 0.9rem; font-weight: bold; }
 
         /* BOTTOM ACTIONS */
         .quick-actions { 
@@ -120,30 +138,22 @@
 
     <header class="hero">
         <div class="hero-content">
-            <h1>LIVE ARENA OPEN</h1>
-            <p>Reliable Sabong betting in the Philippines.</p>
-            <button class="cta-button" onclick="window.location.href='/games/'">PLAY NOW</button>
+            <h1>NEXUS ARENA</h1>
+            <p>The Premium Sabong Experience</p>
         </div>
     </header>
 
     <main class="lobby-grid">
-        <div class="category-title">AVAILABLE GAMES</div>
-        <div class="grid-container">
-            <a href="/games/" class="game-card live">
-                <div class="status-tag">LIVE NOW</div>
-                <div class="card-info">
-                    <h3>LIVE SABONG</h3>
-                    <p>Real-time betting</p>
-                </div>
-            </a>
-            <div class="game-card locked">
-                <div class="status-tag gray">COMING SOON</div>
-                <div class="card-info">
-                    <h3>DIGITAL SLOTS</h3>
-                    <p>High RTP Games</p>
-                </div>
+        <a href="/games/" class="game-card">
+            <div class="status-tag">
+                <div class="pulse"></div>
+                LIVE NOW
             </div>
-        </div>
+            <div class="card-info">
+                <h3>LIVE SABONG</h3>
+                <p>ENTER ARENA →</p>
+            </div>
+        </a>
     </main>
 
     <section class="quick-actions">
@@ -174,7 +184,6 @@
             if (user) {
                 const userRef = doc(db, "users", user.uid);
                 
-                // Load Username & Admin status once
                 const snap = await getDoc(userRef);
                 if (snap.exists()) {
                     const data = snap.data();
@@ -184,7 +193,6 @@
                     }
                 }
 
-                // Live balance listener
                 onSnapshot(userRef, (doc) => {
                     if (doc.exists()) {
                         const bal = doc.data().balance || 0;
