@@ -1,112 +1,61 @@
-/* menu.css */
-:root {
-    --gold: #D4AF37;
-    --bg-dark: #0a0a0a;
-}
+// menu.js
+export function injectMenu() {
+    // Check if it already exists to prevent duplicates
+    if (document.getElementById('nexus-side-menu')) return;
 
-/* Sidebar Container */
-.sidebar {
-    position: fixed;
-    top: 0;
-    left: -280px; 
-    width: 280px;
-    height: 100%;
-    background: var(--bg-dark);
-    border-right: 1px solid #222;
-    transition: 0.3s ease-in-out;
-    z-index: 2000;
-    padding: 20px;
-    box-sizing: border-box;
-    display: flex;
-    flex-direction: column;
-}
+    const menuHTML = `
+        <button class="menu-trigger" id="menu-open-btn">☰</button>
+        <div class="menu-overlay" id="nexus-menu-overlay"></div>
+        <div id="nexus-side-menu" class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">NEXUS</div>
+                <button class="close-btn" id="menu-close-btn" style="background:none; border:none; color:#888; font-size:2rem; cursor:pointer;">×</button>
+            </div>
+            <div class="sidebar-links">
+                <a href="/">🏠 Home</a>
+                <a href="/games/">🐓 Sabong Arena</a>
+                <a href="/profile/">👤 My Profile</a>
+                <hr style="border: 0; border-top: 1px solid #222; margin: 10px 0;">
+                <a href="/history/wallet.html">💰 Wallet History</a>
+                <a href="/history/bets.html">📝 Bet History</a>
+                <a href="/wallet/" style="color: #D4AF37;">📥 Cash-In / Out</a>
+            </div>
+            <div class="sidebar-footer">
+                <button id="nexus-logout" class="logout-btn">🚪 Logout Session</button>
+            </div>
+        </div>
+    `;
 
-.sidebar.active {
-    left: 0;
-    box-shadow: 10px 0 50px rgba(0,0,0,0.9);
-}
+    document.body.insertAdjacentHTML('afterbegin', menuHTML);
 
-/* Menu Trigger Button */
-.menu-trigger {
-    position: fixed;
-    top: 15px;
-    left: 15px;
-    z-index: 1001;
-    background: rgba(0,0,0,0.8);
-    color: var(--gold);
-    border: 1px solid var(--gold);
-    padding: 8px 12px;
-    border-radius: 6px;
-    font-size: 1.2rem;
-    cursor: pointer;
-    font-family: 'Goldman', sans-serif;
-}
+    const menu = document.getElementById('nexus-side-menu');
+    const overlay = document.getElementById('nexus-menu-overlay');
+    const openBtn = document.getElementById('menu-open-btn');
+    const closeBtn = document.getElementById('menu-close-btn');
+    const logoutBtn = document.getElementById('nexus-logout');
 
-.sidebar-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 30px;
-}
+    openBtn.onclick = () => {
+        menu.classList.add('active');
+        overlay.classList.add('active');
+    };
 
-.sidebar-header .logo {
-    color: var(--gold);
-    font-family: 'Goldman', sans-serif;
-    font-size: 1.5rem;
-    font-weight: bold;
-}
+    const close = () => {
+        menu.classList.remove('active');
+        overlay.classList.remove('active');
+    };
 
-.close-btn {
-    background: none;
-    border: none;
-    color: #888;
-    font-size: 2rem;
-    cursor: pointer;
-}
+    closeBtn.onclick = close;
+    overlay.onclick = close;
 
-.sidebar-links a {
-    display: block;
-    padding: 15px 0;
-    color: #eee;
-    text-decoration: none;
-    font-size: 0.95rem;
-    border-bottom: 1px solid #111;
-    transition: 0.2s;
-}
-
-.sidebar-links a:hover {
-    color: var(--gold);
-    padding-left: 10px;
-}
-
-.sidebar-footer {
-    margin-top: auto;
-    padding-top: 20px;
-    border-top: 1px solid #222;
-}
-
-.logout-btn {
-    background: none;
-    border: none;
-    color: #ff4444;
-    cursor: pointer;
-    font-size: 0.9rem;
-    width: 100%;
-    text-align: left;
-    padding: 10px 0;
-}
-
-.menu-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0,0,0,0.7);
-    display: none;
-    z-index: 1999;
-}
-
-.menu-overlay.active {
-    display: block;
+    if (logoutBtn) {
+        logoutBtn.onclick = () => {
+            if (confirm("Logout from NEXUS?")) {
+                if (window.firebaseAuth) {
+                    window.firebaseAuth.signOut().then(() => window.location.href = "/login/");
+                } else {
+                    window.location.href = "/login/";
+                }
+            }
+        };
+    }
 }
