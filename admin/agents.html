@@ -10,19 +10,25 @@
         .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px; }
         .stat-card { background: #111; padding: 20px; border-radius: 12px; border: 1px solid #222; text-align: center; }
         
+        /* REFERRAL BOX */
+        .ref-panel { background: #0a0a0a; border: 1px dashed var(--gold); border-radius: 12px; padding: 20px; margin-bottom: 25px; }
+        .ref-input-group { display: flex; gap: 10px; margin-top: 10px; }
+        .ref-input-group input { flex: 1; background: #000; border: 1px solid #333; color: #888; padding: 12px; border-radius: 8px; font-size: 0.8rem; }
+
         .panel { background: #111; border-radius: 15px; border: 1px solid #333; padding: 20px; }
         .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #222; padding-bottom: 10px; }
         
-        /* TABLE STYLING */
         .agent-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
         .agent-table th { text-align: left; color: #555; padding: 12px; border-bottom: 1px solid #222; }
         .agent-table td { padding: 15px 12px; border-bottom: 1px solid #1a1a1a; color: #eee; }
         .role-badge { background: #222; padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; color: var(--gold); }
 
-        /* MODAL STYLING */
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: flex; align-items: center; justify-content: center; z-index: 2000; }
         .modal-content { background: #111; width: 90%; max-width: 400px; padding: 30px; border-radius: 15px; border: 1px solid var(--gold); }
         .modal input, .modal select { width: 100%; padding: 12px; margin: 10px 0; background: #000; border: 1px solid #333; color: white; border-radius: 8px; box-sizing: border-box; }
+        
+        .btn-edit { background: transparent; border: 1px solid #444; color: #888; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 0.7rem; }
+        .btn-edit:hover { border-color: var(--gold); color: var(--gold); }
     </style>
 </head>
 <body>
@@ -33,16 +39,26 @@
     </nav>
 
     <div class="agent-container">
+        
+        <div class="ref-panel">
+            <h4 style="margin:0; color: var(--gold); font-size: 0.8rem; letter-spacing: 1px;">MY REFERRAL LINK</h4>
+            <div class="ref-input-group">
+                <input type="text" id="referral-url" readonly onclick="this.select()">
+                <button class="btn-main gold" style="padding: 0 20px; white-space: nowrap;" onclick="copyReferral()">COPY LINK</button>
+            </div>
+            <p style="font-size: 0.65rem; color: #555; margin-top: 10px;">Send this link to applicants. They will be automatically placed under your hierarchy.</p>
+        </div>
+
         <div class="stats-grid">
             <div class="stat-card"><h4>My Commission</h4><span class="val" id="my-comm-rate" style="color:var(--gold); font-size:1.5rem;">0%</span></div>
             <div class="stat-card"><h4>Active Downlines</h4><span class="val" id="count-downlines" style="color:white; font-size:1.5rem;">0</span></div>
-            <div class="stat-card"><h4>Total Team Turnover</h4><span class="val" id="team-turnover" style="color:#00ff88; font-size:1.5rem;">₱0</span></div>
+            <div class="stat-card"><h4>Team Turnover</h4><span class="val" id="team-turnover" style="color:#00ff88; font-size:1.5rem;">₱0</span></div>
         </div>
 
         <div class="panel">
             <div class="panel-header">
                 <h3 style="margin:0; color: var(--gold);">AGENT HIERARCHY</h3>
-                <button class="btn-main gold" onclick="toggleModal(true)">+ CREATE DOWNLINE</button>
+                <button class="btn-main gold" onclick="toggleModal(true)">+ MANUAL CREATE</button>
             </div>
             <table class="agent-table">
                 <thead>
@@ -54,32 +70,31 @@
                         <th>Actions</th>
                     </tr>
                 </thead>
-                <tbody id="agent-list">
-                    </tbody>
+                <tbody id="agent-list"></tbody>
             </table>
         </div>
     </div>
 
     <div id="create-modal" class="modal" style="display:none;">
         <div class="modal-content">
-            <h3 style="margin-top:0; color:var(--gold);">NEW DOWNLINE</h3>
-            <p style="font-size: 0.75rem; color: #888;">Note: This user will be placed directly under you.</p>
+            <h3 id="modal-title" style="margin-top:0; color:var(--gold);">NEW DOWNLINE</h3>
             
-            <label style="font-size:0.7rem; color:#555;">USERNAME</label>
-            <input type="text" id="new-username" placeholder="e.g. agent_kevin">
-            
-            <label style="font-size:0.7rem; color:#555;">POSITION</label>
-            <select id="new-role">
-                </select>
+            <div id="create-only-fields">
+                <label style="font-size:0.7rem; color:#555;">USERNAME</label>
+                <input type="text" id="new-username" placeholder="e.g. agent_kevin">
+                
+                <label style="font-size:0.7rem; color:#555;">POSITION</label>
+                <select id="new-role"></select>
+            </div>
             
             <label style="font-size:0.7rem; color:#555;">COMMISSION RATE (%)</label>
-            <input type="number" id="new-comm" step="0.01" placeholder="Max: ---" oninput="validateInputRate()">
+            <input type="number" id="new-comm" step="0.01" oninput="validateInputRate()">
             
             <div id="rate-warning" style="color: #ff4444; font-size: 0.7rem; display: none; margin-bottom: 10px;">
                 Rate cannot exceed your own!
             </div>
 
-            <button class="btn-main gold" id="btn-save" style="width:100%; padding:15px; margin-top:10px;" onclick="processCreate()">CREATE ACCOUNT</button>
+            <button class="btn-main gold" id="btn-save" style="width:100%; padding:15px; margin-top:10px;" onclick="handleSave()">CONFIRM</button>
             <button class="btn-main" style="width:100%; background:#222; margin-top:5px;" onclick="toggleModal(false)">CANCEL</button>
         </div>
     </div>
@@ -104,6 +119,7 @@
 
         const TIERS = ["ADMIN", "OPERATOR", "SUB_OPERATOR", "INCO", "MASTER_AGENT", "SUB_AGENT", "PLAYER"];
         let myData = null;
+        let editingUserId = null;
 
         onAuthStateChanged(auth, async (user) => {
             if (user) {
@@ -122,8 +138,12 @@
             document.getElementById('my-comm-rate').innerText = `${myData.commissionRate}%`;
             document.getElementById('new-comm').placeholder = `Max: ${myData.commissionRate}%`;
 
-            // Fill Role Dropdown (Only show roles BELOW current user)
+            // Referral Link Generation
+            const baseUrl = window.location.origin + "/register/";
+            document.getElementById('referral-url').value = `${baseUrl}?ref=${auth.currentUser.uid}`;
+
             const select = document.getElementById('new-role');
+            select.innerHTML = "";
             const myIndex = TIERS.indexOf(myData.role);
             for (let i = myIndex + 1; i < TIERS.length; i++) {
                 let opt = document.createElement('option');
@@ -140,32 +160,61 @@
                 list.innerHTML = "";
                 document.getElementById('count-downlines').innerText = snap.size;
                 
-                snap.forEach(doc => {
-                    const u = doc.data();
+                snap.forEach(userDoc => {
+                    const u = userDoc.data();
                     list.innerHTML += `
                         <tr>
                             <td><strong>${u.username}</strong></td>
                             <td><span class="role-badge">${u.role}</span></td>
                             <td>${u.commissionRate}%</td>
                             <td style="color:#00ff88">ACTIVE</td>
-                            <td><button onclick="alert('User: ${u.uid}')" style="background:none; border:1px solid #444; color:#888; cursor:pointer; padding:5px 10px; border-radius:4px;">VIEW</button></td>
+                            <td><button class="btn-edit" onclick="openEdit('${userDoc.id}', '${u.username}', ${u.commissionRate})">SET RATE</button></td>
                         </tr>
                     `;
                 });
             });
         }
 
-        window.processCreate = async () => {
-            const user = document.getElementById('new-username').value.trim().toLowerCase();
-            const role = document.getElementById('new-role').value;
+        window.copyReferral = () => {
+            const copyText = document.getElementById("referral-url");
+            copyText.select();
+            navigator.clipboard.writeText(copyText.value);
+            alert("Referral Link Copied!");
+        };
+
+        window.openEdit = (uid, username, currentRate) => {
+            editingUserId = uid;
+            document.getElementById('modal-title').innerText = `EDIT: ${username.toUpperCase()}`;
+            document.getElementById('create-only-fields').style.display = "none";
+            document.getElementById('new-comm').value = currentRate;
+            toggleModal(true);
+        };
+
+        window.toggleModal = (show) => {
+            if (!show) {
+                editingUserId = null;
+                document.getElementById('modal-title').innerText = "NEW DOWNLINE";
+                document.getElementById('create-only-fields').style.display = "block";
+                document.getElementById('new-username').value = "";
+                document.getElementById('new-comm').value = "";
+            }
+            document.getElementById('create-modal').style.display = show ? 'flex' : 'none';
+        };
+
+        window.handleSave = async () => {
             const comm = parseFloat(document.getElementById('new-comm').value);
+            if (isNaN(comm) || comm > myData.commissionRate) return alert("Invalid Rate");
 
-            if(!user || isNaN(comm)) return alert("Fill all fields");
-            if(comm > myData.commissionRate) return alert("NEGATIVE SPREAD: Commission cannot exceed your own!");
-
-            try {
-                // In a real app, use Firebase Auth to create the user. 
-                // For this logic-only demo, we add to Firestore.
+            if (editingUserId) {
+                // UPDATE EXISTING (For Referral Signups)
+                await updateDoc(doc(db, "users", editingUserId), { commissionRate: comm });
+                alert("Commission Updated!");
+            } else {
+                // MANUAL CREATE
+                const user = document.getElementById('new-username').value.trim().toLowerCase();
+                const role = document.getElementById('new-role').value;
+                if(!user) return alert("Enter Username");
+                
                 await addDoc(collection(db, "users"), {
                     username: user,
                     role: role,
@@ -176,13 +225,9 @@
                     totalTurnover: 0,
                     createdAt: new Date()
                 });
-                alert("Account Created Successfully!");
-                toggleModal(false);
-            } catch (e) { console.error(e); }
-        };
-
-        window.toggleModal = (show) => {
-            document.getElementById('create-modal').style.display = show ? 'flex' : 'none';
+                alert("Account Created!");
+            }
+            toggleModal(false);
         };
 
         window.validateInputRate = () => {
@@ -191,12 +236,10 @@
             const btn = document.getElementById('btn-save');
             if (val > myData.commissionRate) {
                 warn.style.display = "block";
-                btn.disabled = true;
-                btn.style.opacity = "0.5";
+                btn.disabled = true; btn.style.opacity = "0.5";
             } else {
                 warn.style.display = "none";
-                btn.disabled = false;
-                btn.style.opacity = "1";
+                btn.disabled = false; btn.style.opacity = "1";
             }
         };
     </script>
