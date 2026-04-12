@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agent Manager | NEXUS</title>
+    <link rel="stylesheet" href="../style.css">
+    <style>
+        .agent-container { max-width: 1000px; margin: 20px auto; padding: 20px; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px; }
+        .stat-card { background: #111; padding: 20px; border-radius: 12px; border: 1px solid #222; text-align: center; }
+        
+        .panel { background: #111; border-radius: 15px; border: 1px solid #333; padding: 20px; }
+        .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #222; padding-bottom: 10px; }
+        
+        /* TABLE STYLING */
+        .agent-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+        .agent-table th { text-align: left; color: #555; padding: 12px; border-bottom: 1px solid #222; }
+        .agent-table td { padding: 15px 12px; border-bottom: 1px solid #1a1a1a; color: #eee; }
+        .role-badge { background: #222; padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; color: var(--gold); }
+
+        /* MODAL STYLING */
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: flex; align-items: center; justify-content: center; z-index: 2000; }
+        .modal-content { background: #111; width: 90%; max-width: 400px; padding: 30px; border-radius: 15px; border: 1px solid var(--gold); }
+        .modal input, .modal select { width: 100%; padding: 12px; margin: 10px 0; background: #000; border: 1px solid #333; color: white; border-radius: 8px; box-sizing: border-box; }
+    </style>
+</head>
+<body>
+
+    <nav class="top-nav">
+        <a href="/admin/" style="color: var(--gold); text-decoration: none; font-weight: bold;">← DASHBOARD</a>
+        <div id="my-role-display" style="color: #888; font-size: 0.8rem;">---</div>
+    </nav>
+
+    <div class="agent-container">
+        <div class="stats-grid">
+            <div class="stat-card"><h4>My Commission</h4><span class="val" id="my-comm-rate" style="color:var(--gold); font-size:1.5rem;">0%</span></div>
+            <div class="stat-card"><h4>Active Downlines</h4><span class="val" id="count-downlines" style="color:white; font-size:1.5rem;">0</span></div>
+            <div class="stat-card"><h4>Total Team Turnover</h4><span class="val" id="team-turnover" style="color:#00ff88; font-size:1.5rem;">₱0</span></div>
+        </div>
+
+        <div class="panel">
+            <div class="panel-header">
+                <h3 style="margin:0; color: var(--gold);">AGENT HIERARCHY</h3>
+                <button class="btn-main gold" onclick="toggleModal(true)">+ CREATE DOWNLINE</button>
+            </div>
+            <table class="agent-table">
+                <thead>
+                    <tr>
+                        <th>Username</th>
+                        <th>Position</th>
+                        <th>Commission</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="agent-list">
+                    </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="create-modal" class="modal" style="display:none;">
+        <div class="modal-content">
+            <h3 style="margin-top:0; color:var(--gold);">NEW DOWNLINE</h3>
+            <p style="font-size: 0.75rem; color: #888;">Note: This user will be placed directly under you.</p>
+            
+            <label style="font-size:0.7rem; color:#555;">USERNAME</label>
+            <input type="text" id="new-username" placeholder="e.g. agent_kevin">
+            
+            <label style="font-size:0.7rem; color:#555;">POSITION</label>
+            <select id="new-role">
+                </select>
+            
+            <label style="font-size:0.7rem; color:#555;">COMMISSION RATE (%)</label>
+            <input type="number" id="new-comm" step="0.01" placeholder="Max: ---" oninput="validateInputRate()">
+            
+            <div id="rate-warning" style="color: #ff4444; font-size: 0.7rem; display: none; margin-bottom: 10px;">
+                Rate cannot exceed your own!
+            </div>
+
+            <button class="btn-main gold" id="btn-save" style="width:100%; padding:15px; margin-top:10px;" onclick="processCreate()">CREATE ACCOUNT</button>
+            <button class="btn-main" style="width:100%; background:#222; margin-top:5px;" onclick="toggleModal(false)">CANCEL</button>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, updateDoc, increment, collection, query, where, orderBy, onSnapshot, addDoc } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCBvOw8HrMhZD0aYSHqFdE196ZITdYBU3Q",
+            authDomain: "nexus-sabong.firebaseapp.com",
+            projectId: "nexus-sabong",
+            storageBucket: "nexus-sabong.firebasestorage.app",
+            messagingSenderId: "421723311",
+            appId: "1:421723311:web:1780f179e7c2a7cc0e285a"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        const TIERS = ["ADMIN", "OPERATOR", "SUB_OPERATOR", "INCO", "MASTER_AGENT", "SUB_AGENT", "PLAYER"];
+        let myData = null;
+
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                const snap = await getDoc(doc(db, "users", user.uid));
+                if(snap.exists()) {
+                    myData = snap.data();
+                    if(myData.role === "PLAYER") window.location.href = "/";
+                    setupUI();
+                    loadDownlines();
+                }
+            } else { window.location.href = "/login/"; }
+        });
+
+        function setupUI() {
+            document.getElementById('my-role-display').innerText = `Logged in as: ${myData.role}`;
+            document.getElementById('my-comm-rate').innerText = `${myData.commissionRate}%`;
+            document.getElementById('new-comm').placeholder = `Max: ${myData.commissionRate}%`;
+
+            // Fill Role Dropdown (Only show roles BELOW current user)
+            const select = document.getElementById('new-role');
+            const myIndex = TIERS.indexOf(myData.role);
+            for (let i = myIndex + 1; i < TIERS.length; i++) {
+                let opt = document.createElement('option');
+                opt.value = TIERS[i];
+                opt.innerText = TIERS[i].replace("_", " ");
+                select.appendChild(opt);
+            }
+        }
+
+        function loadDownlines() {
+            const q = query(collection(db, "users"), where("uplineId", "==", auth.currentUser.uid));
+            onSnapshot(q, (snap) => {
+                const list = document.getElementById('agent-list');
+                list.innerHTML = "";
+                document.getElementById('count-downlines').innerText = snap.size;
+                
+                snap.forEach(doc => {
+                    const u = doc.data();
+                    list.innerHTML += `
+                        <tr>
+                            <td><strong>${u.username}</strong></td>
+                            <td><span class="role-badge">${u.role}</span></td>
+                            <td>${u.commissionRate}%</td>
+                            <td style="color:#00ff88">ACTIVE</td>
+                            <td><button onclick="alert('User: ${u.uid}')" style="background:none; border:1px solid #444; color:#888; cursor:pointer; padding:5px 10px; border-radius:4px;">VIEW</button></td>
+                        </tr>
+                    `;
+                });
+            });
+        }
+
+        window.processCreate = async () => {
+            const user = document.getElementById('new-username').value.trim().toLowerCase();
+            const role = document.getElementById('new-role').value;
+            const comm = parseFloat(document.getElementById('new-comm').value);
+
+            if(!user || isNaN(comm)) return alert("Fill all fields");
+            if(comm > myData.commissionRate) return alert("NEGATIVE SPREAD: Commission cannot exceed your own!");
+
+            try {
+                // In a real app, use Firebase Auth to create the user. 
+                // For this logic-only demo, we add to Firestore.
+                await addDoc(collection(db, "users"), {
+                    username: user,
+                    role: role,
+                    commissionRate: comm,
+                    uplineId: auth.currentUser.uid,
+                    uplinePath: [...(myData.uplinePath || []), auth.currentUser.uid],
+                    balance: 0,
+                    totalTurnover: 0,
+                    createdAt: new Date()
+                });
+                alert("Account Created Successfully!");
+                toggleModal(false);
+            } catch (e) { console.error(e); }
+        };
+
+        window.toggleModal = (show) => {
+            document.getElementById('create-modal').style.display = show ? 'flex' : 'none';
+        };
+
+        window.validateInputRate = () => {
+            const val = parseFloat(document.getElementById('new-comm').value);
+            const warn = document.getElementById('rate-warning');
+            const btn = document.getElementById('btn-save');
+            if (val > myData.commissionRate) {
+                warn.style.display = "block";
+                btn.disabled = true;
+                btn.style.opacity = "0.5";
+            } else {
+                warn.style.display = "none";
+                btn.disabled = false;
+                btn.style.opacity = "1";
+            }
+        };
+    </script>
+</body>
+</html>
