@@ -87,16 +87,21 @@
     border-top: 1px solid #222;
 }
 
-.logout-btn {
-    background: none;
-    border: none;
-    color: #ff4444;
-    cursor: pointer;
-    font-size: 0.9rem;
-    width: 100%;
-    text-align: left;
-    padding: 10px 0;
-}
+    // Inside your injectMenu function in menu.js
+    if (logoutBtn) {
+        logoutBtn.onclick = () => {
+            if (confirm("Logout from NEXUS?")) {
+                // Check if firebaseAuth was made global in the main script
+                if (window.firebaseAuth) {
+                    window.firebaseAuth.signOut().then(() => {
+                        window.location.href = "/login/";
+                    });
+                } else {
+                    window.location.href = "/login/";
+                }
+            }
+        };
+    }
 
 /* Dark Overlay */
 .menu-overlay {
