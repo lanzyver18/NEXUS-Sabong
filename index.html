@@ -6,10 +6,9 @@
     <title>NEXUS | Home Arena</title>
     
     <link rel="stylesheet" href="menu.css">
-    <script src="menu.js"></script>
-
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Goldman:wght@400;700&display=swap" rel="stylesheet">
+    
     <style>
         :root { --gold: #D4AF37; }
 
@@ -18,7 +17,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 12px 20px 12px 60px; /* Added left padding for the ☰ button */
+            padding: 12px 20px 12px 60px; /* Space for the ☰ button */
             background: #000;
             border-bottom: 2px solid #222;
             position: sticky;
@@ -80,27 +79,15 @@
             background-position: center;
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
-        
+
         .status-tag { 
-            position: absolute; 
-            top: 20px; 
-            left: 20px; 
-            background: #ff4444; 
-            color: white; 
-            font-size: 0.7rem; 
-            padding: 5px 12px; 
-            border-radius: 4px; 
-            font-weight: bold;
-            display: flex;
-            align-items: center;
-            gap: 6px;
+            position: absolute; top: 20px; left: 20px; 
+            background: #ff4444; color: white; font-size: 0.7rem; padding: 5px 12px; 
+            border-radius: 4px; font-weight: bold; display: flex; align-items: center; gap: 6px;
         }
 
         .pulse {
-            width: 8px;
-            height: 8px;
-            background: white;
-            border-radius: 50%;
+            width: 8px; height: 8px; background: white; border-radius: 50%;
             animation: pulse-animation 1.5s infinite;
         }
 
@@ -167,6 +154,10 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
         import { getFirestore, doc, onSnapshot, getDoc } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+        
+        // Import the Menu logic if it's a module, or just call the script
+        // For reliability, we will define the injection directly here:
+        import { injectMenu } from "./menu.js"; 
 
         const firebaseConfig = {
             apiKey: "AIzaSyCBvOw8HrMhZD0aYSHqFdE196ZITdYBU3Q",
@@ -181,8 +172,15 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // Make Auth globally accessible for the menu's logout button
+        // Make Auth globally accessible for the menu
         window.firebaseAuth = auth;
+
+        // Run Menu Injection
+        try {
+            injectMenu();
+        } catch (e) {
+            console.error("Menu injection failed. Check if menu.js is in the root folder.", e);
+        }
 
         onAuthStateChanged(auth, async (user) => {
             if (user) {
