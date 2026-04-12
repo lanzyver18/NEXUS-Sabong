@@ -9,8 +9,8 @@
 <body class="auth-page">
     <div class="auth-card">
         <div class="logo">NEXUS</div>
-        <h2>CREATE USERNAME</h2>
-        <p class="text-muted">Choose a unique name to use as your ID.</p>
+        <h2 id="reg-title">CREATE ACCOUNT</h2>
+        <p class="text-muted" id="ref-status">Choose a unique name to use as your ID.</p>
         
         <input type="text" id="reg-username" placeholder="Enter Username (e.g. BossKenny)">
         <input type="password" id="reg-pass" placeholder="Create Password">
@@ -22,7 +22,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
         import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
-        import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCBvOw8HrMhZD0aYSHqFdE196ZITdYBU3Q",
@@ -37,27 +37,77 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
+        const TIERS = ["ADMIN", "OPERATOR", "SUB_OPERATOR", "INCO", "MASTER_AGENT", "SUB_AGENT", "PLAYER"];
+
+        // 1. URL REFERRAL DETECTION
+        const urlParams = new URLSearchParams(window.location.search);
+        const referrerUid = urlParams.get('ref');
+
+        // Check if there is a referral and show status
+        async function checkReferral() {
+            if (referrerUid) {
+                try {
+                    const refSnap = await getDoc(doc(db, "users", referrerUid));
+                    if (refSnap.exists()) {
+                        const refData = refSnap.data();
+                        document.getElementById('ref-status').innerHTML = `You are being recruited by <b>${refData.username.toUpperCase()}</b>`;
+                        document.getElementById('ref-status').style.color = "#D4AF37";
+                    }
+                } catch (e) { console.log("Referral invalid"); }
+            }
+        }
+        checkReferral();
+
         document.getElementById('btn-register').onclick = async () => {
             const user = document.getElementById('reg-username').value.trim().toLowerCase();
             const pass = document.getElementById('reg-pass').value;
 
             if(user.length < 4) return alert("Username too short!");
+            if(pass.length < 6) return alert("Password must be at least 6 characters.");
 
             try {
+                // Determine Upline and Role Logic
+                let uplineId = "SYSTEM";
+                let uplinePath = [];
+                let assignedRole = "PLAYER";
+
+                if (referrerUid) {
+                    const refSnap = await getDoc(doc(db, "users", referrerUid));
+                    if (refSnap.exists()) {
+                        const refData = refSnap.data();
+                        uplineId = referrerUid;
+                        // Inherit path and append the current referrer
+                        uplinePath = [...(refData.uplinePath || []), referrerUid];
+                        
+                        // Set role to one level below referrer
+                        const refLevel = TIERS.indexOf(refData.role);
+                        assignedRole = TIERS[refLevel + 1] || "PLAYER";
+                    }
+                }
+
                 // Convert username to a fake email for Firebase Auth compatibility
                 const fakeEmail = `${user}@nexus-sabong.com`;
                 const userCredential = await createUserWithEmailAndPassword(auth, fakeEmail, pass);
                 
-                // Save profile using the Username as the document ID
+                // Save profile with full hierarchy data
                 await setDoc(doc(db, "users", userCredential.user.uid), {
+                    uid: userCredential.user.uid,
                     username: user,
+                    role: assignedRole,
+                    commissionRate: 0, // Upline will set this later
+                    uplineId: uplineId,
+                    uplinePath: uplinePath,
                     balance: 0,
+                    totalTurnover: 0,
                     isAdmin: false,
                     createdAt: new Date()
                 });
 
                 window.location.href = "/";
-            } catch (error) { alert("Username already taken or invalid."); }
+            } catch (error) { 
+                console.error(error);
+                alert("Username already taken or registration error."); 
+            }
         };
     </script>
 </body>
