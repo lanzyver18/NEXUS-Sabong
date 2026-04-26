@@ -12,31 +12,27 @@
         
         body { background: #000; overflow-x: hidden; margin: 0; color: white; -webkit-font-smoothing: antialiased; }
 
-        /* CRITICAL MENU FIXES */
+        /* FIXED MENU OVERRIDES */
         #menu-container {
             position: fixed !important;
             top: 0 !important;
             left: 0 !important;
             width: 100% !important;
             height: 100% !important;
-            background: #000 !important; /* Forces solid background */
-            z-index: 10000 !important; /* Sits above everything */
-            display: none;
+            background: #000 !important;
+            z-index: 10001 !important;
         }
-
         #menu-overlay {
-            background: rgba(0, 0, 0, 0.9) !important;
-            backdrop-filter: blur(10px) !important;
-            z-index: 9999 !important;
+            background: rgba(0, 0, 0, 0.95) !important;
+            backdrop-filter: blur(15px) !important;
+            z-index: 10000 !important;
         }
 
-        /* Prevent background elements from leaking through top nav */
         .top-nav { 
             position: sticky; top: 0; z-index: 1000;
             display: flex; justify-content: space-between; align-items: center; 
             padding: 12px 20px 12px 75px;
-            background: #000; /* Replaced RGBA with solid Hex */
-            border-bottom: 2px solid #222; 
+            background: #000; border-bottom: 2px solid #222; 
         }
 
         .crash-layout { 
@@ -57,8 +53,7 @@
             background-image: 
                 linear-gradient(rgba(212, 175, 55, 0.05) 1px, transparent 1px),
                 linear-gradient(90deg, rgba(212, 175, 55, 0.05) 1px, transparent 1px);
-            background-size: 80px 80px;
-            transform: perspective(1000px) rotateX(60deg);
+            background-size: 80px 80px; transform: perspective(1000px) rotateX(60deg);
             opacity: 0.5; z-index: 1; pointer-events: none;
         }
 
@@ -137,11 +132,11 @@
             <div class="history-bar" id="history"></div>
         </div>
 
-        <div class="display-area">
+        <div class="display-area" id="arena">
             <div class="grid-bg" id="grid-bg"></div>
             <div class="hud-overlay">
-                <div class="hud-stat stat-tl">NETWORK: STABLE <br> LATENCY: 12ms</div>
-                <div class="hud-stat stat-tr">BUFFERING: 0% <br> NODE: RP-MNL-01</div>
+                <div class="hud-stat stat-tl">NETWORK: STABLE <br> SPEED: <span id="hud-speed">1.00</span> mach</div>
+                <div class="hud-stat stat-tr">COORDINATES: <br> <span id="hud-coords">0, 0</span></div>
             </div>
             <div id="status-text" style="color: var(--gold); font-size: 0.6rem; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 5px; position: absolute; top: 35px; font-weight: bold; z-index: 10; opacity: 0.5;">HUB CONNECTED</div>
             <div id="main-mult">1.00x</div>
@@ -184,16 +179,15 @@
         class ExplosionParticle {
             constructor(x, y) {
                 this.x = x; this.y = y;
-                this.size = Math.random() * 8 + 2;
-                this.vx = (Math.random() - 0.5) * 15;
-                this.vy = (Math.random() - 0.5) * 15;
+                this.size = Math.random() * 6 + 1;
+                this.vx = (Math.random() - 0.5) * 12;
+                this.vy = (Math.random() - 0.5) * 12;
                 this.alpha = 1;
-                this.color = Math.random() > 0.5 ? '#ff4444' : '#ffaa00';
+                this.color = Math.random() > 0.5 ? '#D4AF37' : '#ff4444';
             }
             update() { this.x += this.vx; this.y += this.vy; this.alpha -= 0.02; }
             draw() {
-                ctx.globalAlpha = this.alpha;
-                ctx.fillStyle = this.color;
+                ctx.globalAlpha = this.alpha; ctx.fillStyle = this.color;
                 ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); ctx.fill();
             }
         }
@@ -210,10 +204,7 @@
         });
 
         function initEngine() {
-            gameStatus = "WAITING";
-            let countdown = 5.0;
-            updateButtons();
-            particles = [];
+            gameStatus = "WAITING"; let countdown = 5.0; updateButtons(); particles = [];
             const timer = setInterval(() => {
                 countdown -= 0.1;
                 document.getElementById('status-text').innerText = `NEXT SYNC IN ${countdown.toFixed(1)}S`;
@@ -223,85 +214,72 @@
         }
 
         function runRound() {
-            gameStatus = "RUNNING";
-            document.getElementById('status-text').innerText = "CLIMBING...";
-            if (Math.random() < 0.08) crashPoint = 1.00;
-            else crashPoint = parseFloat((Math.max(1.01, 0.93 / (1 - Math.random()))).toFixed(2));
-
+            gameStatus = "RUNNING"; document.getElementById('status-text').innerText = "CLIMBING...";
+            crashPoint = Math.random() < 0.08 ? 1.00 : parseFloat((Math.max(1.01, 0.94 / (1 - Math.random()))).toFixed(2));
             if (betPlacedForNext) { hasBet = true; betPlacedForNext = false; }
-            updateButtons();
-            startTime = Date.now();
+            updateButtons(); startTime = Date.now();
 
             const tick = setInterval(() => {
                 let elapsed = (Date.now() - startTime) / 1000;
-                currentMult = Math.pow(1.08, elapsed); 
+                currentMult = Math.pow(1.08, elapsed);
                 document.getElementById('main-mult').innerText = currentMult.toFixed(2) + "x";
+                document.getElementById('hud-speed').innerText = currentMult.toFixed(2);
                 
                 if(hasBet) document.getElementById('cashout-preview').innerText = `₱${Math.floor(myBetAmt * currentMult).toLocaleString()}`;
 
                 ctx.clearRect(0,0, canvas.width, canvas.height);
                 
-                const headX = (elapsed * 150);
-                const headY = (currentMult - 1) * 300;
-                const offsetX = canvas.width * 0.4 - headX;
-                const offsetY = canvas.height * 0.7 + headY;
+                // FIXED LINE PROGRESSION
+                const spacingX = 140; const spacingY = 280;
+                const headX = (elapsed * spacingX);
+                const headY = (currentMult - 1) * spacingY;
+                
+                // Camera Smoothing
+                const camX = canvas.width * 0.3 - headX;
+                const camY = canvas.height * 0.7 + headY;
+                document.getElementById('hud-coords').innerText = `${Math.floor(headX)}, ${Math.floor(headY)}`;
 
                 ctx.save();
-                ctx.translate(offsetX, offsetY);
-                gridBg.style.transform = `perspective(1000px) rotateX(60deg) translateY(${headY % 80}px) translateX(${offsetX % 80}px)`;
+                ctx.translate(camX, camY);
+                gridBg.style.transform = `perspective(1000px) rotateX(60deg) translateY(${headY % 80}px) translateX(${camX % 80}px)`;
 
+                // Glowing Trail
                 ctx.beginPath();
-                ctx.lineWidth = 8;
-                ctx.strokeStyle = '#D4AF37';
-                ctx.lineCap = 'round';
-                ctx.shadowBlur = 20; ctx.shadowColor = 'rgba(212, 175, 55, 0.6)';
+                ctx.lineWidth = 10; ctx.strokeStyle = '#D4AF37';
+                ctx.lineCap = 'round'; ctx.shadowBlur = 20; ctx.shadowColor = 'rgba(212, 175, 55, 0.6)';
                 ctx.moveTo(0, 0);
-                for(let i=0; i <= elapsed; i+=0.05) {
-                    const lx = i * 150;
-                    const ly = -(Math.pow(1.08, i) - 1) * 300;
-                    ctx.lineTo(lx, ly);
+                for(let i=0; i <= elapsed; i+=0.1) {
+                    ctx.lineTo(i * spacingX, -(Math.pow(1.08, i) - 1) * spacingY);
                 }
                 ctx.stroke();
 
+                // Head Pointer
                 ctx.shadowBlur = 40; ctx.fillStyle = "#fff";
                 ctx.beginPath(); ctx.arc(headX, -headY, 8, 0, Math.PI * 2); ctx.fill();
                 ctx.restore();
 
-                const auto = parseFloat(document.getElementById('auto-cashout').value);
-                if (hasBet && !isNaN(auto) && auto > 1 && currentMult >= auto) cashout();
-
-                if (currentMult >= crashPoint) {
-                    clearInterval(tick);
-                    doCrash(headX, headY, offsetX, offsetY);
-                }
+                if (hasBet && parseFloat(document.getElementById('auto-cashout').value) <= currentMult) cashout();
+                if (currentMult >= crashPoint) { clearInterval(tick); doCrash(headX, headY, camX, camY); }
             }, 30);
         }
 
-        function doCrash(hx, hy, ox, oy) {
-            gameStatus = "CRASHED";
-            hasBet = false;
+        function doCrash(hx, hy, cx, cy) {
+            gameStatus = "CRASHED"; hasBet = false;
             document.getElementById('main-mult').classList.add('crashed');
             document.getElementById('status-text').innerText = "SIGNAL LOST";
             
-            for(let i=0; i<60; i++) particles.push(new ExplosionParticle(ox + hx, oy - hy));
+            for(let i=0; i<80; i++) particles.push(new ExplosionParticle(cx + hx, cy - hy));
 
-            const particleInterval = setInterval(() => {
+            const pLoop = setInterval(() => {
                 ctx.clearRect(0,0, canvas.width, canvas.height);
-                particles.forEach((p, index) => {
-                    p.update();
-                    p.draw();
-                    if(p.alpha <= 0) particles.splice(index, 1);
+                particles.forEach((p, idx) => {
+                    p.update(); p.draw(); if(p.alpha <= 0) particles.splice(idx, 1);
                 });
-                if(particles.length === 0) clearInterval(particleInterval);
+                if(particles.length === 0) clearInterval(pLoop);
             }, 16);
 
-            addHistory(crashPoint);
-            updateButtons();
-            setTimeout(() => {
-                document.getElementById('main-mult').classList.remove('crashed');
-                document.getElementById('main-mult').innerText = "1.00x";
-                initEngine();
-            }, 3000);
+            addHistory(crashPoint); updateButtons();
+            setTimeout(() => { document.getElementById('main-mult').classList.remove('crashed'); initEngine(); }, 3000);
         }
 
         window.placeBet = async () => {
@@ -309,15 +287,13 @@
             if (amt > balance || amt < 10) return alert("Verify Balance");
             await updateDoc(doc(db, "users", auth.currentUser.uid), { balance: increment(-amt) });
             myBetAmt = amt;
-            if (gameStatus === "WAITING") hasBet = true;
-            else betPlacedForNext = true;
+            if (gameStatus === "WAITING") hasBet = true; else betPlacedForNext = true;
             updateButtons();
         };
 
         window.cashout = async () => {
             if (!hasBet || gameStatus !== "RUNNING") return;
-            const win = Math.floor(myBetAmt * currentMult);
-            hasBet = false;
+            const win = Math.floor(myBetAmt * currentMult); hasBet = false;
             await updateDoc(doc(db, "users", auth.currentUser.uid), { balance: increment(win) });
             await addDoc(collection(db, "wallet_logs"), { uid: auth.currentUser.uid, type: "CRASH_WIN", amount: win, timestamp: new Date() });
             updateButtons();
@@ -336,8 +312,7 @@
             const item = document.createElement('div');
             item.className = `hist-item ${val >= 2 ? 'hist-green' : 'hist-red'}`;
             item.innerText = val.toFixed(2) + "x";
-            bar.prepend(item);
-            if (bar.children.length > 10) bar.lastChild.remove();
+            bar.prepend(item); if (bar.children.length > 10) bar.lastChild.remove();
         }
 
         initEngine();
