@@ -12,20 +12,18 @@
         
         body { background: #000; overflow-x: hidden; margin: 0; color: white; -webkit-font-smoothing: antialiased; }
 
-        /* FIXED NAV - REINFORCED BACKGROUND */
+        /* MENU FIX: Ensure menu-container from injectMenu is opaque and on top */
+        #menu-container {
+            background: #000 !important;
+            z-index: 9999 !important;
+        }
+
         .top-nav { 
-            position: sticky; 
-            top: 0; 
-            z-index: 9999; /* Higher than HUD and Particles */
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
+            position: sticky; top: 0; z-index: 1000;
+            display: flex; justify-content: space-between; align-items: center; 
             padding: 12px 20px 12px 75px;
-            background: #000 !important; /* Pure black fallback */
-            background: rgba(0, 0, 0, 0.95) !important;
-            border-bottom: 2px solid #222; 
+            background: #000; border-bottom: 2px solid #222; 
             backdrop-filter: blur(15px);
-            -webkit-backdrop-filter: blur(15px);
         }
 
         .crash-layout { 
@@ -34,16 +32,13 @@
             gap: 25px; padding: 0 15px; 
         }
 
-        /* PREMIUM DISPLAY AREA */
         .display-area { 
-            background: #050505; 
-            border-radius: 28px; border: 1px solid #222; 
+            background: #050505; border-radius: 28px; border: 1px solid #222; 
             height: 550px; display: flex; flex-direction: column; align-items: center; 
             justify-content: center; position: relative; overflow: hidden;
             box-shadow: 0 20px 50px rgba(0,0,0,0.8), inset 0 0 100px rgba(0,0,0,1);
         }
 
-        /* Cyber Grid Background */
         .grid-bg {
             position: absolute; width: 400%; height: 400%;
             background-image: 
@@ -61,17 +56,15 @@
             pointer-events: none; transform: translateY(-30px);
             transition: color 0.3s, transform 0.1s;
         }
-        #main-mult.crashed { color: var(--red); text-shadow: 0 0 50px rgba(255, 68, 68, 0.6); animation: glitch 0.2s infinite; }
+        #main-mult.crashed { color: var(--red); text-shadow: 0 0 50px rgba(255, 68, 68, 0.6); animation: crash-shake 0.4s ease-out; }
         
         canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 5; }
 
-        /* HUD ELEMENTS */
         .hud-overlay { position: absolute; width: 100%; height: 100%; z-index: 6; pointer-events: none; padding: 30px; box-sizing: border-box; }
         .hud-stat { position: absolute; font-size: 0.55rem; font-family: 'Goldman'; color: var(--gold); opacity: 0.4; text-transform: uppercase; letter-spacing: 1px; }
         .stat-tl { top: 30px; left: 30px; }
         .stat-tr { top: 30px; right: 30px; text-align: right; }
 
-        /* CONTROL PANEL */
         .control-panel { 
             background: linear-gradient(145deg, #111, #080808); padding: 30px; border-radius: 28px; 
             border: 1px solid #252525; display: flex; flex-direction: column; gap: 20px; 
@@ -84,38 +77,24 @@
             color: var(--gold); border-radius: 14px; outline: none; font-family: 'Goldman'; 
             transition: 0.3s; box-sizing: border-box; font-size: 1.2rem;
         }
-        input:focus { border-color: var(--gold); box-shadow: 0 0 20px rgba(212, 175, 55, 0.15); }
-
-        .btn-action { 
-            width: 100%; padding: 22px; border-radius: 16px; border: none; 
-            font-weight: bold; font-family: 'Goldman'; cursor: pointer; 
-            text-transform: uppercase; transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
-            letter-spacing: 2px; font-size: 1.1rem;
-        }
-        
+        .btn-action { width: 100%; padding: 22px; border-radius: 16px; border: none; font-weight: bold; font-family: 'Goldman'; cursor: pointer; text-transform: uppercase; transition: 0.3s; letter-spacing: 2px; font-size: 1.1rem; }
         .btn-bet { background: var(--gold); color: black; box-shadow: 0 8px 0 #917725; }
         .btn-cashout { background: var(--green); color: black; display: none; box-shadow: 0 8px 0 #008f4c; }
         .btn-waiting { background: #1a1a1a; color: #444; cursor: not-allowed; display: none; border: 1px solid #222; }
 
-        .history-bar { 
-            display: flex; gap: 10px; overflow-x: auto; padding: 15px; 
-            background: rgba(0,0,0,0.4); border-radius: 16px; border: 1px solid #1a1a1a; 
-            scrollbar-width: none; margin-top: 10px;
-        }
+        .history-bar { display: flex; gap: 10px; overflow-x: auto; padding: 15px; background: rgba(0,0,0,0.4); border-radius: 16px; border: 1px solid #1a1a1a; scrollbar-width: none; margin-top: 10px; }
         .hist-item { padding: 8px 14px; border-radius: 10px; font-size: 0.8rem; font-family: 'Goldman'; font-weight: bold; background: #111; flex-shrink: 0; border: 1px solid #222; }
+        .hist-green { color: var(--green); border-color: rgba(0, 255, 136, 0.2); }
+        .hist-red { color: var(--red); border-color: rgba(255, 68, 68, 0.2); }
 
-        @keyframes glitch {
-            0% { transform: translate(-32px, -30px); }
-            50% { transform: translate(-28px, -28px); }
-            100% { transform: translate(-30px, -32px); }
+        @keyframes crash-shake {
+            0% { transform: translate(0, -30px) scale(1); }
+            10%, 30%, 50%, 70%, 90% { transform: translate(-10px, -35px); }
+            20%, 40%, 60%, 80% { transform: translate(10px, -25px); }
+            100% { transform: translate(0, -30px) scale(0.9); }
         }
 
-        @media (max-width: 900px) { 
-            .crash-layout { grid-template-columns: 1fr; } 
-            .display-area { height: 420px; }
-            #main-mult { font-size: 4.5rem; }
-            .top-nav { padding-left: 65px; } /* Ensure menu btn spacing on mobile */
-        }
+        @media (max-width: 900px) { .crash-layout { grid-template-columns: 1fr; } .display-area { height: 420px; } #main-mult { font-size: 4.5rem; } }
     </style>
 </head>
 <body>
@@ -227,7 +206,6 @@
                 countdown -= 0.1;
                 document.getElementById('status-text').innerText = `NEXT SYNC IN ${countdown.toFixed(1)}S`;
                 ctx.clearRect(0,0, canvas.width, canvas.height);
-                gridBg.style.transform = `perspective(1000px) rotateX(60deg) translateY(0px) translateX(0px)`;
                 if (countdown <= 0) { clearInterval(timer); runRound(); }
             }, 100);
         }
@@ -260,7 +238,6 @@
                 ctx.translate(offsetX, offsetY);
                 gridBg.style.transform = `perspective(1000px) rotateX(60deg) translateY(${headY % 80}px) translateX(${offsetX % 80}px)`;
 
-                // Line Drawing
                 ctx.beginPath();
                 ctx.lineWidth = 8;
                 ctx.strokeStyle = '#D4AF37';
@@ -274,7 +251,6 @@
                 }
                 ctx.stroke();
 
-                // Head Dot
                 ctx.shadowBlur = 40; ctx.fillStyle = "#fff";
                 ctx.beginPath(); ctx.arc(headX, -headY, 8, 0, Math.PI * 2); ctx.fill();
                 ctx.restore();
@@ -293,7 +269,7 @@
             gameStatus = "CRASHED";
             hasBet = false;
             document.getElementById('main-mult').classList.add('crashed');
-            document.getElementById('status-text').innerText = "NETWORK CRASHED";
+            document.getElementById('status-text').innerText = "SIGNAL LOST";
             
             for(let i=0; i<60; i++) particles.push(new ExplosionParticle(ox + hx, oy - hy));
 
