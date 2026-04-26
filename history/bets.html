@@ -2,70 +2,178 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bet History | NEXUS</title>
-    <link rel="stylesheet" href="../style.css">
-    <link rel="stylesheet" href="../menu.css">
-    <script src="../menu.js" type="module"></script>
+    <link rel="stylesheet" href="/style.css">
+    <link rel="stylesheet" href="/menu.css">
+    <link href="https://fonts.googleapis.com/css2?family=Goldman:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        .bet-container { max-width: 800px; margin: 40px auto; padding: 20px; }
-        .bet-card { 
-            background: #111; border: 1px solid #333; border-radius: 12px; 
-            margin-bottom: 15px; padding: 15px; border-left: 5px solid #444;
+        .bet-container { max-width: 800px; margin: 60px auto 40px; padding: 0 20px; }
+        
+        /* Stats Summary */
+        .history-stats { 
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); 
+            gap: 15px; margin-bottom: 30px; 
         }
-        .bet-card.win { border-left-color: #00ff88; }
-        .bet-card.loss { border-left-color: #ff4444; }
-        .bet-header { display: flex; justify-content: space-between; margin-bottom: 10px; }
-        .bet-details { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.85rem; }
-        .label { color: #666; }
+        .stat-box { background: #111; padding: 15px; border-radius: 12px; border: 1px solid #222; text-align: center; }
+        .stat-box h4 { font-size: 0.6rem; color: #555; text-transform: uppercase; margin-bottom: 5px; letter-spacing: 1px; }
+        .stat-box span { font-family: 'Goldman'; font-size: 1.2rem; color: var(--gold); }
+
+        /* Filter Tabs */
+        .filter-row { display: flex; gap: 10px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 5px; }
+        .filter-btn { 
+            background: #111; border: 1px solid #333; color: #888; padding: 8px 16px; 
+            border-radius: 20px; font-size: 0.75rem; cursor: pointer; transition: 0.2s; white-space: nowrap;
+        }
+        .filter-btn.active { border-color: var(--gold); color: var(--gold); background: rgba(212, 175, 55, 0.1); }
+
+        /* Bet Cards */
+        .bet-card { 
+            background: #111; border: 1px solid #222; border-radius: 15px; 
+            margin-bottom: 15px; padding: 20px; border-left: 6px solid #333;
+            transition: 0.2s;
+        }
+        .bet-card.win { border-left-color: #00ff88; background: linear-gradient(90deg, rgba(0, 255, 136, 0.05), transparent); }
+        .bet-card.loss { border-left-color: #ff4444; background: linear-gradient(90deg, rgba(255, 68, 68, 0.05), transparent); }
+        .bet-card.draw { border-left-color: var(--gold); }
+
+        .bet-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .bet-details { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; font-size: 0.8rem; }
+        .label { color: #555; text-transform: uppercase; font-size: 0.65rem; display: block; margin-bottom: 4px; }
         .value { color: #eee; font-weight: bold; }
-        .win-amt { color: #00ff88; font-family: 'Goldman'; }
+        
+        .payout-val { font-family: 'Goldman'; font-size: 1rem; color: #00ff88; }
+        
+        /* Top Nav Overlap Fix */
+        .top-nav { position: relative; display: flex; justify-content: space-between; align-items: center; padding: 12px 20px 12px 75px; background: #000; border-bottom: 2px solid #222; }
     </style>
 </head>
 <body>
+
+    <nav class="top-nav">
+        <div class="logo" style="color:var(--gold); font-family:'Goldman'; font-weight:bold; font-size:1.2rem;">ARENA LOGS</div>
+        <div id="user-balance" style="color: #00ff88; font-weight: bold; font-family: 'Goldman';">₱0.00</div>
+    </nav>
+
     <div class="bet-container">
-        <h3 style="color: var(--gold); font-family: 'Goldman';">BETTING HISTORY</h3>
-        <div id="bet-list"></div>
+        <h3 style="color: var(--gold); font-family: 'Goldman'; margin-bottom: 25px; letter-spacing: 1px;">BET HISTORY</h3>
+
+        <div class="history-stats">
+            <div class="stat-box"><h4>Total Bets</h4><span id="stat-count">0</span></div>
+            <div class="stat-box"><h4>Volume</h4><span id="stat-volume">₱0</span></div>
+            <div class="stat-box"><h4>Total Profit</h4><span id="stat-profit" style="color:#00ff88;">₱0</span></div>
+        </div>
+
+        <div class="filter-row">
+            <button class="filter-btn active" onclick="setFilter('ALL')">ALL</button>
+            <button class="filter-btn" onclick="setFilter('WIN')">WINS</button>
+            <button class="filter-btn" onclick="setFilter('LOSS')">LOSSES</button>
+            <button class="filter-btn" onclick="setFilter('PENDING')">PENDING</button>
+        </div>
+
+        <div id="bet-list">
+            <p style="color: #444; text-align: center; margin-top: 50px;">Syncing arena records...</p>
+        </div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
-        import { getFirestore, collection, query, where, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
-        import { injectMenu } from "../menu.js";
+        import { getFirestore, collection, query, where, orderBy, onSnapshot, doc } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+        import { injectMenu } from "/menu.js";
 
-        // ... Firebase Config & Auth Init ...
+        const firebaseConfig = {
+            apiKey: "AIzaSyCBvOw8HrMhZD0aYSHqFdE196ZITdYBU3Q",
+            authDomain: "nexus-sabong.firebaseapp.com",
+            projectId: "nexus-sabong",
+            storageBucket: "nexus-sabong.firebasestorage.app",
+            messagingSenderId: "421723311",
+            appId: "1:421723311:web:1780f179e7c2a7cc0e285a"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        window.firebaseAuth = auth;
+        window.firebaseDb = db;
         injectMenu();
+
+        let currentFilter = "ALL";
+        let allBets = [];
 
         onAuthStateChanged(auth, (user) => {
             if (user) {
-                const q = query(collection(db, "bets"), where("uid", "==", user.uid), orderBy("timestamp", "desc"));
-                
-                onSnapshot(q, (snap) => {
-                    const list = document.getElementById('bet-list');
-                    list.innerHTML = "";
-
-                    snap.forEach(doc => {
-                        const b = doc.data();
-                        const resultClass = b.status === "WIN" ? "win" : (b.status === "LOSS" ? "loss" : "");
-                        
-                        list.innerHTML += `
-                            <div class="bet-card ${resultClass}">
-                                <div class="bet-header">
-                                    <span style="color: var(--gold); font-weight: bold;">FIGHT #${b.fightNumber || '---'}</span>
-                                    <span class="status-badge">${b.status}</span>
-                                </div>
-                                <div class="bet-details">
-                                    <div><span class="label">Side:</span> <span class="value" style="color:${b.side === 'MERON' ? '#ff4444' : '#3498db'}">${b.side}</span></div>
-                                    <div><span class="label">Bet:</span> <span class="value">₱${b.amount}</span></div>
-                                    <div><span class="label">Date:</span> <span class="value">${b.timestamp?.toDate().toLocaleDateString()}</span></div>
-                                    <div><span class="label">Payout:</span> <span class="win-amt">${b.status === 'WIN' ? '₱' + b.payout : '---'}</span></div>
-                                </div>
-                            </div>
-                        `;
-                    });
+                // Live Balance
+                onSnapshot(doc(db, "users", user.uid), (snap) => {
+                    if (snap.exists()) document.getElementById('user-balance').innerText = `₱${snap.data().balance.toLocaleString()}`;
                 });
-            }
+
+                // Bet Records
+                const q = query(collection(db, "bets"), where("uid", "==", user.uid), orderBy("timestamp", "desc"));
+                onSnapshot(q, (snap) => {
+                    allBets = [];
+                    snap.forEach(d => allBets.push({id: d.id, ...d.data()}));
+                    calculateStats();
+                    renderBets();
+                });
+            } else { window.location.href = "/login/"; }
         });
+
+        function calculateStats() {
+            let volume = 0;
+            let profit = 0;
+            allBets.forEach(b => {
+                volume += b.amount;
+                if(b.status === "WIN") profit += (b.payout - b.amount);
+                if(b.status === "LOSS") profit -= b.amount;
+            });
+            document.getElementById('stat-count').innerText = allBets.length;
+            document.getElementById('stat-volume').innerText = `₱${volume.toLocaleString()}`;
+            document.getElementById('stat-profit').innerText = `₱${profit.toLocaleString()}`;
+            document.getElementById('stat-profit').style.color = profit >= 0 ? "#00ff88" : "#ff4444";
+        }
+
+        window.setFilter = (f) => {
+            currentFilter = f;
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.innerText === f || (f === 'ALL' && btn.innerText === 'ALL'));
+            });
+            renderBets();
+        };
+
+        function renderBets() {
+            const list = document.getElementById('bet-list');
+            list.innerHTML = "";
+            
+            const filtered = allBets.filter(b => currentFilter === "ALL" || b.status === currentFilter);
+
+            if (filtered.length === 0) {
+                list.innerHTML = `<p style="text-align:center; color:#333; margin-top:50px;">No records found for ${currentFilter}.</p>`;
+                return;
+            }
+
+            filtered.forEach(b => {
+                const resultClass = b.status.toLowerCase();
+                const time = b.timestamp?.toDate().toLocaleString() || 'Recent';
+                const sideColor = b.side === 'MERON' ? '#ff4444' : '#4444ff';
+                
+                list.innerHTML += `
+                    <div class="bet-card ${resultClass}">
+                        <div class="bet-header">
+                            <span style="color: var(--gold); font-family:'Goldman'; font-size:0.9rem;">FIGHT #${b.fightId || '---'}</span>
+                            <span style="font-size:0.6rem; padding:4px 8px; background:#222; border-radius:4px; color:#aaa; font-weight:bold;">${b.status}</span>
+                        </div>
+                        <div class="bet-details">
+                            <div><span class="label">Side Selection</span><span class="value" style="color:${sideColor}">${b.side}</span></div>
+                            <div><span class="label">Amount Placed</span><span class="value">₱${b.amount.toLocaleString()}</span></div>
+                            <div><span class="label">Date & Time</span><span class="value" style="font-size:0.7rem; color:#666;">${time}</span></div>
+                            <div><span class="label">Net Result</span><span class="payout-val">${b.status === 'WIN' ? '+₱' + (b.payout).toLocaleString() : (b.status === 'LOSS' ? '-₱' + b.amount : '---')}</span></div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
     </script>
 </body>
 </html>
