@@ -25,33 +25,33 @@
         .admin-grid { display: grid; grid-template-columns: 1fr 350px; gap: 20px; max-width: 1200px; margin: 20px auto; padding: 0 20px; }
         .insight-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
         .insight-card { background: #111; padding: 20px; border-radius: 12px; border: 1px solid #222; text-align: center; }
-        .insight-card h4 { color: #888; font-size: 0.7rem; margin: 0; text-transform: uppercase; letter-spacing: 1px; }
-        .insight-card .val { color: var(--gold); font-size: 1.5rem; font-weight: bold; margin-top: 5px; display: block; font-family: 'Goldman'; }
+        .insight-card h4 { color: #888; font-size: 0.6rem; margin: 0; text-transform: uppercase; letter-spacing: 1px; }
+        .insight-card .val { color: var(--gold); font-size: 1.4rem; font-weight: bold; margin-top: 5px; display: block; font-family: 'Goldman'; }
 
         .panel { background: #111; border-radius: 15px; border: 1px solid #333; padding: 20px; margin-bottom: 20px; }
         .panel-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #222; margin-bottom: 15px; padding-bottom: 10px; }
         
         /* TREND CHART */
         .trend-container { display: flex; gap: 5px; overflow-x: auto; padding: 10px 0; }
-        .dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
-        .dot.meron { background: #ff4444; box-shadow: 0 0 5px #ff4444; }
-        .dot.wala { background: #4444ff; box-shadow: 0 0 5px #4444ff; }
+        .dot { width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0; }
+        .dot.meron { background: #ff4444; box-shadow: 0 0 8px #ff4444; }
+        .dot.wala { background: #4444ff; box-shadow: 0 0 8px #4444ff; }
         .dot.draw { background: #ffaa00; }
 
+        /* BETTING LOCK BUTTON */
+        .lock-btn { width: 100%; padding: 14px; border-radius: 8px; font-weight: bold; cursor: pointer; border: none; font-family: 'Goldman'; margin-bottom: 15px; transition: 0.3s; text-transform: uppercase; letter-spacing: 1px; }
+
         .w-request { background: #000; padding: 15px; border-radius: 10px; border-left: 4px solid var(--gold); margin-bottom: 12px; }
-        .w-actions { display: flex; gap: 10px; margin-top: 12px; }
         .btn-sm { padding: 8px 12px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 0.7rem; text-transform: uppercase; font-family: 'Goldman'; }
         .btn-approve { background: #00ff88; color: black; }
-        .btn-reject { background: #ff4444; color: white; }
-
+        
         .log-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; color: #eee; }
         .log-table th { text-align: left; color: #555; padding: 10px; border-bottom: 1px solid #222; text-transform: uppercase; font-size: 0.65rem; }
         .log-table td { padding: 12px 10px; border-bottom: 1px solid #1a1a1a; }
         
         .role-tag { font-size: 0.6rem; padding: 2px 6px; border-radius: 3px; background: #222; color: var(--gold); border: 1px solid #333; }
         .search-box { background: #000; border: 1px solid var(--gold); padding: 15px; border-radius: 10px; }
-        input, select { width: 100%; padding: 12px; margin: 10px 0; background: #000; border: 1px solid #333; color: white; border-radius: 5px; box-sizing: border-box; outline: none; }
-        input:focus { border-color: var(--gold); }
+        input { width: 100%; padding: 12px; margin: 10px 0; background: #000; border: 1px solid #333; color: white; border-radius: 5px; box-sizing: border-box; outline: none; }
         
         @media (max-width: 900px) { .admin-grid { grid-template-columns: 1fr; } }
     </style>
@@ -68,7 +68,7 @@
             
             <div class="insight-row">
                 <div class="insight-card"><h4>System Float</h4><span class="val" id="stat-total-bank">₱0</span></div>
-                <div class="insight-card"><h4>Active Downlines</h4><span class="val" id="stat-players">0</span></div>
+                <div class="insight-card"><h4>Network Commission</h4><span class="val" id="stat-network-comm" style="color:#00ff88;">₱0</span></div>
                 <div class="insight-card"><h4>Pending Cash-Out</h4><span class="val" id="stat-pending-w" style="color:#ffaa00;">₱0</span></div>
             </div>
 
@@ -76,8 +76,7 @@
                 <div class="panel-header">
                     <h3 style="margin:0; color: var(--gold); font-family: 'Goldman'; font-size: 0.9rem;">ARENA ROADMAP (LAST 50)</h3>
                 </div>
-                <div class="trend-container" id="roadmap-display">
-                    </div>
+                <div class="trend-container" id="roadmap-display"></div>
             </div>
 
             <div class="panel">
@@ -90,13 +89,11 @@
                             <tr>
                                 <th>Username / Role</th>
                                 <th>Balance</th>
-                                <th>Total Turnover</th>
+                                <th>Earnings</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
-                        <tbody id="downline-table-body">
-                            <tr><td colspan="4" style="text-align:center; color:#444; padding:20px;">Loading downline data...</td></tr>
-                        </tbody>
+                        <tbody id="downline-table-body"></tbody>
                     </table>
                 </div>
             </div>
@@ -106,42 +103,43 @@
                     <h3 style="margin:0; color: var(--gold); font-family: 'Goldman'; font-size: 1rem;">WITHDRAWAL TICKETS</h3>
                     <span id="w-count" style="color:#888; font-size: 0.7rem;">0 PENDING</span>
                 </div>
-                <div id="withdrawal-list">
-                    <p style="text-align:center; color:#444; padding:20px;">Restricted to System Admin.</p>
-                </div>
+                <div id="withdrawal-list"></div>
             </div>
         </div>
 
         <div class="sidebar-admin">
-            <div class="panel search-box" id="arena-settings-panel" style="border-color: #00ff88; display: none; margin-bottom: 20px;">
-                <h3 style="margin-top:0; font-size: 0.9rem; color: #00ff88; font-family: 'Goldman';">ARENA SETTINGS</h3>
-                <label style="font-size: 0.65rem; color: #555; text-transform: uppercase;">Global Multiplier</label>
-                <div style="display: flex; gap: 10px; margin-top: 5px;">
-                    <input type="number" id="payout-multiplier" step="0.01" style="margin:0; font-family: 'Goldman';">
-                    <button onclick="updatePayout()" class="btn-sm btn-approve" style="padding: 0 15px;">SAVE</button>
-                </div>
-                <p style="font-size: 0.6rem; color: #666; margin-top: 8px;">Payout per ₱1.00: ₱<span id="current-payout-display">...</span></p>
-            </div>
-
             <div class="panel" id="fight-control-panel" style="border: 1px solid var(--gold); display:none; margin-bottom: 20px;">
                 <h3 style="margin:0; color: var(--gold); margin-bottom:15px; font-size: 0.9rem; font-family: 'Goldman';">FIGHT CONTROL</h3>
+                
+                <button id="btn-lock-betting" onclick="toggleBettingLock()" class="lock-btn">
+                    SYNCING...
+                </button>
+
                 <div style="display: grid; grid-template-columns: 1fr; gap: 8px;">
-                    <button onclick="settleFight('MERON')" style="background:#ff4444; color:white; padding:12px; border:none; border-radius:5px; font-weight:bold; cursor:pointer; font-size: 0.7rem; font-family: 'Goldman';">SETTLE MERON</button>
-                    <button onclick="settleFight('WALA')" style="background:#4444ff; color:white; padding:12px; border:none; border-radius:5px; font-weight:bold; cursor:pointer; font-size: 0.7rem; font-family: 'Goldman';">SETTLE WALA</button>
-                    <button onclick="settleFight('DRAW')" style="background:#333; color:white; padding:12px; border:none; border-radius:5px; font-weight:bold; cursor:pointer; font-size: 0.7rem; font-family: 'Goldman';">CANCEL / DRAW</button>
+                    <button onclick="settleFight('MERON')" style="background:#ff4444; color:white; padding:12px; border:none; border-radius:5px; font-weight:bold; cursor:pointer;">SETTLE MERON</button>
+                    <button onclick="settleFight('WALA')" style="background:#4444ff; color:white; padding:12px; border:none; border-radius:5px; font-weight:bold; cursor:pointer;">SETTLE WALA</button>
+                    <button onclick="settleFight('DRAW')" style="background:#333; color:white; padding:12px; border:none; border-radius:5px; font-weight:bold; cursor:pointer;">DRAW / CANCEL</button>
                 </div>
             </div>
 
-            <div class="panel search-box">
+            <div class="panel search-box" id="arena-settings-panel" style="border-color: #00ff88; display: none;">
+                <h3 style="margin-top:0; font-size: 0.8rem; color: #00ff88; font-family: 'Goldman';">ARENA PAYOUT</h3>
+                <div style="display: flex; gap: 10px;">
+                    <input type="number" id="payout-multiplier" step="0.01" style="margin:0; font-family: 'Goldman';">
+                    <button onclick="updatePayout()" class="btn-sm btn-approve">SAVE</button>
+                </div>
+            </div>
+
+            <div class="panel search-box" style="margin-top:20px;">
                 <h3 style="margin-top:0; font-size: 0.9rem; color: var(--gold); font-family: 'Goldman';">CREDIT LOADER</h3>
-                <input type="text" id="target-username" placeholder="Search Username...">
-                <button onclick="checkUser()" style="width:100%; margin-bottom:10px; background:#222; color:white; padding:10px; border:none; border-radius:5px; cursor:pointer; font-size: 0.7rem; font-weight: bold;">SEARCH USER</button>
+                <input type="text" id="target-username" placeholder="Search ID...">
+                <button onclick="checkUser()" style="width:100%; margin-bottom:10px; background:#222; color:white; padding:10px; border:none; border-radius:5px; font-family: 'Goldman'; cursor:pointer;">FIND USER</button>
                 <div id="player-preview" style="display:none; background:#0a0a0a; padding:12px; border-radius:8px; margin-bottom:15px; border-left:3px solid var(--gold);">
                     <span id="res-name" style="font-weight:bold; color:white; font-size: 0.8rem;">---</span><br>
                     <span id="res-bal" style="color:#00ff88; font-weight:bold; font-family: 'Goldman';">₱0</span>
                 </div>
-                <input type="number" id="load-amt" placeholder="Enter Amount (₱)">
-                <button onclick="confirmLoad()" style="width:100%; background:var(--gold); color: black; padding:15px; border:none; border-radius:5px; font-weight:bold; cursor:pointer; font-size: 0.8rem; font-family: 'Goldman';">LOAD CREDITS</button>
+                <input type="number" id="load-amt" placeholder="Amount (₱)">
+                <button onclick="confirmLoad()" style="width:100%; background:var(--gold); color: black; padding:15px; border:none; border-radius:5px; font-weight:bold; font-family: 'Goldman'; cursor:pointer;">LOAD CREDITS</button>
             </div>
         </div>
     </div>
@@ -149,7 +147,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc, getDocs, updateDoc, increment, collection, query, where, orderBy, limit, onSnapshot, addDoc, writeBatch } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, setDoc, updateDoc, increment, collection, query, where, onSnapshot, writeBatch, getDocs } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
         import { injectMenu } from "/menu.js";
 
         const firebaseConfig = {
@@ -171,6 +169,7 @@
 
         let myTierData = null;
         let activePlayerId = null;
+        let arenaLocked = false;
         window.currentMultiplier = 1.90;
 
         onAuthStateChanged(auth, async (user) => {
@@ -188,15 +187,17 @@
             const downlineQuery = query(collection(db, "users"), where("uplineId", "==", auth.currentUser.uid));
             onSnapshot(downlineQuery, (snap) => {
                 let totalBank = 0;
+                let networkComm = 0;
                 const table = document.getElementById('downline-table-body');
-                table.innerHTML = snap.empty ? '<tr><td colspan="4" style="text-align:center; color:#444; padding:20px;">No direct downlines found.</td></tr>' : '';
-                document.getElementById('stat-players').innerText = snap.size;
+                table.innerHTML = "";
                 snap.forEach(uDoc => {
                     const u = uDoc.data();
                     totalBank += (u.balance || 0);
-                    table.innerHTML += `<tr><td><strong>${u.username}</strong><br><span class="role-tag">${u.role}</span></td><td style="color:#00ff88; font-weight:bold;">₱${(u.balance || 0).toLocaleString()}</td><td style="color:#888;">₱${(u.totalTurnover || 0).toLocaleString()}</td><td><button class="btn-sm" style="background:#222; color:var(--gold); border:1px solid var(--gold);" onclick="quickSelectUser('${u.username}')">LOAD</button></td></tr>`;
+                    networkComm += (u.totalCommission || 0);
+                    table.innerHTML += `<tr><td><strong>${u.username}</strong><br><span class="role-tag">${u.role}</span></td><td style="color:#00ff88;">₱${(u.balance || 0).toLocaleString()}</td><td>₱${(u.totalCommission || 0).toLocaleString()}</td><td><button class="btn-sm" style="background:#222; color:var(--gold); border:1px solid var(--gold);" onclick="quickSelectUser('${u.username}')">LOAD</button></td></tr>`;
                 });
                 document.getElementById('stat-total-bank').innerText = "₱" + totalBank.toLocaleString();
+                document.getElementById('stat-network-comm').innerText = "₱" + networkComm.toLocaleString();
             });
 
             if (myTierData.level === 1) {
@@ -204,20 +205,24 @@
                 document.getElementById('arena-settings-panel').style.display = "block";
                 document.getElementById('trend-panel').style.display = "block";
                 loadWithdrawals();
-                loadArenaSettings();
+                syncArenaControl();
             }
         }
 
-        function loadArenaSettings() {
+        function syncArenaControl() {
             onSnapshot(doc(db, "settings", "arena"), (docSnap) => {
                 if (docSnap.exists()) {
                     const data = docSnap.data();
+                    arenaLocked = data.isLocked || false;
+                    const lockBtn = document.getElementById('btn-lock-betting');
+                    lockBtn.innerText = arenaLocked ? "OPEN BETTING" : "CLOSE BETTING";
+                    lockBtn.style.background = arenaLocked ? "#00ff88" : "#ff4444";
+                    lockBtn.style.color = arenaLocked ? "black" : "white";
+
                     const m = data.payoutMultiplier || 1.90;
                     document.getElementById('payout-multiplier').value = m;
-                    document.getElementById('current-payout-display').innerText = m.toFixed(2);
                     window.currentMultiplier = m;
 
-                    // Update Roadmap
                     const roadmap = data.history || [];
                     const roadDiv = document.getElementById('roadmap-display');
                     roadDiv.innerHTML = "";
@@ -230,10 +235,14 @@
             });
         }
 
+        window.toggleBettingLock = async () => {
+            await updateDoc(doc(db, "settings", "arena"), { isLocked: !arenaLocked });
+        };
+
         window.settleFight = async (winner) => {
             if (myTierData.level !== 1) return;
             const m = window.currentMultiplier;
-            if (!confirm(`Settle as ${winner} (@${m})?`)) return;
+            if (!confirm(`Settle as ${winner}?`)) return;
             
             const batch = writeBatch(db);
             const q = query(collection(db, "bets"), where("status", "==", "PENDING"));
@@ -253,16 +262,15 @@
                 }
             });
 
-            // Update Global Trend
             const arenaRef = doc(db, "settings", "arena");
             const arenaSnap = await getDoc(arenaRef);
             let history = arenaSnap.exists() ? (arenaSnap.data().history || []) : [];
             history.push(winner);
             if(history.length > 100) history.shift();
-            batch.update(arenaRef, { history: history });
+            batch.update(arenaRef, { history: history, isLocked: true }); // Auto-lock after settle
 
             await batch.commit();
-            alert("Fight Settled & Roadmap Updated");
+            alert("Fight Settled & Betting Locked.");
         };
 
         window.checkUser = async () => {
@@ -281,9 +289,7 @@
         window.confirmLoad = async () => {
             const amt = parseInt(document.getElementById('load-amt').value);
             if (!activePlayerId || isNaN(amt)) return;
-            if (myTierData.level > 1 && myTierData.balance < amt) return alert("Low balance");
             if (confirm(`Load ₱${amt}?`)) {
-                if (myTierData.level > 1) await updateDoc(doc(db, "users", auth.currentUser.uid), { balance: increment(-amt) });
                 await updateDoc(doc(db, "users", activePlayerId), { balance: increment(amt) });
                 await addDoc(collection(db, "wallet_logs"), { uid: auth.currentUser.uid, type: "LOAD", toUser: document.getElementById('res-name').innerText, amount: amt, timestamp: new Date() });
                 alert("Success");
@@ -295,21 +301,26 @@
             onSnapshot(query(collection(db, "withdrawals"), where("status", "==", "PENDING")), (snap) => {
                 const list = document.getElementById('withdrawal-list');
                 let total = 0;
-                list.innerHTML = snap.empty ? '<p style="text-align:center; color:#444; padding:20px;">No pending tickets.</p>' : '';
-                document.getElementById('w-count').innerText = snap.size + " PENDING";
+                list.innerHTML = "";
                 snap.forEach(doc => {
                     const d = doc.data();
                     total += d.amount;
-                    list.innerHTML += `<div class="w-request"><strong>${d.username.toUpperCase()}</strong> <span style="float:right; color:#00ff88;">₱${d.amount.toLocaleString()}</span><div class="w-actions"><button class="btn-sm btn-approve" onclick="handleWithdraw('${doc.id}', 'APPROVED')">PAID</button><button class="btn-sm btn-reject" onclick="handleWithdraw('${doc.id}', 'REJECTED', '${d.uid}', ${d.amount})">REJECT</button></div></div>`;
+                    list.innerHTML += `<div class="w-request"><strong>${d.username.toUpperCase()}</strong> <span style="float:right; color:#00ff88;">₱${d.amount.toLocaleString()}</span><div class="w-actions"><button class="btn-sm btn-approve" onclick="handleWithdraw('${doc.id}', 'APPROVED')">PAID</button></div></div>`;
                 });
                 document.getElementById('stat-pending-w').innerText = "₱" + total.toLocaleString();
             });
         }
 
-        window.handleWithdraw = async (id, status, pUid, amt) => {
-            if (status === 'REJECTED') await updateDoc(doc(db, "users", pUid), { balance: increment(amt) });
+        window.handleWithdraw = async (id, status) => {
             await updateDoc(doc(db, "withdrawals", id), { status });
-            alert(status);
+            alert("Confirmed");
+        };
+
+        window.quickSelectUser = (u) => { document.getElementById('target-username').value = u; checkUser(); };
+        window.updatePayout = async () => {
+            const newVal = parseFloat(document.getElementById('payout-multiplier').value);
+            await updateDoc(doc(db, "settings", "arena"), { payoutMultiplier: newVal });
+            alert("Payout Saved");
         };
     </script>
 </body>
