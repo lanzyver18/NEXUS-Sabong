@@ -2,132 +2,176 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Game Library | NEXUS</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Protocol Library | NEXUS PRO</title>
     
     <link rel="stylesheet" href="/menu.css">
     <link rel="stylesheet" href="/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Goldman:wght@400;700&display=swap" rel="stylesheet">
     
     <style>
-        :root { --gold: #D4AF37; --green: #00ff88; --panel-bg: #0f0f0f; }
+        :root { --gold: #D4AF37; --green: #00ff88; --panel-bg: #0f0f0f; --red: #ff4444; }
 
+        body { background: #000; overflow-x: hidden; }
+        
         .top-nav { 
             display: flex; justify-content: space-between; align-items: center; 
-            padding: 12px 20px 12px 75px; background: #000; border-bottom: 2px solid #222;
-            position: sticky; top: 0; z-index: 1000;
+            padding: 12px 20px 12px 75px; background: rgba(0,0,0,0.9); 
+            border-bottom: 2px solid #222; position: sticky; top: 0; z-index: 1000;
+            backdrop-filter: blur(10px);
         }
 
-        .library-wrapper { max-width: 1000px; margin: 20px auto; padding: 0 15px 100px; }
+        .library-layout { display: grid; grid-template-columns: 1fr 300px; gap: 25px; max-width: 1300px; margin: 20px auto; padding: 0 20px 100px; }
 
-        /* ADVERTISEMENT CAROUSEL */
+        /* ADVANCED AD CAROUSEL */
         .ad-banner {
-            width: 100%; height: 180px; background: #111; border-radius: 20px;
+            width: 100%; height: 220px; background: #050505; border-radius: 24px;
             margin-bottom: 30px; border: 1px solid #222; overflow: hidden;
-            position: relative; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            position: relative; box-shadow: 0 15px 40px rgba(0,0,0,0.6);
         }
         .ad-slide {
             width: 100%; height: 100%; display: flex; align-items: center;
-            justify-content: center; background-size: cover; background-position: center;
-            position: absolute; opacity: 0; transition: 0.8s ease-in-out;
+            position: absolute; opacity: 0; transition: 1s cubic-bezier(0.4, 0, 0.2, 1);
+            background-size: cover; background-position: center; transform: scale(1.05);
         }
-        .ad-slide.active { opacity: 1; }
+        .ad-slide.active { opacity: 1; transform: scale(1); }
         .ad-overlay {
-            background: linear-gradient(to right, rgba(0,0,0,0.9), transparent);
+            background: linear-gradient(90deg, rgba(0,0,0,0.95) 20%, transparent);
             width: 100%; height: 100%; display: flex; flex-direction: column;
-            justify-content: center; padding: 30px; box-sizing: border-box;
+            justify-content: center; padding: 40px; box-sizing: border-box;
         }
-        .ad-overlay h2 { color: var(--gold); margin: 0; font-family: 'Goldman'; font-size: 1.4rem; }
-        .ad-overlay p { color: #888; font-size: 0.8rem; margin: 5px 0 15px; }
+        .ad-overlay h2 { color: var(--gold); margin: 0; font-family: 'Goldman'; font-size: 1.8rem; letter-spacing: 2px; }
+        .ad-overlay p { color: #aaa; font-size: 0.85rem; margin: 10px 0 20px; max-width: 300px; line-height: 1.4; }
 
-        /* CATEGORY TABS */
-        .cat-row { display: flex; gap: 15px; margin-bottom: 25px; overflow-x: auto; padding-bottom: 10px; scrollbar-width: none; }
+        /* SEARCH & CATEGORY LOGIC */
+        .filter-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; gap: 20px; }
+        .search-container { position: relative; flex: 1; }
+        .search-container input { 
+            width: 100%; padding: 14px 20px 14px 45px; background: #111; 
+            border: 1px solid #333; border-radius: 12px; color: white; outline: none; transition: 0.3s;
+        }
+        .search-container input:focus { border-color: var(--gold); background: #000; }
+        .search-container::before { content: '🔍'; position: absolute; left: 18px; top: 15px; font-size: 0.9rem; opacity: 0.5; }
+
+        .cat-row { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 5px; scrollbar-width: none; }
         .cat-tab {
-            padding: 10px 20px; background: #111; border: 1px solid #222; border-radius: 30px;
-            color: #666; font-size: 0.7rem; font-weight: bold; cursor: pointer;
+            padding: 10px 22px; background: #111; border: 1px solid #222; border-radius: 10px;
+            color: #555; font-size: 0.65rem; font-weight: bold; cursor: pointer;
             white-space: nowrap; transition: 0.3s; text-transform: uppercase; font-family: 'Goldman';
         }
-        .cat-tab.active { border-color: var(--gold); color: var(--gold); background: rgba(212,175,55,0.05); }
+        .cat-tab.active { border-color: var(--gold); color: var(--gold); background: rgba(212,175,55,0.08); }
 
-        /* GAMES GRID */
-        .games-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 20px; }
+        /* GAMES GRID - PREMIUM GLASS CARDS */
+        .games-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px; }
         .game-item {
-            background: var(--panel-bg); border-radius: 18px; border: 1px solid #222;
-            overflow: hidden; text-decoration: none; transition: 0.3s; position: relative;
+            background: #0a0a0a; border-radius: 20px; border: 1px solid #1a1a1a;
+            overflow: hidden; text-decoration: none; transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative; box-shadow: 0 10px 20px rgba(0,0,0,0.3);
         }
-        .game-item:hover { transform: translateY(-5px); border-color: var(--gold); }
-        .game-thumb { width: 100%; aspect-ratio: 1/1; background-size: cover; background-position: center; }
-        .game-meta { padding: 15px; text-align: center; }
-        .game-meta h4 { margin: 0; color: #eee; font-family: 'Goldman'; font-size: 0.85rem; }
-        .game-meta small { color: #555; font-size: 0.6rem; text-transform: uppercase; letter-spacing: 1px; }
+        .game-item:hover { transform: translateY(-8px); border-color: var(--gold); box-shadow: 0 15px 30px rgba(212,175,55,0.1); }
+        .game-thumb { width: 100%; aspect-ratio: 4/5; background-size: cover; background-position: center; transition: 0.5s; }
+        .game-item:hover .game-thumb { transform: scale(1.1); }
+        
+        .game-meta { padding: 18px; background: linear-gradient(to top, #000, transparent); }
+        .game-meta h4 { margin: 0; color: #fff; font-family: 'Goldman'; font-size: 0.9rem; letter-spacing: 1px; }
+        .game-meta small { color: var(--gold); font-size: 0.6rem; text-transform: uppercase; font-weight: bold; }
 
-        .badge-hot { position: absolute; top: 10px; right: 10px; background: #ff4444; color: white; font-size: 0.5rem; padding: 3px 7px; border-radius: 4px; font-weight: bold; }
+        /* ACTIVITY SIDEBAR */
+        .activity-panel { background: #080808; border-radius: 24px; border: 1px solid #1a1a1a; padding: 20px; height: fit-content; position: sticky; top: 90px; }
+        .activity-header { color: #444; font-size: 0.6rem; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 20px; display: block; font-weight: bold; }
+        .feed-item { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; animation: slideIn 0.5s ease; }
+        .feed-icon { width: 32px; height: 32px; background: #111; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; border: 1px solid #222; }
+        .feed-info { flex: 1; }
+        .feed-info b { display: block; color: #eee; font-size: 0.75rem; }
+        .feed-info small { color: #555; font-size: 0.65rem; }
+        .feed-amt { color: var(--green); font-family: 'Goldman'; font-size: 0.75rem; }
 
-        @media (max-width: 600px) { .ad-banner { height: 140px; } .ad-overlay h2 { font-size: 1.1rem; } }
+        @keyframes slideIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+
+        @media (max-width: 1000px) {
+            .library-layout { grid-template-columns: 1fr; }
+            .activity-panel { display: none; }
+        }
+        @media (max-width: 600px) { 
+            .ad-banner { height: 160px; } 
+            .ad-overlay h2 { font-size: 1.2rem; }
+            .filter-row { flex-direction: column; align-items: stretch; }
+        }
     </style>
 </head>
 <body>
 
     <nav class="top-nav">
-        <div class="logo" style="color:var(--gold); font-family:'Goldman'; font-weight:bold; font-size:1.2rem;">NEXUS LIBRARY</div>
-        <div style="color: var(--green); font-weight: bold; font-family: 'Goldman';" id="nav-bal">₱0.00</div>
+        <div class="logo" style="color:var(--gold); font-family:'Goldman'; font-weight:bold; font-size:1.2rem; letter-spacing:2px;">NEXUS LIBRARY</div>
+        <div style="color: var(--green); font-weight: bold; font-family: 'Goldman'; font-size: 1rem;" id="nav-bal">₱0.00</div>
     </nav>
 
-    <div class="library-wrapper">
-        
-        <div class="ad-banner" id="ad-carousel">
-            <div class="ad-slide active" style="background-image: url('https://images.unsplash.com/photo-1518623489648-a173ef7824f3?auto=format&fit=crop&q=80&w=1000');">
-                <div class="ad-overlay">
-                    <h2>TRIPLE REBATE WEEK</h2>
-                    <p>Get 3.0% commission on every bet made today.</p>
-                    <button class="nav-profile-btn" style="width:fit-content; font-size:0.6rem;">LEARN MORE</button>
+    <div class="library-layout">
+        <main class="main-library">
+            <div class="ad-banner" id="ad-carousel">
+                <div class="ad-slide active" style="background-image: linear-gradient(to right, #000, transparent), url('https://images.unsplash.com/photo-1518623489648-a173ef7824f3?w=1200&q=60');">
+                    <div class="ad-overlay">
+                        <h2>WEEKEND REBATE</h2>
+                        <p>Enjoy a 3.0% instant rebate on all Arena losses. High stakes, lower risk.</p>
+                        <button class="nav-profile-btn" style="width:fit-content; font-size:0.7rem; background:var(--gold); color:#000; border:none;">COLLECT NOW</button>
+                    </div>
+                </div>
+                <div class="ad-slide" style="background-image: linear-gradient(to right, #000, transparent), url('https://images.unsplash.com/photo-1642104704074-907c0698cbd9?w=1200&q=60');">
+                    <div class="ad-overlay">
+                        <h2>MINES PROTOCOL</h2>
+                        <p>The newest high-risk, high-reward protocol is now active. Unlock 1000x.</p>
+                        <button class="nav-profile-btn" onclick="window.location.href='/games/mines/'" style="width:fit-content; font-size:0.7rem; background:var(--gold); color:#000; border:none;">INITIALIZE</button>
+                    </div>
                 </div>
             </div>
-            <div class="ad-slide" style="background-image: url('https://images.unsplash.com/photo-1642104704074-907c0698cbd9?auto=format&fit=crop&q=80&w=1000');">
-                <div class="ad-overlay">
-                    <h2>NEW PROTOCOL: MINES</h2>
-                    <p>Experience the ultimate high-risk game on Nexus.</p>
-                    <button class="nav-profile-btn" onclick="window.location.href='/games/mines/'" style="width:fit-content; font-size:0.6rem;">PLAY NOW</button>
+
+            <div class="filter-row">
+                <div class="search-container">
+                    <input type="text" id="game-search" placeholder="Search for protocol name..." oninput="filterGames()">
+                </div>
+                <div class="cat-row">
+                    <div class="cat-tab active" data-cat="all">All</div>
+                    <div class="cat-tab" data-cat="pit">Pit</div>
+                    <div class="cat-tab" data-cat="multi">Multiplayer</div>
+                    <div class="cat-tab" data-cat="instant">Instant</div>
                 </div>
             </div>
-        </div>
 
-        <div class="cat-row">
-            <div class="cat-tab active">All Games</div>
-            <div class="cat-tab">Sabong</div>
-            <div class="cat-tab">Crash</div>
-            <div class="cat-tab">Table Games</div>
-            <div class="cat-tab">Slots</div>
-        </div>
+            <div class="games-grid" id="games-grid">
+                <a href="/games/sabong/" class="game-item" data-name="sabong arena" data-category="pit">
+                    <div class="game-thumb" style="background-image: url('https://images.unsplash.com/photo-1596727147705-61a532a655bd?w=600&q=60');"></div>
+                    <div class="badge-hot">LIVE</div>
+                    <div class="game-meta">
+                        <h4>SABONG ARENA</h4>
+                        <small>PIT FIGHTING</small>
+                    </div>
+                </a>
 
-        <div class="games-grid">
-            
-            <a href="/games/sabong/" class="game-item">
-                <div class="game-thumb" style="background-image: url('https://images.unsplash.com/photo-1596727147705-61a532a655bd?auto=format&fit=crop&q=60');"></div>
-                <div class="badge-hot">LIVE</div>
-                <div class="game-meta">
-                    <h4>SABONG ARENA</h4>
-                    <small>Real-time Betting</small>
-                </div>
-            </a>
+                <a href="/games/crash/" class="game-item" data-name="nexus crash" data-category="multi">
+                    <div class="game-thumb" style="background-image: url('https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=600&q=60');"></div>
+                    <div class="game-meta">
+                        <h4>NEXUS CRASH</h4>
+                        <small>EXPONENTIAL MULTIPLIER</small>
+                    </div>
+                </a>
 
-            <a href="/games/crash/" class="game-item">
-                <div class="game-thumb" style="background-image: url('https://images.unsplash.com/photo-1635070041078-e363dbe005cb?auto=format&fit=crop&q=60');"></div>
-                <div class="game-meta">
-                    <h4>NEXUS CRASH</h4>
-                    <small>Multiplayer Action</small>
-                </div>
-            </a>
+                <a href="/games/mines/" class="game-item" data-name="nexus mines" data-category="instant">
+                    <div class="game-thumb" style="background-image: url('https://images.unsplash.com/photo-1614028674026-a65e31bfd27c?w=600&q=60');"></div>
+                    <div class="game-meta">
+                        <h4>NEXUS MINES</h4>
+                        <small>DATA DECRYPTION</small>
+                    </div>
+                </a>
+            </div>
+        </main>
 
-            <a href="/games/mines/" class="game-item">
-                <div class="game-thumb" style="background-image: url('https://images.unsplash.com/photo-1614028674026-a65e31bfd27c?auto=format&fit=crop&q=60');"></div>
-                <div class="game-meta">
-                    <h4>NEXUS MINES</h4>
-                    <small>Risk & Reward</small>
-                </div>
-            </a>
-
-        </div>
+        <aside class="activity-sidebar">
+            <div class="activity-panel">
+                <span class="activity-header">Network Wins</span>
+                <div id="live-wins-feed">
+                    </div>
+            </div>
+        </aside>
     </div>
 
     <script type="module">
@@ -152,14 +196,64 @@
         window.firebaseDb = db;
         injectMenu();
 
-        // Ad Carousel Logic
+        // CATEGORY FILTERING
+        window.filterGames = () => {
+            const query = document.getElementById('game-search').value.toLowerCase();
+            const activeCat = document.querySelector('.cat-tab.active').dataset.cat;
+            const items = document.querySelectorAll('.game-item');
+
+            items.forEach(item => {
+                const name = item.dataset.name;
+                const cat = item.dataset.category;
+                const matchesSearch = name.includes(query);
+                const matchesCat = activeCat === 'all' || cat === activeCat;
+                
+                item.style.display = (matchesSearch && matchesCat) ? 'block' : 'none';
+            });
+        };
+
+        document.querySelectorAll('.cat-tab').forEach(tab => {
+            tab.onclick = () => {
+                document.querySelectorAll('.cat-tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                filterGames();
+            };
+        });
+
+        // LIVE WINS SIMULATOR (Builds trust/hype)
+        const winners = ["Ken_02", "Zyver99", "Player_X", "NexusAgent", "LuckyPinoy", "Jom_S"];
+        const games = ["Mines", "Crash", "Sabong"];
+        function addLiveWin() {
+            const feed = document.getElementById('live-wins-feed');
+            const win = {
+                user: winners[Math.floor(Math.random()*winners.length)],
+                game: games[Math.floor(Math.random()*games.length)],
+                amt: (Math.random() * 5000 + 100).toFixed(0)
+            };
+
+            const html = `
+                <div class="feed-item">
+                    <div class="feed-icon">💎</div>
+                    <div class="feed-info">
+                        <b>${win.user}</b>
+                        <small>${win.game}</small>
+                    </div>
+                    <div class="feed-amt">₱${parseInt(win.amt).toLocaleString()}</div>
+                </div>
+            `;
+            feed.insertAdjacentHTML('afterbegin', html);
+            if(feed.children.length > 8) feed.lastChild.remove();
+        }
+        setInterval(addLiveWin, 4000);
+
+        // Ad Logic
         let currentAd = 0;
         const slides = document.querySelectorAll('.ad-slide');
         setInterval(() => {
             slides[currentAd].classList.remove('active');
             currentAd = (currentAd + 1) % slides.length;
             slides[currentAd].classList.add('active');
-        }, 5000);
+        }, 7000);
 
         onAuthStateChanged(auth, user => {
             if (user) {
