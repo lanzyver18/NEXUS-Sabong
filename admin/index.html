@@ -8,39 +8,22 @@
     <link rel="stylesheet" href="/menu.css">
     <link href="https://fonts.googleapis.com/css2?family=Goldman:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        /* FIXED NAVIGATION FOR MENU BUTTON */
-        .top-nav {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            position: relative; 
-            padding: 12px 20px 12px 75px; 
-            background: #000;
-            border-bottom: 2px solid #222;
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-        }
-
+        .top-nav { display: flex; justify-content: space-between; align-items: center; position: relative; padding: 12px 20px 12px 75px; background: #000; border-bottom: 2px solid #222; position: sticky; top: 0; z-index: 1000; }
         .admin-grid { display: grid; grid-template-columns: 1fr 350px; gap: 20px; max-width: 1200px; margin: 20px auto; padding: 0 20px; }
         .insight-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
         .insight-card { background: #111; padding: 20px; border-radius: 12px; border: 1px solid #222; text-align: center; }
         .insight-card h4 { color: #888; font-size: 0.6rem; margin: 0; text-transform: uppercase; letter-spacing: 1px; }
         .insight-card .val { color: var(--gold); font-size: 1.4rem; font-weight: bold; margin-top: 5px; display: block; font-family: 'Goldman'; }
-
         .panel { background: #111; border-radius: 15px; border: 1px solid #333; padding: 20px; margin-bottom: 20px; }
         .panel-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #222; margin-bottom: 15px; padding-bottom: 10px; }
         
-        /* TREND CHART */
         .trend-container { display: flex; gap: 5px; overflow-x: auto; padding: 10px 0; }
         .dot { width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0; }
         .dot.meron { background: #ff4444; box-shadow: 0 0 8px #ff4444; }
         .dot.wala { background: #4444ff; box-shadow: 0 0 8px #4444ff; }
         .dot.draw { background: #ffaa00; }
 
-        /* BETTING LOCK BUTTON */
         .lock-btn { width: 100%; padding: 14px; border-radius: 8px; font-weight: bold; cursor: pointer; border: none; font-family: 'Goldman'; margin-bottom: 15px; transition: 0.3s; text-transform: uppercase; letter-spacing: 1px; }
-
         .w-request { background: #000; padding: 15px; border-radius: 10px; border-left: 4px solid var(--gold); margin-bottom: 12px; }
         .btn-sm { padding: 8px 12px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 0.7rem; text-transform: uppercase; font-family: 'Goldman'; }
         .btn-approve { background: #00ff88; color: black; }
@@ -52,6 +35,10 @@
         .role-tag { font-size: 0.6rem; padding: 2px 6px; border-radius: 3px; background: #222; color: var(--gold); border: 1px solid #333; }
         .search-box { background: #000; border: 1px solid var(--gold); padding: 15px; border-radius: 10px; }
         input { width: 100%; padding: 12px; margin: 10px 0; background: #000; border: 1px solid #333; color: white; border-radius: 5px; box-sizing: border-box; outline: none; }
+        
+        /* LIVE BET STREAM */
+        .live-bets { height: 200px; overflow-y: auto; font-size: 0.7rem; font-family: monospace; padding: 10px; background: #050505; border-radius: 8px; border: 1px solid #222; }
+        .bet-row { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid #111; }
         
         @media (max-width: 900px) { .admin-grid { grid-template-columns: 1fr; } }
     </style>
@@ -81,6 +68,15 @@
 
             <div class="panel">
                 <div class="panel-header">
+                    <h3 style="margin:0; color: var(--gold); font-family: 'Goldman'; font-size: 1rem;">LIVE BETS (PENDING)</h3>
+                    <span id="pending-bet-count" style="color:#555; font-size:0.7rem;">0 ACTIVE</span>
+                </div>
+                <div class="live-bets" id="live-bet-stream">
+                    </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header">
                     <h3 style="margin:0; color: var(--gold); font-family: 'Goldman'; font-size: 1rem;">DOWNLINE OVERVIEW</h3>
                 </div>
                 <div style="overflow-x: auto;">
@@ -96,14 +92,6 @@
                         <tbody id="downline-table-body"></tbody>
                     </table>
                 </div>
-            </div>
-
-            <div class="panel" id="withdrawal-panel">
-                <div class="panel-header">
-                    <h3 style="margin:0; color: var(--gold); font-family: 'Goldman'; font-size: 1rem;">WITHDRAWAL TICKETS</h3>
-                    <span id="w-count" style="color:#888; font-size: 0.7rem;">0 PENDING</span>
-                </div>
-                <div id="withdrawal-list"></div>
             </div>
         </div>
 
@@ -123,11 +111,13 @@
             </div>
 
             <div class="panel search-box" id="arena-settings-panel" style="border-color: #00ff88; display: none;">
-                <h3 style="margin-top:0; font-size: 0.8rem; color: #00ff88; font-family: 'Goldman';">ARENA PAYOUT</h3>
-                <div style="display: flex; gap: 10px;">
+                <h3 style="margin-top:0; font-size: 0.8rem; color: #00ff88; font-family: 'Goldman';">ARENA SETTINGS</h3>
+                <label style="font-size:0.6rem; color:#444;">MULTIPLIER</label>
+                <div style="display: flex; gap: 10px; margin-bottom:10px;">
                     <input type="number" id="payout-multiplier" step="0.01" style="margin:0; font-family: 'Goldman';">
                     <button onclick="updatePayout()" class="btn-sm btn-approve">SAVE</button>
                 </div>
+                <button onclick="forceResetHype()" style="width:100%; background:#222; color:#555; padding:8px; border:none; border-radius:4px; cursor:pointer; font-size:0.6rem;">FORCE HYPE RESET</button>
             </div>
 
             <div class="panel search-box" style="margin-top:20px;">
@@ -147,7 +137,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc, updateDoc, increment, collection, query, where, onSnapshot, writeBatch, getDocs } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, setDoc, updateDoc, increment, collection, query, where, onSnapshot, writeBatch, getDocs, orderBy } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
         import { injectMenu } from "/menu.js";
 
         const firebaseConfig = {
@@ -183,7 +173,6 @@
         });
 
         function initManagement() {
-            // Stats & Downlines
             const downlineQuery = query(collection(db, "users"), where("uplineId", "==", auth.currentUser.uid));
             onSnapshot(downlineQuery, (snap) => {
                 let totalBank = 0;
@@ -204,9 +193,23 @@
                 document.getElementById('fight-control-panel').style.display = "block";
                 document.getElementById('arena-settings-panel').style.display = "block";
                 document.getElementById('trend-panel').style.display = "block";
-                loadWithdrawals();
                 syncArenaControl();
+                streamLiveBets();
             }
+        }
+
+        function streamLiveBets() {
+            const q = query(collection(db, "bets"), where("status", "==", "PENDING"), orderBy("timestamp", "desc"));
+            onSnapshot(q, (snap) => {
+                const stream = document.getElementById('live-bet-stream');
+                document.getElementById('pending-bet-count').innerText = `${snap.size} ACTIVE`;
+                stream.innerHTML = "";
+                snap.forEach(d => {
+                    const b = d.data();
+                    const color = b.side === "MERON" ? "#ff4444" : "#4444ff";
+                    stream.innerHTML += `<div class="bet-row"><span style="color:#888">${b.username.toUpperCase()}</span><span style="color:${color}; font-weight:bold;">${b.side}: ₱${b.amount.toLocaleString()}</span></div>`;
+                });
+            });
         }
 
         function syncArenaControl() {
@@ -234,6 +237,12 @@
                 }
             });
         }
+
+        window.forceResetHype = async () => {
+            if (confirm("Reset rigged totals to 0 instantly?")) {
+                await updateDoc(doc(db, "settings", "arena"), { resetTime: new Date() });
+            }
+        };
 
         window.toggleBettingLock = async () => {
             await updateDoc(doc(db, "settings", "arena"), { isLocked: !arenaLocked });
@@ -267,10 +276,10 @@
             let history = arenaSnap.exists() ? (arenaSnap.data().history || []) : [];
             history.push(winner);
             if(history.length > 100) history.shift();
-            batch.update(arenaRef, { history: history, isLocked: true }); // Auto-lock after settle
+            batch.update(arenaRef, { history: history, isLocked: true, resetTime: new Date() });
 
             await batch.commit();
-            alert("Fight Settled & Betting Locked.");
+            alert("Fight Settled & Hype Reset.");
         };
 
         window.checkUser = async () => {
@@ -295,25 +304,6 @@
                 alert("Success");
                 location.reload();
             }
-        };
-
-        function loadWithdrawals() {
-            onSnapshot(query(collection(db, "withdrawals"), where("status", "==", "PENDING")), (snap) => {
-                const list = document.getElementById('withdrawal-list');
-                let total = 0;
-                list.innerHTML = "";
-                snap.forEach(doc => {
-                    const d = doc.data();
-                    total += d.amount;
-                    list.innerHTML += `<div class="w-request"><strong>${d.username.toUpperCase()}</strong> <span style="float:right; color:#00ff88;">₱${d.amount.toLocaleString()}</span><div class="w-actions"><button class="btn-sm btn-approve" onclick="handleWithdraw('${doc.id}', 'APPROVED')">PAID</button></div></div>`;
-                });
-                document.getElementById('stat-pending-w').innerText = "₱" + total.toLocaleString();
-            });
-        }
-
-        window.handleWithdraw = async (id, status) => {
-            await updateDoc(doc(db, "withdrawals", id), { status });
-            alert("Confirmed");
         };
 
         window.quickSelectUser = (u) => { document.getElementById('target-username').value = u; checkUser(); };
