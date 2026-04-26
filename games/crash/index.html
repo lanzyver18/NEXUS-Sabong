@@ -12,34 +12,13 @@
         
         body { background: #000; overflow-x: hidden; margin: 0; color: white; -webkit-font-smoothing: antialiased; }
 
-        /* FIXED MENU OVERRIDES */
-        #menu-container {
-            position: fixed !important;
-            top: 0 !important;
-            left: 0 !important;
-            width: 100% !important;
-            height: 100% !important;
-            background: #000 !important;
-            z-index: 10001 !important;
-        }
-        #menu-overlay {
-            background: rgba(0, 0, 0, 0.95) !important;
-            backdrop-filter: blur(15px) !important;
-            z-index: 10000 !important;
-        }
+        /* MENU FIXES */
+        #menu-container { position: fixed !important; top: 0 !important; left: 0 !important; width: 100% !important; height: 100% !important; background: #000 !important; z-index: 10001 !important; display: none; }
+        #menu-overlay { background: rgba(0, 0, 0, 0.95) !important; backdrop-filter: blur(15px) !important; z-index: 10000 !important; }
 
-        .top-nav { 
-            position: sticky; top: 0; z-index: 1000;
-            display: flex; justify-content: space-between; align-items: center; 
-            padding: 12px 20px 12px 75px;
-            background: #000; border-bottom: 2px solid #222; 
-        }
+        .top-nav { position: sticky; top: 0; z-index: 1000; display: flex; justify-content: space-between; align-items: center; padding: 12px 20px 12px 75px; background: #000; border-bottom: 2px solid #222; }
 
-        .crash-layout { 
-            max-width: 1200px; margin: 20px auto; 
-            display: grid; grid-template-columns: 360px 1fr; 
-            gap: 25px; padding: 0 15px; 
-        }
+        .crash-layout { max-width: 1200px; margin: 20px auto; display: grid; grid-template-columns: 360px 1fr; gap: 25px; padding: 0 15px; }
 
         .display-area { 
             background: #050505; border-radius: 28px; border: 1px solid #222; 
@@ -49,21 +28,17 @@
         }
 
         .grid-bg {
-            position: absolute; width: 400%; height: 400%;
-            background-image: 
-                linear-gradient(rgba(212, 175, 55, 0.05) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(212, 175, 55, 0.05) 1px, transparent 1px);
-            background-size: 80px 80px; transform: perspective(1000px) rotateX(60deg);
-            opacity: 0.5; z-index: 1; pointer-events: none;
+            position: absolute; width: 200%; height: 200%;
+            background-image: linear-gradient(rgba(212, 175, 55, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(212, 175, 55, 0.03) 1px, transparent 1px);
+            background-size: 60px 60px; transform: perspective(1000px) rotateX(60deg); opacity: 0.5; z-index: 1; pointer-events: none;
         }
 
         #main-mult { 
-            font-family: 'Goldman'; font-size: 7rem; color: white; 
-            z-index: 10; text-shadow: 0 0 40px rgba(255,255,255,0.15); 
-            pointer-events: none; transform: translateY(-30px);
-            transition: color 0.3s, transform 0.1s;
+            font-family: 'Goldman'; font-size: 7rem; color: white; z-index: 10; 
+            text-shadow: 0 0 40px rgba(255,255,255,0.15); pointer-events: none; 
+            transform: translateY(-30px); transition: 0.1s;
         }
-        #main-mult.crashed { color: var(--red); text-shadow: 0 0 50px rgba(255, 68, 68, 0.6); animation: crash-shake 0.4s ease-out; }
+        #main-mult.crashed { color: var(--red); animation: crash-shake 0.4s ease-out; }
         
         canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 5; }
 
@@ -72,18 +47,11 @@
         .stat-tl { top: 30px; left: 30px; }
         .stat-tr { top: 30px; right: 30px; text-align: right; }
 
-        .control-panel { 
-            background: linear-gradient(145deg, #111, #080808); padding: 30px; border-radius: 28px; 
-            border: 1px solid #252525; display: flex; flex-direction: column; gap: 20px; 
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-        }
+        .control-panel { background: linear-gradient(145deg, #111, #080808); padding: 30px; border-radius: 28px; border: 1px solid #252525; display: flex; flex-direction: column; gap: 20px; }
         
         .input-group label { display: block; font-size: 0.6rem; color: #555; text-transform: uppercase; letter-spacing: 2.5px; margin-bottom: 12px; font-weight: bold; }
-        input { 
-            width: 100%; padding: 18px; background: #000; border: 1px solid #333; 
-            color: var(--gold); border-radius: 14px; outline: none; font-family: 'Goldman'; 
-            transition: 0.3s; box-sizing: border-box; font-size: 1.2rem;
-        }
+        input { width: 100%; padding: 18px; background: #000; border: 1px solid #333; color: var(--gold); border-radius: 14px; outline: none; font-family: 'Goldman'; transition: 0.3s; box-sizing: border-box; font-size: 1.2rem; }
+        
         .btn-action { width: 100%; padding: 22px; border-radius: 16px; border: none; font-weight: bold; font-family: 'Goldman'; cursor: pointer; text-transform: uppercase; transition: 0.3s; letter-spacing: 2px; font-size: 1.1rem; }
         .btn-bet { background: var(--gold); color: black; box-shadow: 0 8px 0 #917725; }
         .btn-cashout { background: var(--green); color: black; display: none; box-shadow: 0 8px 0 #008f4c; }
@@ -94,13 +62,7 @@
         .hist-green { color: var(--green); border-color: rgba(0, 255, 136, 0.2); }
         .hist-red { color: var(--red); border-color: rgba(255, 68, 68, 0.2); }
 
-        @keyframes crash-shake {
-            0% { transform: translate(0, -30px) scale(1); }
-            10%, 30%, 50%, 70%, 90% { transform: translate(-10px, -35px); }
-            20%, 40%, 60%, 80% { transform: translate(10px, -25px); }
-            100% { transform: translate(0, -30px) scale(0.9); }
-        }
-
+        @keyframes crash-shake { 0% { transform: translate(0, -30px); } 20% { transform: translate(-10px, -35px); } 40% { transform: translate(10px, -25px); } 60% { transform: translate(-5px, -30px); } 100% { transform: translate(0, -30px) scale(0.9); } }
         @media (max-width: 900px) { .crash-layout { grid-template-columns: 1fr; } .display-area { height: 420px; } #main-mult { font-size: 4rem; } }
     </style>
 </head>
@@ -118,7 +80,7 @@
                 <input type="number" id="bet-amount" value="100" min="10" step="10">
             </div>
             <div class="input-group">
-                <label>Automatic Extraction</label>
+                <label>Extraction Target</label>
                 <input type="number" id="auto-cashout" value="2.00" step="0.1" min="1.1">
             </div>
 
@@ -136,7 +98,7 @@
             <div class="grid-bg" id="grid-bg"></div>
             <div class="hud-overlay">
                 <div class="hud-stat stat-tl">NETWORK: STABLE <br> SPEED: <span id="hud-speed">1.00</span> mach</div>
-                <div class="hud-stat stat-tr">COORDINATES: <br> <span id="hud-coords">0, 0</span></div>
+                <div class="hud-stat stat-tr">VECTOR STATUS: <br> <span id="hud-coords">ACTIVE</span></div>
             </div>
             <div id="status-text" style="color: var(--gold); font-size: 0.6rem; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 5px; position: absolute; top: 35px; font-weight: bold; z-index: 10; opacity: 0.5;">HUB CONNECTED</div>
             <div id="main-mult">1.00x</div>
@@ -186,10 +148,7 @@
                 this.color = Math.random() > 0.5 ? '#D4AF37' : '#ff4444';
             }
             update() { this.x += this.vx; this.y += this.vy; this.alpha -= 0.02; }
-            draw() {
-                ctx.globalAlpha = this.alpha; ctx.fillStyle = this.color;
-                ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); ctx.fill();
-            }
+            draw() { ctx.globalAlpha = this.alpha; ctx.fillStyle = this.color; ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); ctx.fill(); }
         }
 
         onAuthStateChanged(auth, user => {
@@ -224,28 +183,31 @@
                 currentMult = Math.pow(1.08, elapsed);
                 document.getElementById('main-mult').innerText = currentMult.toFixed(2) + "x";
                 document.getElementById('hud-speed').innerText = currentMult.toFixed(2);
-                
                 if(hasBet) document.getElementById('cashout-preview').innerText = `₱${Math.floor(myBetAmt * currentMult).toLocaleString()}`;
 
                 ctx.clearRect(0,0, canvas.width, canvas.height);
                 
-                // FIXED LINE PROGRESSION
-                const spacingX = 140; const spacingY = 280;
+                // --- FIXED LINE & CAMERA SCALING ---
+                // We normalize coordinates so the line head stays relative to viewport height
+                const scale = Math.min(1, 4 / currentMult); 
+                const spacingX = 140 * scale; 
+                const spacingY = 280 * scale;
+
                 const headX = (elapsed * spacingX);
                 const headY = (currentMult - 1) * spacingY;
                 
-                // Camera Smoothing
-                const camX = canvas.width * 0.3 - headX;
+                // Camera target centered horizontally, lower-third vertically
+                const camX = canvas.width * 0.4 - headX;
                 const camY = canvas.height * 0.7 + headY;
-                document.getElementById('hud-coords').innerText = `${Math.floor(headX)}, ${Math.floor(headY)}`;
 
                 ctx.save();
                 ctx.translate(camX, camY);
-                gridBg.style.transform = `perspective(1000px) rotateX(60deg) translateY(${headY % 80}px) translateX(${camX % 80}px)`;
+                gridBg.style.transform = `perspective(1000px) rotateX(60deg) translateY(${(headY % 80)}px) translateX(${(camX % 80)}px)`;
 
-                // Glowing Trail
+                // Drawing smooth trail
                 ctx.beginPath();
-                ctx.lineWidth = 10; ctx.strokeStyle = '#D4AF37';
+                ctx.lineWidth = Math.max(4, 10 * scale); 
+                ctx.strokeStyle = '#D4AF37';
                 ctx.lineCap = 'round'; ctx.shadowBlur = 20; ctx.shadowColor = 'rgba(212, 175, 55, 0.6)';
                 ctx.moveTo(0, 0);
                 for(let i=0; i <= elapsed; i+=0.1) {
@@ -253,9 +215,9 @@
                 }
                 ctx.stroke();
 
-                // Head Pointer
+                // Point Head
                 ctx.shadowBlur = 40; ctx.fillStyle = "#fff";
-                ctx.beginPath(); ctx.arc(headX, -headY, 8, 0, Math.PI * 2); ctx.fill();
+                ctx.beginPath(); ctx.arc(headX, -headY, 8 * scale, 0, Math.PI * 2); ctx.fill();
                 ctx.restore();
 
                 if (hasBet && parseFloat(document.getElementById('auto-cashout').value) <= currentMult) cashout();
@@ -267,17 +229,12 @@
             gameStatus = "CRASHED"; hasBet = false;
             document.getElementById('main-mult').classList.add('crashed');
             document.getElementById('status-text').innerText = "SIGNAL LOST";
-            
             for(let i=0; i<80; i++) particles.push(new ExplosionParticle(cx + hx, cy - hy));
-
             const pLoop = setInterval(() => {
                 ctx.clearRect(0,0, canvas.width, canvas.height);
-                particles.forEach((p, idx) => {
-                    p.update(); p.draw(); if(p.alpha <= 0) particles.splice(idx, 1);
-                });
+                particles.forEach((p, idx) => { p.update(); p.draw(); if(p.alpha <= 0) particles.splice(idx, 1); });
                 if(particles.length === 0) clearInterval(pLoop);
             }, 16);
-
             addHistory(crashPoint); updateButtons();
             setTimeout(() => { document.getElementById('main-mult').classList.remove('crashed'); initEngine(); }, 3000);
         }
