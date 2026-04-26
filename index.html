@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NEXUS | Home Arena</title>
     
-    <link rel="stylesheet" href="menu.css">
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="/menu.css">
+    <link rel="stylesheet" href="/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Goldman:wght@400;700&display=swap" rel="stylesheet">
     
     <style>
@@ -17,7 +17,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 12px 20px 12px 60px; /* Space for the ☰ button */
+            padding: 12px 20px 12px 60px; 
             background: #000;
             border-bottom: 2px solid #222;
             position: sticky;
@@ -145,7 +145,7 @@
     </main>
 
     <section class="quick-actions">
-        <button onclick="window.location.href='/admin/'" id="admin-btn" class="action-btn admin-action">ADMIN</button>
+        <button onclick="window.location.href='/admin/agents.html'" id="admin-btn" class="action-btn admin-action">ADMIN</button>
         <button onclick="window.location.href='/wallet/'" class="action-btn gold">CASH IN</button>
         <button onclick="window.location.href='/wallet/'" class="action-btn">WITHDRAW</button>
     </section>
@@ -155,9 +155,8 @@
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
         import { getFirestore, doc, onSnapshot, getDoc } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
         
-        // Import the Menu logic if it's a module, or just call the script
-        // For reliability, we will define the injection directly here:
-        import { injectMenu } from "./menu.js"; 
+        // Import from absolute root path
+        import { injectMenu } from "/menu.js"; 
 
         const firebaseConfig = {
             apiKey: "AIzaSyCBvOw8HrMhZD0aYSHqFdE196ZITdYBU3Q",
@@ -172,14 +171,15 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // Make Auth globally accessible for the menu
+        // GLOBALS FOR menu.js
         window.firebaseAuth = auth;
+        window.firebaseDb = db; 
 
         // Run Menu Injection
         try {
             injectMenu();
         } catch (e) {
-            console.error("Menu injection failed. Check if menu.js is in the root folder.", e);
+            console.error("Menu injection failed:", e);
         }
 
         onAuthStateChanged(auth, async (user) => {
@@ -190,7 +190,10 @@
                 if (snap.exists()) {
                     const data = snap.data();
                     document.getElementById('user-display').innerText = data.username ? data.username.toUpperCase() : "PLAYER";
-                    if (data.isAdmin === true) {
+                    
+                    // Display admin button if user is Tier 1-6
+                    const level = data.level || 7;
+                    if (level >= 1 && level <= 6) {
                         document.getElementById('admin-btn').style.display = "block";
                     }
                 }
