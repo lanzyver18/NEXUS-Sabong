@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Goldman:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        :root { --gold: #D4AF37; }
+        :root { --gold: #D4AF37; --gold-dark: #aa8c2c; }
         body.auth-page { 
             background: #050505; 
             display: flex; 
@@ -18,51 +18,63 @@
             font-family: 'Segoe UI', sans-serif;
         }
         .auth-card { 
-            background: #0f0f0f; 
+            background: linear-gradient(145deg, #0f0f0f, #080808);
             padding: 40px; 
-            border-radius: 20px; 
+            border-radius: 24px; 
             border: 1px solid #222; 
             width: 100%; 
             max-width: 380px; 
             text-align: center; 
-            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            box-shadow: 0 25px 60px rgba(0,0,0,0.8);
         }
         .logo { font-family: 'Goldman', sans-serif; color: var(--gold); font-size: 2.2rem; margin-bottom: 5px; letter-spacing: 2px; }
         
-        .input-group { text-align: left; margin-bottom: 15px; }
+        .input-group { text-align: left; margin-bottom: 18px; position: relative; }
         .input-group label { font-size: 0.65rem; color: #555; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 8px; }
         
         input { 
             width: 100%; padding: 14px; background: #000; border: 1px solid #333; 
-            color: white; border-radius: 8px; box-sizing: border-box; transition: 0.3s;
+            color: white; border-radius: 10px; box-sizing: border-box; transition: 0.3s;
+            font-size: 0.9rem;
         }
-        input:focus { border-color: var(--gold); outline: none; box-shadow: 0 0 10px rgba(212, 175, 55, 0.1); }
+        input:focus { border-color: var(--gold); outline: none; box-shadow: 0 0 15px rgba(212, 175, 55, 0.1); }
+
+        .availability-hint { font-size: 0.6rem; margin-top: 5px; position: absolute; right: 0; top: 0; }
+        .available { color: #00ff88; }
+        .taken { color: #ff4444; }
+
+        .toggle-pass { position: absolute; right: 12px; bottom: 12px; cursor: pointer; color: #444; font-size: 0.7rem; font-weight: bold; }
 
         .tier-badge {
-            background: rgba(212, 175, 55, 0.1);
-            border: 1px solid var(--gold);
+            background: rgba(212, 175, 55, 0.05);
+            border: 1px solid rgba(212, 175, 55, 0.3);
             color: var(--gold);
             font-size: 0.7rem;
             padding: 12px;
-            border-radius: 8px;
-            margin-bottom: 20px;
+            border-radius: 12px;
+            margin-bottom: 25px;
             display: none;
             font-family: 'Goldman', sans-serif;
             letter-spacing: 1px;
+            animation: fadeIn 0.5s ease;
         }
         
-        .strength-meter { height: 4px; background: #222; margin-top: 8px; border-radius: 2px; overflow: hidden; }
-        .strength-bar { height: 100%; width: 0%; transition: 0.5s; }
+        .strength-meter { height: 4px; background: #1a1a1a; margin-top: 8px; border-radius: 2px; overflow: hidden; }
+        .strength-bar { height: 100%; width: 0%; transition: 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
 
         .btn-action.gold { 
-            width: 100%; padding: 16px; font-weight: bold; font-size: 0.9rem;
-            background: var(--gold); color: black; border: none; border-radius: 8px;
+            width: 100%; padding: 18px; font-weight: bold; font-size: 0.95rem;
+            background: linear-gradient(to right, var(--gold-dark), var(--gold));
+            color: black; border: none; border-radius: 12px;
             font-family: 'Goldman', sans-serif; cursor: pointer; transition: 0.3s;
             margin-top: 15px;
             text-transform: uppercase;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
         }
-        .btn-action.gold:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(212, 175, 55, 0.3); }
-        .btn-action.gold:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-action.gold:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(212, 175, 55, 0.2); }
+        .btn-action.gold:disabled { opacity: 0.4; cursor: not-allowed; filter: grayscale(1); }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body class="auth-page">
@@ -74,30 +86,32 @@
             JOINING AS: <span id="assigned-role-text">PLAYER</span>
         </div>
 
-        <p id="ref-status" style="font-size: 0.75rem; color: #666; margin-bottom: 20px;">Register a unique username to serve as your Arena ID.</p>
+        <p id="ref-status" style="font-size: 0.75rem; color: #666; margin-bottom: 20px;">Register a unique Arena ID to begin.</p>
         
         <div class="input-group">
-            <label>Username (ID)</label>
-            <input type="text" id="reg-username" placeholder="e.g. NexusWarrior">
+            <label>Arena Username</label>
+            <input type="text" id="reg-username" placeholder="e.g. NexusWarrior" maxlength="15" autocomplete="off">
+            <span id="avail-status" class="availability-hint"></span>
         </div>
 
         <div class="input-group">
-            <label>Create Password</label>
-            <input type="password" id="reg-pass" placeholder="Min. 6 characters" oninput="checkStrength(this.value)">
+            <label>Security Password</label>
+            <input type="password" id="reg-pass" placeholder="Min. 6 characters">
+            <span class="toggle-pass" onclick="togglePass()">SHOW</span>
             <div class="strength-meter"><div id="strength-bar" class="strength-bar"></div></div>
         </div>
         
         <button class="btn-action gold" id="btn-register">REGISTER & ENTER</button>
         
-        <p class="auth-footer" style="margin-top: 25px; font-size: 0.8rem; color: #555;">
-            Already have an ID? <a href="/login/" style="color: var(--gold); text-decoration: none; font-weight: bold;">Sign In</a>
+        <p class="auth-footer" style="margin-top: 30px; font-size: 0.8rem; color: #555;">
+            Already have an ID? <a href="/login/" style="color: var(--gold); text-decoration: none; font-weight: bold; margin-left: 5px;">Sign In</a>
         </p>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
         import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
-        import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, getDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCBvOw8HrMhZD0aYSHqFdE196ZITdYBU3Q",
@@ -112,29 +126,32 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
+        // UPDATED 6-TIER HIERARCHY
         const TIERS = [
             { role: "ADMIN", level: 1 },
             { role: "OPERATOR", level: 2 },
-            { role: "SUB_OPERATOR", level: 3 },
-            { role: "INCO", level: 4 },
-            { role: "MASTER_AGENT", level: 5 },
-            { role: "SUB_AGENT", level: 6 },
-            { role: "PLAYER", level: 7 }
+            { role: "INCO", level: 3 },
+            { role: "SUBOP", level: 4 },
+            { role: "AGENT", level: 5 },
+            { role: "PLAYER", level: 6 }
         ];
 
         const urlParams = new URLSearchParams(window.location.search);
         const referrerUid = urlParams.get('ref');
+        const userInp = document.getElementById('reg-username');
+        const passInp = document.getElementById('reg-pass');
+        const btn = document.getElementById('btn-register');
 
+        // Check for Referral and set Role
         async function checkReferral() {
             if (referrerUid) {
                 try {
                     const refSnap = await getDoc(doc(db, "users", referrerUid));
                     if (refSnap.exists()) {
                         const refData = refSnap.data();
-                        
-                        // Logic: Find current index in TIERS and move down by 1
                         const currentTierIndex = TIERS.findIndex(t => t.role === refData.role);
-                        const nextTier = TIERS[currentTierIndex + 1] || TIERS[6];
+                        // Move down 1 level, cap at PLAYER (level 6)
+                        const nextTier = TIERS[currentTierIndex + 1] || TIERS[5];
 
                         document.getElementById('ref-status').innerHTML = `Recruited by <b>${refData.username.toUpperCase()}</b>`;
                         document.getElementById('tier-preview').style.display = "block";
@@ -145,7 +162,30 @@
         }
         checkReferral();
 
-        window.checkStrength = (p) => {
+        // Real-time Availability Check
+        let checkTimeout;
+        userInp.oninput = () => {
+            const val = userInp.value.trim().toLowerCase();
+            const hint = document.getElementById('avail-status');
+            hint.innerHTML = "";
+            clearTimeout(checkTimeout);
+            
+            if (val.length < 4) return;
+            
+            checkTimeout = setTimeout(async () => {
+                const q = query(collection(db, "users"), where("username", "==", val));
+                const snap = await getDocs(q);
+                if (!snap.empty) {
+                    hint.innerHTML = "TAKEN"; hint.className = "availability-hint taken";
+                } else {
+                    hint.innerHTML = "AVAILABLE"; hint.className = "availability-hint available";
+                }
+            }, 500);
+        };
+
+        // Strength Meter
+        passInp.oninput = () => {
+            const p = passInp.value;
             const bar = document.getElementById('strength-bar');
             let s = 0;
             if (p.length > 5) s += 33;
@@ -155,13 +195,18 @@
             bar.style.background = s < 40 ? "#ff4444" : s < 80 ? "#ffaa00" : "#00ff88";
         };
 
-        document.getElementById('btn-register').onclick = async () => {
-            const user = document.getElementById('reg-username').value.trim().toLowerCase();
-            const pass = document.getElementById('reg-pass').value;
-            const btn = document.getElementById('btn-register');
+        window.togglePass = () => {
+            const type = passInp.type === 'password' ? 'text' : 'password';
+            passInp.type = type;
+            document.querySelector('.toggle-pass').innerText = type === 'password' ? 'SHOW' : 'HIDE';
+        };
 
-            if(user.length < 4) return alert("Username must be at least 4 characters.");
-            if(pass.length < 6) return alert("Password must be at least 6 characters.");
+        btn.onclick = async () => {
+            const user = userInp.value.trim().toLowerCase();
+            const pass = passInp.value;
+
+            if(user.length < 4) return alert("Username too short (Min 4 characters).");
+            if(pass.length < 6) return alert("Password too weak (Min 6 characters).");
 
             btn.disabled = true;
             btn.innerText = "AUTHENTICATING...";
@@ -170,18 +215,17 @@
                 let uplineId = "SYSTEM";
                 let uplinePath = [];
                 let assignedRole = "PLAYER";
-                let assignedLevel = 7;
+                let assignedLevel = 6;
 
                 if (referrerUid) {
                     const refSnap = await getDoc(doc(db, "users", referrerUid));
                     if (refSnap.exists()) {
                         const refData = refSnap.data();
                         uplineId = referrerUid;
-                        // Path inheritance: All parents + the person who invited them
                         uplinePath = [...(refData.uplinePath || []), referrerUid];
                         
                         const currentTierIndex = TIERS.findIndex(t => t.role === refData.role);
-                        const nextTier = TIERS[currentTierIndex + 1] || TIERS[6];
+                        const nextTier = TIERS[currentTierIndex + 1] || TIERS[5];
                         assignedRole = nextTier.role;
                         assignedLevel = nextTier.level;
                     }
@@ -194,21 +238,21 @@
                     uid: userCredential.user.uid,
                     username: user,
                     role: assignedRole,
-                    level: assignedLevel, // CRITICAL: For menu and dash access
+                    level: assignedLevel,
                     commissionRate: 0, 
                     uplineId: uplineId,
-                    uplinePath: uplinePath, // CRITICAL: For payout engine
+                    uplinePath: uplinePath,
                     balance: 0,
                     totalTurnover: 0,
                     totalCommission: 0,
-                    isAdmin: (assignedLevel === 1), // Legacy support
+                    isAdmin: (assignedLevel === 1),
                     createdAt: new Date()
                 });
 
                 window.location.href = "/";
             } catch (error) { 
                 console.error(error);
-                alert("Username is taken or connection lost."); 
+                alert("This username is already registered. Please try another."); 
                 btn.disabled = false;
                 btn.innerText = "REGISTER & ENTER";
             }
