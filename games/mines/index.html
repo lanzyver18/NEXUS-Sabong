@@ -26,7 +26,15 @@
         .stat-box span { font-family: 'Goldman'; font-size: 1.8rem; color: var(--gold); text-shadow: 0 0 10px rgba(212, 175, 55, 0.3); }
 
         .input-group label { display: block; font-size: 0.6rem; color: #666; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
-        input { width: 100%; padding: 14px; background: #000; border: 1px solid #333; color: white; border-radius: 10px; outline: none; transition: 0.3s; font-family: 'Goldman'; }
+        
+        /* QUANTUM STEPPER STYLING */
+        .stepper-container { display: flex; align-items: center; background: #000; border: 1px solid #333; border-radius: 10px; overflow: hidden; height: 45px; }
+        .step-btn { background: #111; border: none; color: var(--gold); width: 50px; height: 100%; font-size: 1.2rem; cursor: pointer; transition: 0.2s; font-family: 'Goldman'; }
+        .step-btn:hover:not(:disabled) { background: #222; color: white; }
+        .step-btn:disabled { opacity: 0.2; cursor: not-allowed; }
+        .stepper-val { flex: 1; text-align: center; font-family: 'Goldman'; color: white; font-size: 1rem; border: none; background: transparent; pointer-events: none; }
+
+        input[type="number"] { width: 100%; padding: 12px; background: #000; border: 1px solid #333; color: white; border-radius: 10px; outline: none; transition: 0.3s; font-family: 'Goldman'; box-sizing: border-box; }
         input:focus { border-color: var(--gold); background: #050505; }
 
         .btn-action { width: 100%; padding: 18px; border-radius: 12px; border: none; font-weight: bold; font-family: 'Goldman'; cursor: pointer; text-transform: uppercase; transition: 0.3s; }
@@ -48,9 +56,6 @@
         .cell:hover:not(.revealed):not(.disabled) { background: #222; transform: scale(1.03); border-color: var(--gold); }
         .cell.revealed.safe { background: rgba(0, 255, 136, 0.08); border-color: var(--green); color: var(--green); cursor: default; animation: popIn 0.3s ease; }
         .cell.revealed.mine { background: rgba(255, 68, 68, 0.08); border-color: var(--red); color: var(--red); cursor: default; animation: shake 0.4s; }
-        .cell.disabled { cursor: not-allowed; opacity: 0.5; }
-
-        .fair-badge { font-size: 0.5rem; color: #333; text-align: center; margin-top: 10px; text-transform: uppercase; letter-spacing: 1px; }
 
         @keyframes popIn { 0% { transform: scale(0.8); } 100% { transform: scale(1); } }
         @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
@@ -78,14 +83,18 @@
             </div>
 
             <div class="input-group">
-                <label>Mines Count</label>
-                <input type="number" id="mine-count" value="3" min="1" max="24" oninput="updateNextMultPreview()">
+                <label>Number of Mines</label>
+                <div class="stepper-container">
+                    <button class="step-btn" id="mine-minus" onclick="adjustMines(-1)">−</button>
+                    <input type="text" class="stepper-val" id="mine-count-display" value="3" readonly>
+                    <button class="step-btn" id="mine-plus" onclick="adjustMines(1)">+</button>
+                </div>
             </div>
 
             <button id="btn-start" class="btn-action btn-play" onclick="startGame()">Start Protocol</button>
             <button id="btn-cashout" class="btn-action btn-cashout" onclick="cashout()">Secure ₱0.00</button>
             
-            <div class="fair-badge">Provably Fair Protocol v2.1</div>
+            <div style="font-size: 0.5rem; color: #333; text-align: center; margin-top: 10px; text-transform: uppercase; letter-spacing: 1px;">Provably Fair Protocol v2.2</div>
         </div>
 
         <div class="board-container">
@@ -113,15 +122,6 @@
         const db = getFirestore(app);
         injectMenu();
 
-        // AUDIO ENGINE
-        const Sfx = {
-            click: new Audio('https://nexus-assets.s3.amazonaws.com/click.mp3'),
-            gem: new Audio('https://nexus-assets.s3.amazonaws.com/gem.mp3'),
-            bomb: new Audio('https://nexus-assets.s3.amazonaws.com/bomb.mp3'),
-            win: new Audio('https://nexus-assets.s3.amazonaws.com/win.mp3'),
-            play: (sound) => { sound.currentTime = 0; sound.play().catch(()=>{}); }
-        };
-
         let balance = 0;
         let gameActive = false;
         let mines = [];
@@ -140,7 +140,7 @@
             } else { window.location.href = "/login/"; }
         });
 
-        // Probabilistic Multiplier Function
+        // Probabilistic Multiplier Function (nCr Probability)
         function nCr(n, r) {
             if (r < 0 || r > n) return 0;
             if (r === 0 || r === n) return 1;
@@ -150,39 +150,43 @@
             return res;
         }
 
-        function getMultiplier(mines, revealed) {
-            const houseEdge = 0.96; // 4% House Edge
-            const probability = nCr(25 - mines, revealed) / nCr(25, revealed);
+        function getMultiplier(m, r) {
+            const houseEdge = 0.96; 
+            const probability = nCr(25 - m, r) / nCr(25, r);
             return (1 / probability) * houseEdge;
         }
 
+        window.adjustMines = (val) => {
+            if (gameActive) return;
+            const display = document.getElementById('mine-count-display');
+            let current = parseInt(display.value);
+            let next = current + val;
+            if (next >= 1 && next <= 24) {
+                display.value = next;
+                currentMineSetting = next;
+                updateNextMultPreview();
+            }
+        };
+
         window.updateNextMultPreview = () => {
             if (gameActive) return;
-            const m = parseInt(document.getElementById('mine-count').value);
-            if (m > 0 && m < 25) {
-                const next = getMultiplier(m, 1);
-                document.getElementById('current-mult').innerText = next.toFixed(2) + "x";
-                document.getElementById('mult-label').innerText = "Next Multiplier";
-            }
+            const next = getMultiplier(currentMineSetting, 1);
+            document.getElementById('current-mult').innerText = next.toFixed(2) + "x";
+            document.getElementById('mult-label').innerText = "First Gem Value";
         };
 
         window.startGame = async () => {
             const bet = parseInt(document.getElementById('bet-amount').value);
-            const count = parseInt(document.getElementById('mine-count').value);
-            
             if (bet > balance || bet < 10) return alert("Check balance.");
-            if (count < 1 || count > 24) return alert("Invalid mine count.");
 
-            Sfx.play(Sfx.click);
             try {
                 await updateDoc(doc(db, "users", auth.currentUser.uid), { balance: increment(-bet) });
                 gameActive = true;
                 currentBet = bet;
-                currentMineSetting = count;
                 revealedCount = 0;
                 mines = Array(25).fill(false);
                 let placed = 0;
-                while (placed < count) {
+                while (placed < currentMineSetting) {
                     let idx = Math.floor(Math.random() * 25);
                     if (!mines[idx]) { mines[idx] = true; placed++; }
                 }
@@ -206,15 +210,14 @@
 
         window.revealCell = (idx, el) => {
             if (!gameActive || el.classList.contains('revealed')) return;
+            el.classList.add('revealed');
 
             if (mines[idx]) {
-                Sfx.play(Sfx.bomb);
-                el.classList.add('revealed', 'mine');
+                el.classList.add('mine');
                 el.innerText = "💣";
                 gameOver(false);
             } else {
-                Sfx.play(Sfx.gem);
-                el.classList.add('revealed', 'safe');
+                el.classList.add('safe');
                 el.innerText = "💎";
                 revealedCount++;
                 const newMult = getMultiplier(currentMineSetting, revealedCount);
@@ -228,7 +231,6 @@
             const mult = getMultiplier(currentMineSetting, revealedCount);
             const win = Math.floor(currentBet * mult);
             
-            Sfx.play(Sfx.win);
             try {
                 await updateDoc(doc(db, "users", auth.currentUser.uid), { balance: increment(win) });
                 await addDoc(collection(db, "wallet_logs"), {
@@ -250,20 +252,14 @@
                     cells[idx].style.opacity = "0.2";
                 }
             });
-            if(!win) {
-                document.getElementById('current-mult').style.color = "var(--red)";
-                setTimeout(() => {
-                    document.getElementById('current-mult').style.color = "var(--gold)";
-                    updateNextMultPreview();
-                }, 2000);
-            }
         }
 
         function updateUI(active) {
             document.getElementById('btn-start').style.display = active ? 'none' : 'block';
             document.getElementById('btn-cashout').style.display = active ? 'block' : 'none';
             document.getElementById('bet-amount').disabled = active;
-            document.getElementById('mine-count').disabled = active;
+            document.getElementById('mine-plus').disabled = active;
+            document.getElementById('mine-minus').disabled = active;
         }
 
         renderGrid();
