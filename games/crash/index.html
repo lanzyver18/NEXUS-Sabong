@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Nexus Crash | NETWORK SYNC</title>
+    <title>Nexus Crash | AUTO-SYNC PRO</title>
     <link rel="stylesheet" href="/style.css">
     <link rel="stylesheet" href="/menu.css">
     <link href="https://fonts.googleapis.com/css2?family=Goldman:wght@400;700&display=swap" rel="stylesheet">
@@ -69,7 +69,7 @@
 
         <div class="display-area">
             <div class="grid-bg" id="grid-bg"></div>
-            <div id="status-text" style="color: var(--gold); font-size: 0.6rem; position: absolute; top: 35px; font-weight: bold; z-index: 10; opacity: 0.5; letter-spacing: 3px;">CONNECTING TO SYSTEM...</div>
+            <div id="status-text" style="color: var(--gold); font-size: 0.6rem; position: absolute; top: 35px; font-weight: bold; z-index: 10; opacity: 0.5; letter-spacing: 3px;">SYSTEM ONLINE</div>
             <div id="main-mult">1.00x</div>
             <canvas id="crash-canvas"></canvas>
         </div>
@@ -78,7 +78,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
-        import { getFirestore, doc, onSnapshot, updateDoc, increment, setDoc, getDoc, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+        import { getFirestore, doc, onSnapshot, updateDoc, increment, setDoc, getDoc, collection, addDoc, serverTimestamp, arrayUnion } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
         import { injectMenu } from "/menu.js";
 
         const firebaseConfig = {
@@ -96,7 +96,7 @@
         injectMenu();
 
         let balance = 0, currentMult = 1.00, gameStatus = "WAITING", hasBet = false, myBetAmt = 0;
-        let particles = [];
+        let localCrashPoint = 0;
         const canvas = document.getElementById('crash-canvas');
         const ctx = canvas.getContext('2d');
         const gridBg = document.getElementById('grid-bg');
@@ -104,64 +104,96 @@
         function resize() { canvas.width = canvas.parentElement.clientWidth; canvas.height = canvas.parentElement.clientHeight; }
         window.addEventListener('resize', resize); resize();
 
-        class ExplosionParticle {
-            constructor(x, y) {
-                this.x = x; this.y = y;
-                this.size = Math.random() * 6 + 2;
-                this.vx = (Math.random() - 0.5) * 15;
-                this.vy = (Math.random() - 0.5) * 15;
-                this.alpha = 1;
-                this.color = Math.random() > 0.5 ? '#D4AF37' : '#ff4444';
-            }
-            update() { this.x += this.vx; this.y += this.vy; this.alpha -= 0.02; }
-            draw() { ctx.globalAlpha = this.alpha; ctx.fillStyle = this.color; ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); ctx.fill(); }
-        }
-
-        // GLOBAL SYNC ENGINE
+        // 1. MASTER ENGINE: Syncs with Firestore Document
         onSnapshot(doc(db, "settings", "crash"), async (snap) => {
             if (!snap.exists()) return;
             const data = snap.data();
-            const serverNow = Date.now();
-            const startAt = data.startTime?.toMillis() || serverNow;
-            
             gameStatus = data.status;
-            const crashPoint = data.crashPoint;
+            localCrashPoint = data.crashPoint;
+            const startTime = data.startTime?.toMillis() || Date.now();
 
             if (gameStatus === "RUNNING") {
-                document.getElementById('status-text').innerText = "SYSTEM LIVE";
-                document.getElementById('main-mult').classList.remove('crashed');
-                
-                const runLoop = () => {
-                    if (gameStatus !== "RUNNING") return;
-                    let elapsed = (Date.now() - startAt) / 1000;
-                    currentMult = Math.pow(1.08, elapsed);
-
-                    if (currentMult >= crashPoint) {
-                        handleCrash(crashPoint);
-                        return;
-                    }
-
-                    renderGame(elapsed, currentMult);
-                    requestAnimationFrame(runLoop);
-                };
-                runLoop();
+                startAnimation(startTime, localCrashPoint);
             } else if (gameStatus === "WAITING") {
-                document.getElementById('status-text').innerText = "PREPARING NEXT ROUND...";
-                ctx.clearRect(0,0, canvas.width, canvas.height);
-                document.getElementById('main-mult').innerText = "1.00x";
-                updateButtons();
+                resetUI();
+            } else if (gameStatus === "CRASHED") {
+                showCrash(localCrashPoint);
             }
             
             updateHistory(data.history || []);
         });
 
-        function renderGame(elapsed, mult) {
-            document.getElementById('main-mult').innerText = mult.toFixed(2) + "x";
-            if(hasBet) {
-                document.getElementById('cashout-preview').innerText = `₱${Math.floor(myBetAmt * mult).toLocaleString()}`;
-                if (parseFloat(document.getElementById('auto-cashout').value) <= mult) cashout();
-            }
+        // 2. AUTONOMOUS LOOP: If this client is the first one, it pushes updates to Firestore
+        // This ensures the game plays even if the admin isn't looking.
+        async function runAutoEngine() {
+            const snap = await getDoc(doc(db, "settings", "crash"));
+            const data = snap.data();
+            const now = Date.now();
+            const lastUpdate = data.lastUpdate?.toMillis() || 0;
 
+            // Logic to cycle the game every X seconds automatically
+            if (gameStatus === "CRASHED" && (now - lastUpdate) > 5000) {
+                // Time to wait for bets
+                await updateDoc(doc(db, "settings", "crash"), { 
+                    status: "WAITING", 
+                    lastUpdate: serverTimestamp() 
+                });
+            } else if (gameStatus === "WAITING" && (now - lastUpdate) > 10000) {
+                // Time to fly!
+                const newCrashPoint = generateCrashPoint();
+                await updateDoc(doc(db, "settings", "crash"), { 
+                    status: "RUNNING", 
+                    startTime: serverTimestamp(),
+                    crashPoint: newCrashPoint,
+                    lastUpdate: serverTimestamp() 
+                });
+            } else if (gameStatus === "RUNNING") {
+                const elapsed = (now - data.startTime.toMillis()) / 1000;
+                const currentVal = Math.pow(1.08, elapsed);
+                if (currentVal >= data.crashPoint) {
+                    await updateDoc(doc(db, "settings", "crash"), { 
+                        status: "CRASHED", 
+                        history: arrayUnion(data.crashPoint),
+                        lastUpdate: serverTimestamp() 
+                    });
+                }
+            }
+        }
+        setInterval(runAutoEngine, 2000); // Check engine state every 2 seconds
+
+        function generateCrashPoint() {
+            // High payout logic: 7% instant crash, rest is random exponential
+            if (Math.random() < 0.07) return 1.00;
+            const e = 0.94 / (1 - Math.random());
+            return parseFloat(Math.max(1.01, e).toFixed(2));
+        }
+
+        function startAnimation(startTime, crashPoint) {
+            document.getElementById('status-text').innerText = "SYSTEM LIVE";
+            document.getElementById('main-mult').classList.remove('crashed');
+            updateButtons();
+
+            const animate = () => {
+                if (gameStatus !== "RUNNING") return;
+                let elapsed = (Date.now() - startTime) / 1000;
+                currentMult = Math.pow(1.08, elapsed);
+
+                if (currentMult >= crashPoint) return;
+
+                document.getElementById('main-mult').innerText = currentMult.toFixed(2) + "x";
+                if(hasBet) {
+                    document.getElementById('cashout-preview').innerText = `₱${Math.floor(myBetAmt * currentMult).toLocaleString()}`;
+                    const auto = parseFloat(document.getElementById('auto-cashout').value);
+                    if (auto > 1 && currentMult >= auto) cashout();
+                }
+
+                renderCanvas(elapsed, currentMult);
+                requestAnimationFrame(animate);
+            };
+            requestAnimationFrame(animate);
+        }
+
+        function renderCanvas(elapsed, mult) {
             ctx.clearRect(0,0, canvas.width, canvas.height);
             const scale = Math.min(1, 4 / mult);
             const spacingX = 140 * scale, spacingY = 280 * scale;
@@ -171,9 +203,8 @@
             ctx.save();
             ctx.translate(camX, camY);
             gridBg.style.transform = `perspective(1000px) rotateX(60deg) translateY(${(headY % 80)}px) translateX(${(camX % 80)}px)`;
-
             ctx.beginPath();
-            ctx.lineWidth = 8 * scale; ctx.strokeStyle = '#D4AF37'; ctx.lineCap = 'round';
+            ctx.lineWidth = 10 * scale; ctx.strokeStyle = '#D4AF37'; ctx.lineCap = 'round';
             ctx.shadowBlur = 20; ctx.shadowColor = 'rgba(212, 175, 55, 0.6)';
             ctx.moveTo(0, 0);
             for(let i=0; i <= elapsed; i+=0.1) {
@@ -183,26 +214,24 @@
             ctx.restore();
         }
 
-        function handleCrash(cp) {
-            gameStatus = "CRASHED";
-            hasBet = false;
+        function showCrash(cp) {
             document.getElementById('main-mult').innerText = cp.toFixed(2) + "x";
             document.getElementById('main-mult').classList.add('crashed');
             document.getElementById('status-text').innerText = "SIGNAL LOST";
-            
-            // Explosion logic (Visual only)
-            for(let i=0; i<50; i++) particles.push(new ExplosionParticle(canvas.width/2, canvas.height/2));
-            const pLoop = setInterval(() => {
-                ctx.clearRect(0,0, canvas.width, canvas.height);
-                particles.forEach((p, idx) => { p.update(); p.draw(); if(p.alpha <= 0) particles.splice(idx, 1); });
-                if(particles.length === 0) clearInterval(pLoop);
-            }, 16);
+            hasBet = false;
+            updateButtons();
+        }
 
+        function resetUI() {
+            ctx.clearRect(0,0, canvas.width, canvas.height);
+            document.getElementById('main-mult').innerText = "1.00x";
+            document.getElementById('status-text').innerText = "PREPARING NEXT LAUNCH...";
+            document.getElementById('main-mult').classList.remove('crashed');
             updateButtons();
         }
 
         window.placeBet = async () => {
-            if (gameStatus !== "WAITING") return alert("Round already started");
+            if (gameStatus !== "WAITING") return alert("Round In Progress");
             const amt = parseInt(document.getElementById('bet-amount').value);
             if (amt > balance || amt < 10) return alert("Verify Balance");
             await updateDoc(doc(db, "users", auth.currentUser.uid), { balance: increment(-amt) });
@@ -223,7 +252,7 @@
             const bBet = document.getElementById('btn-bet'), bCash = document.getElementById('btn-cashout'), bWait = document.getElementById('btn-waiting');
             bBet.style.display = "none"; bCash.style.display = "none"; bWait.style.display = "none";
             if (hasBet && gameStatus === "RUNNING") bCash.style.display = "block";
-            else if (hasBet && gameStatus === "WAITING") { bWait.style.display = "block"; bWait.innerText = "BET PLACED"; }
+            else if (hasBet && gameStatus === "WAITING") { bWait.style.display = "block"; bWait.innerText = "READY FOR LAUNCH"; }
             else if (gameStatus === "WAITING") bBet.style.display = "block";
             else bWait.style.display = "block";
         }
