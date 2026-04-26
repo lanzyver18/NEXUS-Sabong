@@ -55,6 +55,10 @@
         .bet-input { background: #000; border: 1px solid #333; color: var(--green); padding: 18px; width: 100%; border-radius: 12px; text-align: center; font-size: 1.4rem; font-family: 'Goldman'; box-sizing: border-box; outline: none; transition: 0.3s; }
         .bet-input:focus { border-color: var(--gold); }
 
+        /* TOAST NOTIFICATION */
+        #bet-toast { position: fixed; top: 25px; right: 25px; background: var(--green); color: black; padding: 15px 30px; border-radius: 12px; font-family: 'Goldman'; font-weight: bold; font-size: 0.8rem; z-index: 3000; transform: translateX(200%); transition: 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: 0 10px 40px rgba(0,255,136,0.3); letter-spacing: 1px; }
+        #bet-toast.show { transform: translateX(0); }
+
         /* LIVE FEED SIDEBAR */
         .live-bets-feed { margin-top: 25px; border-top: 1px solid #222; padding-top: 20px; }
         .feed-title { font-size: 0.6rem; color: #444; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 15px; display: block; }
@@ -68,7 +72,7 @@
 </head>
 <body>
 
-    <div id="bet-toast">PROTOCOL SECURED: BET PLACED</div>
+    <div id="bet-toast">BET PLACED SUCCESSFULLY</div>
 
     <nav class="top-nav">
         <div class="logo" style="color:var(--gold); font-family:'Goldman'; font-weight:bold; font-size:1.2rem; letter-spacing:2px;">NEXUS ARENA</div>
@@ -137,7 +141,7 @@
             
             <button id="btn-place-bet" onclick="executeBet()" style="width:100%; margin-top:15px; padding:20px; border-radius:12px; border:none; background:var(--gold); color:black; font-family:'Goldman'; font-weight:bold; cursor:pointer; text-transform:uppercase; letter-spacing:1px; transition:0.3s;">Confirm Bet</button>
 
-            <div class="history-list">
+            <div class="history-list" style="margin-top:20px;">
                 <h4 style="font-size: 0.6rem; color: #444; margin-bottom: 12px; letter-spacing: 2px; text-transform: uppercase;">My Session</h4>
                 <div id="local-bet-history"></div>
             </div>
@@ -172,7 +176,6 @@
         let isLocked = false;
         let selectedSide = null;
 
-        // Audio SFX
         const playSfx = (type) => {
             const sounds = {
                 click: 'https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3',
@@ -191,7 +194,6 @@
                     }
                 });
 
-                // Arena State
                 onSnapshot(doc(db, "settings", "arena"), (docSnap) => {
                     if (docSnap.exists()) {
                         const data = docSnap.data();
@@ -220,7 +222,6 @@
                     }
                 });
 
-                // Global Bet Stream (Real-time activity)
                 onSnapshot(query(collection(db, "bets"), orderBy("timestamp", "desc"), limit(4)), (snap) => {
                     const stream = document.getElementById('global-bet-stream');
                     stream.innerHTML = "";
@@ -231,7 +232,6 @@
                     });
                 });
 
-                // Hype Multiplier
                 onSnapshot(query(collection(db, "bets"), where("status", "==", "PENDING")), (snap) => {
                     let mReal = 0, wReal = 0;
                     snap.forEach(d => { if(d.data().side === 'MERON') mReal += d.data().amount; else wReal += d.data().amount; });
@@ -245,7 +245,6 @@
                     document.getElementById('bar-wala').style.width = (100 - mPerc) + "%";
                 });
 
-                // Personal Logs
                 onSnapshot(query(collection(db, "bets"), where("uid", "==", user.uid), orderBy("timestamp", "desc"), limit(3)), (snap) => {
                     const hist = document.getElementById('local-bet-history');
                     hist.innerHTML = "";
@@ -292,7 +291,6 @@
                     amount: amt, side: selectedSide, status: "PENDING", timestamp: new Date()
                 });
 
-                // Commission logic
                 if (currentUserData.uplinePath) {
                     let distributed = 0;
                     for (const uId of [...currentUserData.uplinePath].reverse()) {
@@ -315,7 +313,6 @@
                 toast.classList.add('show');
                 setTimeout(() => toast.classList.remove('show'), 3000);
                 
-                // Reset UI
                 selectedSide = null;
                 document.querySelectorAll('.bet-card').forEach(c => c.classList.remove('selected'));
             } catch (e) { alert("Execution Error"); }
