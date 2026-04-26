@@ -1,4 +1,6 @@
 // menu.js
+import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+
 export function injectMenu() {
     if (document.getElementById('nexus-side-menu')) return;
 
@@ -15,12 +17,15 @@ export function injectMenu() {
                 <a href="/">🏠 Home</a>
                 <a href="/games/">🐓 Sabong Arena</a>
                 <a href="/profile/">👤 My Profile</a>
+                
                 <div style="margin: 15px 0 5px 0; color:#444; font-size:0.7rem; font-weight:bold; letter-spacing:1px;">RECORDS</div>
                 <a href="/history/wallet.html">💰 Wallet History</a>
                 <a href="/history/bets.html">📝 Bet History</a>
+                
                 <div style="margin: 15px 0 5px 0; color:#444; font-size:0.7rem; font-weight:bold; letter-spacing:1px;">FINANCE</div>
                 <a href="/wallet/" style="color:#D4AF37;">📥 Cash-In / Out</a>
-                <div id="agent-manager-link"></div>
+                
+                <div id="agent-manager-section"></div>
             </div>
 
             <div class="sidebar-footer">
@@ -40,7 +45,7 @@ export function injectMenu() {
     openBtn.onclick = () => {
         menu.classList.add('active');
         overlay.classList.add('active');
-        document.body.style.overflow = 'hidden'; // Prevent background scrolling
+        document.body.style.overflow = 'hidden';
     };
 
     const close = () => {
@@ -63,4 +68,39 @@ export function injectMenu() {
             }
         };
     }
+
+    // Initialize Hierarchy Check
+    checkUserTier();
+}
+
+async function checkUserTier() {
+    const auth = window.firebaseAuth;
+    const db = window.firebaseDb; // Ensure you also pass db to window in your main files
+
+    if (!auth || !db) return;
+
+    auth.onAuthStateChanged(async (user) => {
+        if (user) {
+            try {
+                const userRef = doc(db, "users", user.uid);
+                const snap = await getDoc(userRef);
+                
+                if (snap.exists()) {
+                    const data = snap.data();
+                    const level = data.level || 7; // Default to Player if level is missing
+                    
+                    // Levels 1-6 are Admin/Agents
+                    if (level >= 1 && level <= 6) {
+                        const container = document.getElementById('agent-manager-section');
+                        container.innerHTML = `
+                            <div style="margin: 15px 0 5px 0; color:#444; font-size:0.7rem; font-weight:bold; letter-spacing:1px;">MANAGEMENT</div>
+                            <a href="/admin/agents.html" style="color:#00ff88;">👥 Agent Manager</a>
+                        `;
+                    }
+                }
+            } catch (error) {
+                console.error("Hierarchy check failed:", error);
+            }
+        }
+    });
 }
