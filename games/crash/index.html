@@ -79,11 +79,11 @@
         <div class="display-area">
             <div class="grid-bg" id="grid-bg"></div>
             <div class="hud-overlay">
-                <div class="hud-stat stat-tl">NETWORK: ENCRYPTED <br> ENGINE: V8-CORE <br> HEALTH: 100%</div>
-                <div class="hud-stat stat-tr">VECTOR POS: <span id="hud-coords">0,0</span> <br> EXTRACTIONS: 0 <br> STATUS: ACTIVE</div>
+                <div class="hud-stat stat-tl">NETWORK: <span id="hud-net">OFFLINE</span> <br> ENGINE: V8-CORE <br> HEALTH: <span id="hud-health">0%</span></div>
+                <div class="hud-stat stat-tr">VECTOR POS: <span id="hud-coords">0,0</span> <br> EXTRACTIONS: 0 <br> STATUS: <span id="hud-status">STANDBY</span></div>
             </div>
-            <div id="status-text" style="color: var(--gold); font-size: 0.6rem; position: absolute; top: 35px; font-weight: bold; z-index: 10; opacity: 0.5; letter-spacing: 5px; text-transform: uppercase;">System Standby</div>
-            <div id="main-mult">1.00x</div>
+            <div id="status-text" style="color: var(--gold); font-size: 0.6rem; position: absolute; top: 35px; font-weight: bold; z-index: 10; opacity: 0.5; letter-spacing: 5px; text-transform: uppercase;">Awaiting Connection</div>
+            <div id="main-mult">---<small>INITIALIZING</small></div>
             <canvas id="crash-canvas"></canvas>
         </div>
     </div>
@@ -110,6 +110,7 @@
 
         let balance = 0, currentMult = 1.00, gameStatus = "WAITING", hasBet = false, myBetAmt = 0;
         let particles = [];
+        let isLoaded = false;
         const canvas = document.getElementById('crash-canvas');
         const ctx = canvas.getContext('2d');
         const gridBg = document.getElementById('grid-bg');
@@ -130,10 +131,19 @@
             draw() { ctx.globalAlpha = this.alpha; ctx.fillStyle = this.color; ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); ctx.fill(); }
         }
 
-        // 1. SYSTEM SYNC ENGINE
+        // 1. MASTER SYSTEM ENGINE
         onSnapshot(doc(db, "settings", "crash"), async (snap) => {
             if (!snap.exists()) return;
             const data = snap.data();
+            
+            // Mark as loaded once we receive first data
+            if(!isLoaded) {
+                isLoaded = true;
+                document.getElementById('hud-net').innerText = 'STABLE';
+                document.getElementById('hud-health').innerText = '100%';
+                document.getElementById('hud-status').innerText = 'READY';
+            }
+
             gameStatus = data.status;
             const cp = data.crashPoint;
             const startAt = data.startTime?.toMillis() || Date.now();
@@ -149,8 +159,9 @@
             updateHistoryUI(data.history || []);
         });
 
-        // 2. AUTONOMOUS LOOP (10s Betting, 5s Result)
+        // 2. AUTONOMOUS HEARTBEAT (Runs logic if no one else is)
         async function runAutoLoop() {
+            if(!isLoaded) return; // Wait for initial sync before acting
             try {
                 const snap = await getDoc(doc(db, "settings", "crash"));
                 const data = snap.data();
@@ -239,13 +250,15 @@
             for(let i=0; i<60; i++) particles.push(new Particle(canvas.width/2, canvas.height/2));
             const pLoop = setInterval(() => {
                 ctx.clearRect(0,0, canvas.width, canvas.height);
-                particles.forEach((p, idx) => { p.update(); p.draw(); if(p.alpha <= 0) particles.splice(idx, 1); });
+                particles.forEach((p, idx) => {
+                    p.update(); p.draw(); if(p.alpha <= 0) particles.splice(idx, 1);
+                });
                 if(particles.length === 0) clearInterval(pLoop);
             }, 16);
         }
 
         window.placeBet = async () => {
-            if (gameStatus !== "WAITING") return alert("Round In Progress");
+            if (!isLoaded || gameStatus !== "WAITING") return alert("Round In Progress");
             const amt = parseInt(document.getElementById('bet-amount').value);
             if (amt > balance || amt < 10) return alert("Low Credits");
             await updateDoc(doc(db, "users", auth.currentUser.uid), { balance: increment(-amt) });
@@ -263,6 +276,8 @@
         function updateButtons() {
             const bBet = document.getElementById('btn-bet'), bCash = document.getElementById('btn-cashout'), bWait = document.getElementById('btn-waiting');
             bBet.style.display = "none"; bCash.style.display = "none"; bWait.style.display = "none";
+            if (!isLoaded) { bWait.style.display = "block"; return; }
+            
             if (hasBet && gameStatus === "RUNNING") bCash.style.display = "block";
             else if (hasBet && gameStatus === "WAITING") { bWait.style.display = "block"; bWait.innerText = "LOCKED IN"; }
             else if (gameStatus === "WAITING") bBet.style.display = "block";
