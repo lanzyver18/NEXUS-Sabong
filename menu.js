@@ -28,7 +28,7 @@ export function injectMenu() {
             
             <div class="sidebar-links">
                 <a href="/" class="${currentPath === '/' || currentPath === '/index.html' ? 'active' : ''}">Arena Lobby</a>
-                <a href="/games/" class="${currentPath.includes('/games/') ? 'active' : ''}">Sabong Arena</a>
+                <a href="/games/" class="${currentPath.includes('/games/') ? 'active' : ''}">Games</a>
                 <a href="/profile/" class="${currentPath.includes('/profile/') ? 'active' : ''}">My Profile</a>
                 
                 <div class="menu-category">FINANCE & LOGS</div>
