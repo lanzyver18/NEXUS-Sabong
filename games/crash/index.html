@@ -18,21 +18,20 @@
         .top-nav { position: sticky; top: 0; z-index: 1000; display: flex; justify-content: space-between; align-items: center; padding: 12px 20px 12px 75px; background: #000; border-bottom: 2px solid #222; }
         .crash-layout { max-width: 1200px; margin: 20px auto; display: grid; grid-template-columns: 360px 1fr; gap: 25px; padding: 0 15px; }
 
-        /* THE ARENA */
         .display-area { background: #050505; border-radius: 28px; border: 1px solid #222; height: 550px; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.8), inset 0 0 100px rgba(0,0,0,1); }
         .grid-bg { position: absolute; width: 400%; height: 400%; background-image: linear-gradient(rgba(212, 175, 55, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(212, 175, 55, 0.03) 1px, transparent 1px); background-size: 80px 80px; transform: perspective(1000px) rotateX(60deg); opacity: 0.5; z-index: 1; pointer-events: none; }
 
-        #main-mult { font-family: 'Goldman'; font-size: 7rem; color: white; z-index: 10; text-shadow: 0 0 40px rgba(255,255,255,0.15); pointer-events: none; transform: translateY(-30px); transition: 0.1s; }
+        #main-mult { font-family: 'Goldman'; font-size: 7rem; color: white; z-index: 10; text-shadow: 0 0 40px rgba(255,255,255,0.15); pointer-events: none; transform: translateY(-30px); transition: 0.1s; text-align: center; }
+        #main-mult small { display: block; font-size: 1rem; color: var(--gold); letter-spacing: 5px; opacity: 0.6; margin-top: -10px; }
         #main-mult.crashed { color: var(--red); animation: crash-shake 0.4s ease-out; }
+        
         canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 5; }
 
-        /* TELEMETRY HUD */
         .hud-overlay { position: absolute; width: 100%; height: 100%; z-index: 6; pointer-events: none; padding: 30px; box-sizing: border-box; }
-        .hud-stat { position: absolute; font-size: 0.55rem; font-family: 'Goldman'; color: var(--gold); opacity: 0.4; text-transform: uppercase; letter-spacing: 1px; }
+        .hud-stat { position: absolute; font-size: 0.55rem; font-family: 'Goldman'; color: var(--gold); opacity: 0.4; text-transform: uppercase; letter-spacing: 1px; line-height: 1.5; }
         .stat-tl { top: 30px; left: 30px; }
         .stat-tr { top: 30px; right: 30px; text-align: right; }
 
-        /* CONTROLS */
         .control-panel { background: linear-gradient(145deg, #111, #080808); padding: 30px; border-radius: 28px; border: 1px solid #252525; display: flex; flex-direction: column; gap: 20px; }
         .input-group label { display: block; font-size: 0.6rem; color: #555; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 10px; font-weight: bold; }
         input { width: 100%; padding: 18px; background: #000; border: 1px solid #333; color: var(--gold); border-radius: 14px; outline: none; font-family: 'Goldman'; transition: 0.3s; box-sizing: border-box; font-size: 1.2rem; }
@@ -46,7 +45,7 @@
         .hist-item { padding: 8px 14px; border-radius: 10px; font-size: 0.8rem; font-family: 'Goldman'; font-weight: bold; background: #111; flex-shrink: 0; border: 1px solid #222; }
         .hist-green { color: var(--green); } .hist-red { color: var(--red); }
 
-        @keyframes crash-shake { 0% { transform: translate(0, -30px); } 20% { transform: translate(-10px, -35px); } 40% { transform: translate(10px, -25px); } 60% { transform: translate(-5px, -30px); } 100% { transform: translate(0, -30px) scale(0.9); } }
+        @keyframes crash-shake { 0% { transform: translate(0, -30px); } 20% { transform: translate(-10px, -35px); } 40% { transform: translate(10px, -25px); } 100% { transform: translate(0, -30px) scale(0.9); } }
         @media (max-width: 900px) { .crash-layout { grid-template-columns: 1fr; } .display-area { height: 420px; } #main-mult { font-size: 4rem; } }
     </style>
 </head>
@@ -60,19 +59,19 @@
     <div class="crash-layout">
         <div class="control-panel">
             <div class="input-group">
-                <label>Investment Value</label>
+                <label>Investment</label>
                 <input type="number" id="bet-amount" value="100" min="10">
             </div>
             <div class="input-group">
-                <label>Automatic Extraction</label>
+                <label>Auto Extract</label>
                 <input type="number" id="auto-cashout" value="2.00" step="0.1">
             </div>
 
-            <button id="btn-bet" class="btn-action btn-bet" onclick="placeBet()">Initiate Launch</button>
+            <button id="btn-bet" class="btn-action btn-bet" onclick="placeBet()">Initiate Round</button>
             <button id="btn-cashout" class="btn-action btn-cashout" onclick="cashout()">
                 EXTRACT <span id="cashout-preview" style="display:block; font-size:0.7rem; opacity:0.6; margin-top:5px;">₱0.00</span>
             </button>
-            <button id="btn-waiting" class="btn-action btn-waiting">Syncing Network...</button>
+            <button id="btn-waiting" class="btn-action btn-waiting">Syncing...</button>
 
             <div class="history-bar" id="history"></div>
         </div>
@@ -80,10 +79,10 @@
         <div class="display-area">
             <div class="grid-bg" id="grid-bg"></div>
             <div class="hud-overlay">
-                <div class="hud-stat stat-tl">NETWORK: STABLE <br> SPEED: <span id="hud-speed">1.00</span> MACH</div>
-                <div class="hud-stat stat-tr">COORDINATES: <br> <span id="hud-coords">0, 0</span></div>
+                <div class="hud-stat stat-tl">NETWORK: ENCRYPTED <br> ENGINE: V8-CORE <br> HEALTH: 100%</div>
+                <div class="hud-stat stat-tr">VECTOR POS: <span id="hud-coords">0,0</span> <br> EXTRACTIONS: 0 <br> STATUS: ACTIVE</div>
             </div>
-            <div id="status-text" style="color: var(--gold); font-size: 0.6rem; position: absolute; top: 35px; font-weight: bold; z-index: 10; opacity: 0.5; letter-spacing: 5px; text-transform: uppercase;">System Ready</div>
+            <div id="status-text" style="color: var(--gold); font-size: 0.6rem; position: absolute; top: 35px; font-weight: bold; z-index: 10; opacity: 0.5; letter-spacing: 5px; text-transform: uppercase;">System Standby</div>
             <div id="main-mult">1.00x</div>
             <canvas id="crash-canvas"></canvas>
         </div>
@@ -121,61 +120,63 @@
         class Particle {
             constructor(x, y) {
                 this.x = x; this.y = y;
-                this.size = Math.random() * 6 + 1;
-                this.vx = (Math.random() - 0.5) * 12;
-                this.vy = (Math.random() - 0.5) * 12;
+                this.size = Math.random() * 5 + 1;
+                this.vx = (Math.random() - 0.5) * 15;
+                this.vy = (Math.random() - 0.5) * 15;
                 this.alpha = 1;
                 this.color = Math.random() > 0.5 ? '#D4AF37' : '#ff4444';
             }
-            update() { this.x += this.vx; this.y += this.vy; this.alpha -= 0.02; }
+            update() { this.x += this.vx; this.y += this.vy; this.alpha -= 0.03; }
             draw() { ctx.globalAlpha = this.alpha; ctx.fillStyle = this.color; ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); ctx.fill(); }
         }
 
-        // 1. MASTER ENGINE: Listens to the Shared Firestore State
+        // 1. SYSTEM SYNC ENGINE
         onSnapshot(doc(db, "settings", "crash"), async (snap) => {
             if (!snap.exists()) return;
             const data = snap.data();
             gameStatus = data.status;
-            const crashPoint = data.crashPoint;
+            const cp = data.crashPoint;
             const startAt = data.startTime?.toMillis() || Date.now();
+            const lastUpd = data.lastUpdate?.toMillis() || Date.now();
 
             if (gameStatus === "RUNNING") {
-                startFlight(startAt, crashPoint);
+                startAnimationLoop(startAt, cp);
             } else if (gameStatus === "WAITING") {
-                resetArena();
+                startBettingPhase(lastUpd);
             } else if (gameStatus === "CRASHED") {
-                handleCrashEffect(crashPoint);
+                triggerCrashVisuals(cp);
             }
-            updateHistory(data.history || []);
+            updateHistoryUI(data.history || []);
         });
 
-        // 2. AUTONOMOUS HEARTBEAT
-        async function runCycle() {
-            const snap = await getDoc(doc(db, "settings", "crash"));
-            if (!snap.exists()) return;
-            const data = snap.data();
-            const now = Date.now();
-            const lastUpdate = data.lastUpdate?.toMillis() || 0;
+        // 2. AUTONOMOUS LOOP (10s Betting, 5s Result)
+        async function runAutoLoop() {
+            try {
+                const snap = await getDoc(doc(db, "settings", "crash"));
+                const data = snap.data();
+                const now = Date.now();
+                const lastUpdate = data.lastUpdate?.toMillis() || 0;
 
-            if (data.status === "CRASHED" && (now - lastUpdate) > 5000) {
-                await updateDoc(doc(db, "settings", "crash"), { status: "WAITING", lastUpdate: serverTimestamp() });
-            } else if (data.status === "WAITING" && (now - lastUpdate) > 10000) {
-                const cp = Math.random() < 0.08 ? 1.00 : parseFloat((Math.max(1.01, 0.94 / (1 - Math.random()))).toFixed(2));
-                await updateDoc(doc(db, "settings", "crash"), { status: "RUNNING", startTime: serverTimestamp(), crashPoint: cp, lastUpdate: serverTimestamp() });
-            } else if (data.status === "RUNNING") {
-                const elapsed = (now - data.startTime.toMillis()) / 1000;
-                if (Math.pow(1.08, elapsed) >= data.crashPoint) {
-                    let newHist = [...(data.history || [])];
-                    newHist.push(data.crashPoint);
-                    if(newHist.length > 10) newHist.shift();
-                    await updateDoc(doc(db, "settings", "crash"), { status: "CRASHED", history: newHist, lastUpdate: serverTimestamp() });
+                if (data.status === "CRASHED" && (now - lastUpdate) > 5000) {
+                    await updateDoc(doc(db, "settings", "crash"), { status: "WAITING", lastUpdate: serverTimestamp() });
+                } 
+                else if (data.status === "WAITING" && (now - lastUpdate) > 10000) {
+                    const cp = Math.random() < 0.07 ? 1.00 : parseFloat((0.94 / (1 - Math.random())).toFixed(2));
+                    await updateDoc(doc(db, "settings", "crash"), { status: "RUNNING", startTime: serverTimestamp(), crashPoint: cp, lastUpdate: serverTimestamp() });
+                } 
+                else if (data.status === "RUNNING") {
+                    const elapsed = (now - data.startTime.toMillis()) / 1000;
+                    if (Math.pow(1.08, elapsed) >= data.crashPoint) {
+                        let h = data.history || []; h.push(data.crashPoint); if(h.length > 10) h.shift();
+                        await updateDoc(doc(db, "settings", "crash"), { status: "CRASHED", history: h, lastUpdate: serverTimestamp() });
+                    }
                 }
-            }
+            } catch (e) {}
         }
-        setInterval(runCycle, 2000);
+        setInterval(runAutoLoop, 2000);
 
-        function startFlight(startAt, cp) {
-            document.getElementById('status-text').innerText = "In Flight";
+        function startAnimationLoop(startAt, cp) {
+            document.getElementById('status-text').innerText = "VECTORS LIVE";
             document.getElementById('main-mult').classList.remove('crashed');
             updateButtons();
             const animate = () => {
@@ -184,24 +185,23 @@
                 currentMult = Math.pow(1.08, elapsed);
                 if (currentMult >= cp) return;
 
-                document.getElementById('main-mult').innerText = currentMult.toFixed(2) + "x";
-                document.getElementById('hud-speed').innerText = currentMult.toFixed(2);
+                document.getElementById('main-mult').innerHTML = `${currentMult.toFixed(2)}x<small>CLIMBING</small>`;
                 if(hasBet) {
                     document.getElementById('cashout-preview').innerText = `₱${Math.floor(myBetAmt * currentMult).toLocaleString()}`;
                     if (parseFloat(document.getElementById('auto-cashout').value) <= currentMult) cashout();
                 }
-                renderLine(elapsed, currentMult);
+                renderScene(elapsed, currentMult);
                 requestAnimationFrame(animate);
             };
             requestAnimationFrame(animate);
         }
 
-        function renderLine(elapsed, mult) {
+        function renderScene(elapsed, mult) {
             ctx.clearRect(0,0, canvas.width, canvas.height);
             const scale = Math.min(1, 4 / mult);
             const headX = elapsed * (140 * scale), headY = (mult - 1) * (280 * scale);
-            const cx = canvas.width * 0.3 - headX, cy = canvas.height * 0.7 + headY;
-            document.getElementById('hud-coords').innerText = `${Math.floor(headX)}, ${Math.floor(headY)}`;
+            const cx = canvas.width * 0.4 - headX, cy = canvas.height * 0.7 + headY;
+            document.getElementById('hud-coords').innerText = `${Math.floor(headX)},${Math.floor(headY)}`;
 
             ctx.save();
             ctx.translate(cx, cy);
@@ -213,20 +213,30 @@
             for(let i=0; i <= elapsed; i+=0.1) { ctx.lineTo(i * (140 * scale), -(Math.pow(1.08, i) - 1) * (280 * scale)); }
             ctx.stroke();
             
-            // Draw Head Point
             ctx.shadowBlur = 40; ctx.fillStyle = "#fff";
-            ctx.beginPath(); ctx.arc(headX, -headY, 8 * scale, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(headX, -headY, 7 * scale, 0, Math.PI * 2); ctx.fill();
             ctx.restore();
         }
 
-        function handleCrashEffect(cp) {
-            document.getElementById('main-mult').innerText = cp.toFixed(2) + "x";
+        function startBettingPhase(lastUpd) {
+            ctx.clearRect(0,0, canvas.width, canvas.height);
+            document.getElementById('main-mult').classList.remove('crashed');
+            const timer = setInterval(() => {
+                if (gameStatus !== "WAITING") { clearInterval(timer); return; }
+                let remaining = Math.max(0, 10 - (Date.now() - lastUpd) / 1000);
+                document.getElementById('main-mult').innerHTML = `${remaining.toFixed(1)}s<small>TIME TO BET</small>`;
+                document.getElementById('status-text').innerText = "PREPARING NEXT SYNC";
+                updateButtons();
+            }, 100);
+        }
+
+        function triggerCrashVisuals(cp) {
+            document.getElementById('main-mult').innerHTML = `${cp.toFixed(2)}x<small>SIGNAL LOST</small>`;
             document.getElementById('main-mult').classList.add('crashed');
-            document.getElementById('status-text').innerText = "Signal Lost";
+            document.getElementById('status-text').innerText = "NETWORK ERROR";
             hasBet = false; updateButtons();
             
-            // Explosion Particles
-            for(let i=0; i<80; i++) particles.push(new Particle(canvas.width/2, canvas.height/2));
+            for(let i=0; i<60; i++) particles.push(new Particle(canvas.width/2, canvas.height/2));
             const pLoop = setInterval(() => {
                 ctx.clearRect(0,0, canvas.width, canvas.height);
                 particles.forEach((p, idx) => { p.update(); p.draw(); if(p.alpha <= 0) particles.splice(idx, 1); });
@@ -234,18 +244,10 @@
             }, 16);
         }
 
-        function resetArena() {
-            ctx.clearRect(0,0, canvas.width, canvas.height);
-            document.getElementById('main-mult').innerText = "1.00x";
-            document.getElementById('status-text').innerText = "Accepting Bets...";
-            document.getElementById('main-mult').classList.remove('crashed');
-            updateButtons();
-        }
-
         window.placeBet = async () => {
-            if (gameStatus !== "WAITING") return alert("Round Locked");
+            if (gameStatus !== "WAITING") return alert("Round In Progress");
             const amt = parseInt(document.getElementById('bet-amount').value);
-            if (amt > balance || amt < 10) return alert("Low Balance");
+            if (amt > balance || amt < 10) return alert("Low Credits");
             await updateDoc(doc(db, "users", auth.currentUser.uid), { balance: increment(-amt) });
             myBetAmt = amt; hasBet = true; updateButtons();
         };
@@ -262,12 +264,12 @@
             const bBet = document.getElementById('btn-bet'), bCash = document.getElementById('btn-cashout'), bWait = document.getElementById('btn-waiting');
             bBet.style.display = "none"; bCash.style.display = "none"; bWait.style.display = "none";
             if (hasBet && gameStatus === "RUNNING") bCash.style.display = "block";
-            else if (hasBet && gameStatus === "WAITING") { bWait.style.display = "block"; bWait.innerText = "Ready"; }
+            else if (hasBet && gameStatus === "WAITING") { bWait.style.display = "block"; bWait.innerText = "LOCKED IN"; }
             else if (gameStatus === "WAITING") bBet.style.display = "block";
             else bWait.style.display = "block";
         }
 
-        function updateHistory(history) {
+        function updateHistoryUI(history) {
             const bar = document.getElementById('history'); bar.innerHTML = "";
             [...history].reverse().forEach(val => {
                 const item = document.createElement('div');
