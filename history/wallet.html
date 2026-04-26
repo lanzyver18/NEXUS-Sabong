@@ -4,76 +4,108 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Wallet History | NEXUS</title>
-    <link rel="stylesheet" href="../style.css">
-    <link rel="stylesheet" href="../menu.css">
-    <script src="../menu.js" type="module"></script>
+    <link rel="stylesheet" href="/style.css">
+    <link rel="stylesheet" href="/menu.css">
+    <link href="https://fonts.googleapis.com/css2?family=Goldman:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        .history-container { max-width: 800px; margin: 40px auto; padding: 20px; }
+        .history-container { max-width: 800px; margin: 60px auto 40px; padding: 20px; }
         .history-item { 
-            background: #111; border: 1px solid #222; border-radius: 10px; 
-            padding: 15px; margin-bottom: 10px; display: flex; 
+            background: #111; border: 1px solid #222; border-radius: 12px; 
+            padding: 18px; margin-bottom: 12px; display: flex; 
             justify-content: space-between; align-items: center; 
+            transition: 0.2s;
         }
+        .history-item:hover { border-color: #333; background: #151515; }
         .item-left { display: flex; flex-direction: column; }
-        .item-left span { font-weight: bold; color: #eee; }
-        .item-left small { color: #666; font-size: 0.75rem; margin-top: 4px; }
+        .item-left span { font-weight: bold; color: #eee; font-size: 0.9rem; letter-spacing: 0.5px; }
+        .item-left small { color: #555; font-size: 0.7rem; margin-top: 6px; }
         .item-right { text-align: right; }
-        .amount { font-family: 'Goldman', sans-serif; font-weight: bold; }
-        .status-badge { font-size: 0.65rem; padding: 3px 8px; border-radius: 4px; text-transform: uppercase; }
+        .amount { font-family: 'Goldman', sans-serif; font-weight: bold; font-size: 1.1rem; }
+        .status-badge { font-size: 0.6rem; padding: 3px 8px; border-radius: 4px; text-transform: uppercase; font-weight: bold; margin-top: 5px; display: inline-block; }
+        
+        /* Status Colors */
         .pending { background: #555; color: white; }
-        .approved { background: #00ff88; color: black; }
-        .rejected { background: #ff4444; color: white; }
+        .approved, .success { background: rgba(0, 255, 136, 0.1); color: #00ff88; border: 1px solid #00ff88; }
+        .rejected, .failed { background: rgba(255, 68, 68, 0.1); color: #ff4444; border: 1px solid #ff4444; }
+        .commission { background: rgba(212, 175, 55, 0.1); color: var(--gold); border: 1px solid var(--gold); }
     </style>
 </head>
 <body>
+
     <div class="history-container">
-        <h3 style="color: var(--gold); font-family: 'Goldman'; margin-bottom: 25px;">TRANSACTION LOGS</h3>
+        <h3 style="color: var(--gold); font-family: 'Goldman'; margin-bottom: 30px; letter-spacing: 1px;">FINANCIAL RECORDS</h3>
         <div id="wallet-history-list">
-            <p style="color: #444; text-align: center;">Fetching transactions...</p>
+            <p style="color: #444; text-align: center; margin-top: 50px;">Fetching logs...</p>
         </div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
-        import { getFirestore, collection, query, where, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
-        import { injectMenu } from "../menu.js";
+        import { getFirestore, doc, collection, query, where, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+        import { injectMenu } from "/menu.js";
 
-        const firebaseConfig = { /* YOUR CONFIG */ };
+        const firebaseConfig = {
+            apiKey: "AIzaSyCBvOw8HrMhZD0aYSHqFdE196ZITdYBU3Q",
+            authDomain: "nexus-sabong.firebaseapp.com",
+            projectId: "nexus-sabong",
+            storageBucket: "nexus-sabong.firebasestorage.app",
+            messagingSenderId: "421723311",
+            appId: "1:421723311:web:1780f179e7c2a7cc0e285a"
+        };
+
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
 
+        // Required for menu.js logic
         window.firebaseAuth = auth;
+        window.firebaseDb = db;
         injectMenu();
 
         onAuthStateChanged(auth, (user) => {
             if (user) {
-                const q = query(collection(db, "wallet_logs"), where("uid", "==", user.uid), orderBy("timestamp", "desc"));
+                const q = query(
+                    collection(db, "wallet_logs"), 
+                    where("uid", "==", user.uid), 
+                    orderBy("timestamp", "desc")
+                );
                 
                 onSnapshot(q, (snap) => {
                     const list = document.getElementById('wallet-history-list');
                     list.innerHTML = "";
                     
                     if (snap.empty) {
-                        list.innerHTML = "<p style='color:#444; text-align:center;'>No transactions found.</p>";
+                        list.innerHTML = `
+                            <div style="text-align:center; padding: 40px; color: #333;">
+                                <div style="font-size: 3rem; margin-bottom: 10px;">📄</div>
+                                <p>No transactions recorded yet.</p>
+                            </div>`;
                         return;
                     }
 
-                    snap.forEach(doc => {
-                        const d = doc.data();
-                        const isCashIn = d.type === "CASH-IN";
+                    snap.forEach(logDoc => {
+                        const d = logDoc.data();
+                        
+                        // Logic for amount styling based on type
+                        // COMMISSION and CASH-IN are positive (+), WITHDRAW and LOAD (to players) are negative (-)
+                        const isPositive = (d.type === "CASH-IN" || d.type === "COMMISSION");
+                        const statusClass = d.status ? d.status.toLowerCase() : 'pending';
+                        
                         list.innerHTML += `
                             <div class="history-item">
                                 <div class="item-left">
-                                    <span>${d.type}</span>
-                                    <small>${d.timestamp?.toDate().toLocaleString() || 'Recent'}</small>
+                                    <span>${d.type} ${d.fromUser ? `<small style="color:var(--gold)">FROM: ${d.fromUser.toUpperCase()}</small>` : ''}</span>
+                                    <span>${d.toUser ? `<small style="color:#00ff88">TO: ${d.toUser.toUpperCase()}</small>` : ''}</span>
+                                    <small>${d.timestamp?.toDate().toLocaleString('en-PH') || 'Processing...'}</small>
                                 </div>
                                 <div class="item-right">
-                                    <div class="amount" style="color: ${isCashIn ? '#00ff88' : '#ff4444'}">
-                                        ${isCashIn ? '+' : '-'}₱${parseFloat(d.amount).toLocaleString()}
+                                    <div class="amount" style="color: ${isPositive ? '#00ff88' : '#ff4444'}">
+                                        ${isPositive ? '+' : '-'}₱${parseFloat(d.amount).toLocaleString(undefined, {minimumFractionDigits: 2})}
                                     </div>
-                                    <span class="status-badge ${d.status.toLowerCase()}">${d.status}</span>
+                                    <span class="status-badge ${d.type === 'COMMISSION' ? 'commission' : statusClass}">
+                                        ${d.type === 'COMMISSION' ? 'EARNED' : d.status}
+                                    </span>
                                 </div>
                             </div>
                         `;
