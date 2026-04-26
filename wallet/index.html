@@ -12,35 +12,27 @@
         .wallet-card { background: #111; padding: 25px; border-radius: 16px; border: 1px solid #222; margin-bottom: 25px; text-align: center; }
         .gold-title { color: #D4AF37; text-transform: uppercase; letter-spacing: 2px; font-size: 0.9rem; font-family: 'Goldman'; margin-top: 0; margin-bottom: 15px; }
         
-        /* ID BOX */
         .id-box { background: #000; padding: 15px; border: 2px dashed #333; border-radius: 12px; margin: 15px 0; cursor: pointer; transition: 0.2s; }
         .id-box:hover { border-color: var(--gold); background: #050505; }
         .id-box code { font-size: 1.4rem; color: #D4AF37; font-family: 'Goldman', monospace; font-weight: bold; }
 
-        /* WITHDRAWAL FORM */
+        /* SAVED ACCOUNTS CHIPS */
+        .saved-accounts { display: flex; gap: 8px; margin-bottom: 15px; overflow-x: auto; padding-bottom: 5px; justify-content: center; }
+        .acc-chip { background: rgba(212, 175, 55, 0.1); border: 1px solid #333; color: #888; padding: 6px 12px; border-radius: 20px; font-size: 0.65rem; cursor: pointer; white-space: nowrap; }
+        .acc-chip.active { border-color: var(--gold); color: var(--gold); }
+
         .form-group { text-align: left; margin-bottom: 15px; }
         label { display: block; color: #555; font-size: 0.65rem; text-transform: uppercase; margin-bottom: 5px; letter-spacing: 1px; }
         select, input { width: 100%; padding: 14px; background: #000; border: 1px solid #333; color: white; border-radius: 8px; box-sizing: border-box; outline: none; transition: 0.3s; }
         select:focus, input:focus { border-color: #D4AF37; }
         
-        /* CHIPS */
         .chip-row { display: flex; gap: 8px; margin-bottom: 15px; overflow-x: auto; padding-bottom: 5px; }
         .chip { background: #222; border: 1px solid #333; color: #888; padding: 8px 12px; border-radius: 6px; font-size: 0.7rem; cursor: pointer; white-space: nowrap; }
         .chip:hover { border-color: var(--gold); color: var(--gold); }
 
-        .btn-withdraw { 
-            background: #D4AF37; color: black; width: 100%; padding: 16px; 
-            border-radius: 10px; border: none; font-weight: bold; cursor: pointer; 
-            text-transform: uppercase; margin-top: 10px; transition: 0.3s; font-family: 'Goldman';
-        }
-        .btn-withdraw:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(212, 175, 55, 0.3); }
-
-        /* PENDING STATUS */
+        .btn-withdraw { background: #D4AF37; color: black; width: 100%; padding: 16px; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; text-transform: uppercase; margin-top: 10px; transition: 0.3s; font-family: 'Goldman'; }
         .pending-status { background: rgba(255, 170, 0, 0.1); border: 1px solid #ffaa00; padding: 15px; border-radius: 12px; margin-bottom: 20px; display: none; text-align: left; }
-
-        /* NAV FIX */
         .top-nav { position: relative; display: flex; justify-content: space-between; align-items: center; padding: 12px 20px 12px 75px; background: #000; border-bottom: 2px solid #222; }
-
         #toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: #D4AF37; color: black; padding: 10px 25px; border-radius: 30px; display: none; z-index: 1000; font-weight: bold; font-size: 0.8rem; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
     </style>
 </head>
@@ -52,28 +44,30 @@
     </nav>
 
     <div class="wallet-wrapper">
-
         <div id="pending-container" class="pending-status">
-            <small style="color:#ffaa00; font-weight:bold; text-transform:uppercase; letter-spacing:1px;">Withdrawal Pending</small>
+            <small style="color:#ffaa00; font-weight:bold; text-transform:uppercase; letter-spacing:1px;">Ticket Active</small>
             <div style="display:flex; justify-content:space-between; align-items:center; margin-top:5px;">
                 <span id="pending-amt" style="color:white; font-weight:bold; font-family:'Goldman';">₱0.00</span>
-                <span style="font-size:0.7rem; color:#888;" id="pending-bank">GCASH</span>
+                <span style="font-size:0.7rem; color:#888;" id="pending-bank">---</span>
             </div>
         </div>
         
         <div class="wallet-card">
-            <h3 class="gold-title">MY ARENA ID</h3>
+            <h3 class="gold-title">ARENA IDENTITY</h3>
             <div class="id-box" onclick="copyUsername()">
                 <code id="user-id">---</code>
             </div>
-            <p style="font-size: 0.65rem; color: #555;">Click to copy. Send this ID to your Agent for credit loads.</p>
+            <p style="font-size: 0.6rem; color: #444; text-transform: uppercase;">Tap to copy your ID for Cash-In requests</p>
         </div>
 
         <div class="wallet-card">
-            <h3 class="gold-title">OUTBOUND TRANSFER</h3>
+            <h3 class="gold-title">CASH-OUT REQUEST</h3>
             
+            <div id="saved-profiles-container" class="saved-accounts">
+                </div>
+
             <div class="form-group">
-                <label>Target Channel</label>
+                <label>Channel</label>
                 <select id="w-bank">
                     <option value="GCASH">GCASH</option>
                     <option value="MAYA">MAYA</option>
@@ -84,44 +78,45 @@
 
             <div class="form-group">
                 <label>Account Holder Name</label>
-                <input type="text" id="w-name" placeholder="Full name on account">
+                <input type="text" id="w-name" placeholder="Full Name">
             </div>
 
             <div class="form-group">
-                <label>Mobile / Account Number</label>
-                <input type="text" id="w-number" placeholder="09XX or Bank #">
+                <label>Account Number</label>
+                <input type="text" id="w-number" placeholder="09XX or Card #">
             </div>
 
             <div class="form-group">
-                <label>Transfer Amount</label>
+                <label>Amount</label>
                 <div class="chip-row">
                     <div class="chip" onclick="setAmt(500)">₱500</div>
-                    <div class="chip" onclick="setAmt(1000)">₱1,000</div>
-                    <div class="chip" onclick="setAmt(5000)">₱5,000</div>
+                    <div class="chip" onclick="setAmt(1000)">₱1K</div>
+                    <div class="chip" onclick="setAmt(5000)">₱5K</div>
                     <div class="chip" onclick="setAmt('MAX')">ALL</div>
                 </div>
                 <input type="number" id="w-amount" placeholder="Min: ₱100">
             </div>
 
             <button class="btn-withdraw" id="btn-submit-w">SUBMIT WITHDRAWAL</button>
+            <p style="font-size: 0.6rem; color: #444; margin-top: 10px;">Submitting will save this account to your profiles.</p>
         </div>
 
         <div class="wallet-card" style="border-color: #0084FF;">
-            <h3 class="gold-title" style="color:#0084FF;">SUPPORT & CASH-IN</h3>
-            <div style="display:grid; gap:10px;">
-                <a href="https://m.me/YOUR_PAGE" target="_blank" style="background:#0084FF; padding:15px; border-radius:10px; color:white; font-weight:bold; text-decoration:none; font-size:0.8rem;">MESSAGE AGENT (FB)</a>
-                <a href="/history/wallet.html" style="background:#222; padding:12px; border-radius:10px; color:#888; text-decoration:none; font-size:0.7rem; border:1px solid #333;">VIEW TRANSACTION HISTORY</a>
+            <h3 class="gold-title" style="color:#0084FF;">GET CREDITS</h3>
+            <div class="form-group">
+                <label style="text-align:center;">I want to Cash-In:</label>
+                <input type="number" id="cashin-amt" placeholder="Enter desired amount" style="border-color: #0084FF33; text-align:center;">
             </div>
+            <button onclick="requestCashIn()" style="background:#0084FF; color:white; width:100%; padding:15px; border-radius:10px; font-weight:bold; border:none; cursor:pointer; font-family:'Goldman';">REQUEST VIA FB</button>
         </div>
-
     </div>
 
-    <div id="toast">ID COPIED TO CLIPBOARD</div>
+    <div id="toast">ACTION SUCCESSFUL</div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
-        import { getFirestore, doc, onSnapshot, getDoc, addDoc, collection, query, where, updateDoc, increment } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+        import { getFirestore, doc, onSnapshot, addDoc, collection, query, where, updateDoc, increment } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
         import { injectMenu } from "/menu.js";
 
         const firebaseConfig = {
@@ -146,84 +141,99 @@
 
         onAuthStateChanged(auth, async (user) => {
             if (user) {
-                const userRef = doc(db, "users", user.uid);
-                
-                onSnapshot(userRef, (snap) => {
-                    const data = snap.data();
-                    myUser = data.username;
-                    currentBal = data.balance || 0;
+                onSnapshot(doc(db, "users", user.uid), (snap) => {
+                    const d = snap.data();
+                    myUser = d.username;
+                    currentBal = d.balance || 0;
                     document.getElementById('user-id').innerText = myUser.toUpperCase();
                     document.getElementById('display-balance').innerText = currentBal.toLocaleString(undefined, {minimumFractionDigits: 2});
+                    loadSavedProfiles();
                 });
 
-                // Check for pending withdrawals
-                const q = query(collection(db, "withdrawals"), where("uid", "==", user.uid), where("status", "==", "PENDING"));
-                onSnapshot(q, (snap) => {
+                onSnapshot(query(collection(db, "withdrawals"), where("uid", "==", user.uid), where("status", "==", "PENDING")), (snap) => {
                     const container = document.getElementById('pending-container');
                     if (!snap.empty) {
                         const d = snap.docs[0].data();
                         container.style.display = "block";
                         document.getElementById('pending-amt').innerText = `₱${d.amount.toLocaleString()}`;
                         document.getElementById('pending-bank').innerText = d.bank;
-                    } else {
-                        container.style.display = "none";
-                    }
+                    } else { container.style.display = "none"; }
                 });
-
             } else { window.location.href = "/login/"; }
         });
 
+        // SAVED PROFILES LOGIC
+        function loadSavedProfiles() {
+            const profiles = JSON.parse(localStorage.getItem(`nexus_profiles_${myUser}`)) || [];
+            const container = document.getElementById('saved-profiles-container');
+            container.innerHTML = profiles.length ? "" : "<small style='color:#333'>No saved accounts</small>";
+            profiles.forEach((p, index) => {
+                const chip = document.createElement('div');
+                chip.className = 'acc-chip';
+                chip.innerText = `${p.bank}: ${p.number.slice(-4)}`;
+                chip.onclick = () => {
+                    document.getElementById('w-bank').value = p.bank;
+                    document.getElementById('w-name').value = p.name;
+                    document.getElementById('w-number').value = p.number;
+                    showToast("Account Loaded");
+                };
+                container.appendChild(chip);
+            });
+        }
+
+        function saveProfile(bank, name, number) {
+            let profiles = JSON.parse(localStorage.getItem(`nexus_profiles_${myUser}`)) || [];
+            const exists = profiles.find(p => p.number === number);
+            if (!exists) {
+                profiles.push({ bank, name, number });
+                localStorage.setItem(`nexus_profiles_${myUser}`, JSON.stringify(profiles.slice(-3)));
+                loadSavedProfiles();
+            }
+        }
+
         window.setAmt = (val) => {
-            const field = document.getElementById('w-amount');
-            if (val === 'MAX') field.value = Math.floor(currentBal);
-            else field.value = val;
+            document.getElementById('w-amount').value = (val === 'MAX') ? Math.floor(currentBal) : val;
+        };
+
+        window.requestCashIn = () => {
+            const amt = document.getElementById('cashin-amt').value || "0";
+            const msg = `Hi Agent! My Arena ID is ${myUser.toUpperCase()}. I want to Cash-In ₱${amt}. Please send instructions.`;
+            window.open(`https://m.me/YOUR_PAGE?text=${encodeURIComponent(msg)}`, '_blank');
         };
 
         document.getElementById('btn-submit-w').onclick = async () => {
-            const btn = document.getElementById('btn-submit-w');
             const bank = document.getElementById('w-bank').value;
             const name = document.getElementById('w-name').value.trim();
             const num = document.getElementById('w-number').value.trim();
             const amt = parseInt(document.getElementById('w-amount').value);
 
-            if (!name || !num || isNaN(amt) || amt < 100) return alert("All fields required. Min ₱100.");
+            if (!name || !num || isNaN(amt) || amt < 100) return alert("Fill all fields correctly.");
             if (amt > currentBal) return alert("Insufficient balance!");
 
-            btn.disabled = true;
-            btn.innerText = "SUBMITTING...";
-
-            try {
-                // 1. Lock funds
-                await updateDoc(doc(db, "users", auth.currentUser.uid), { balance: increment(-amt) });
-
-                // 2. Log request
-                await addDoc(collection(db, "withdrawals"), {
-                    uid: auth.currentUser.uid,
-                    username: myUser,
-                    bank: bank,
-                    accountName: name,
-                    accountNumber: num,
-                    amount: amt,
-                    status: "PENDING",
-                    timestamp: new Date()
-                });
-
-                alert("Withdrawal submitted! Funds are locked until approved by Admin.");
-                location.reload();
-            } catch (e) { 
-                alert("Error submitting request."); 
-                btn.disabled = false;
-                btn.innerText = "SUBMIT WITHDRAWAL";
+            if(confirm(`Confirm ₱${amt} Withdrawal? Credits will be locked.`)) {
+                try {
+                    await updateDoc(doc(db, "users", auth.currentUser.uid), { balance: increment(-amt) });
+                    await addDoc(collection(db, "withdrawals"), {
+                        uid: auth.currentUser.uid, username: myUser, bank, accountName: name, accountNumber: num, amount: amt, status: "PENDING", timestamp: new Date()
+                    });
+                    saveProfile(bank, name, num);
+                    showToast("Withdrawal Submitted!");
+                    setTimeout(() => location.reload(), 1500);
+                } catch (e) { alert("Submission error."); }
             }
         };
 
         window.copyUsername = () => {
-            navigator.clipboard.writeText(myUser.toUpperCase()).then(() => {
-                const toast = document.getElementById('toast');
-                toast.style.display = "block";
-                setTimeout(() => { toast.style.display = "none"; }, 2000);
-            });
+            navigator.clipboard.writeText(myUser.toUpperCase());
+            showToast("ID Copied");
         };
+
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.innerText = msg;
+            t.style.display = "block";
+            setTimeout(() => t.style.display = "none", 2000);
+        }
     </script>
 </body>
 </html>
