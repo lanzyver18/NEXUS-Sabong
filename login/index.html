@@ -4,18 +4,29 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login | NEXUS</title>
-    <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Goldman:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body class="auth-page">
     <div class="auth-card">
-        <div class="logo">NEXUS</div>
-        <h2>PLAYER LOGIN</h2>
+        <div class="logo" style="font-family: 'Goldman', sans-serif; color: var(--gold); font-size: 2rem; margin-bottom: 10px;">NEXUS</div>
+        <h2 style="font-size: 1rem; letter-spacing: 2px; margin-bottom: 20px;">SYSTEM ACCESS</h2>
         
-        <input type="text" id="login-username" placeholder="Username">
-        <input type="password" id="login-pass" placeholder="Password">
+        <div style="text-align: left; margin-bottom: 15px;">
+            <label style="font-size: 0.7rem; color: #555; text-transform: uppercase;">Username</label>
+            <input type="text" id="login-username" placeholder="Enter your ID" autocomplete="username">
+        </div>
+
+        <div style="text-align: left; margin-bottom: 20px;">
+            <label style="font-size: 0.7rem; color: #555; text-transform: uppercase;">Password</label>
+            <input type="password" id="login-pass" placeholder="••••••••" autocomplete="current-password">
+        </div>
         
-        <button class="btn-action gold" id="btn-login">SIGN IN</button>
-        <p class="auth-footer">New here? <a href="/register/">Register</a></p>
+        <button class="btn-action gold" id="btn-login" style="width: 100%; padding: 15px; font-weight: bold;">SIGN IN</button>
+        
+        <p class="auth-footer" style="margin-top: 20px; font-size: 0.8rem; color: #666;">
+            No account yet? <a href="/register/" style="color: var(--gold); text-decoration: none;">Create one here</a>
+        </p>
     </div>
 
     <script type="module">
@@ -34,16 +45,41 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
 
-        document.getElementById('btn-login').onclick = async () => {
+        const loginBtn = document.getElementById('btn-login');
+
+        loginBtn.onclick = async () => {
             const user = document.getElementById('login-username').value.trim().toLowerCase();
             const pass = document.getElementById('login-pass').value;
 
+            if (!user || !pass) return alert("Please fill in all fields.");
+
+            // Visual feedback
+            loginBtn.innerText = "AUTHENTICATING...";
+            loginBtn.disabled = true;
+            loginBtn.style.opacity = "0.7";
+
             try {
+                // Compatibility with the custom username system
                 const fakeEmail = `${user}@nexus-sabong.com`;
                 await signInWithEmailAndPassword(auth, fakeEmail, pass);
+                
+                // Redirect to the root (Home Arena)
                 window.location.href = "/";
-            } catch (error) { alert("Login failed. Check username/password."); }
+            } catch (error) { 
+                console.error(error);
+                alert("Login failed. Please check your username and password.");
+                
+                // Reset button
+                loginBtn.innerText = "SIGN IN";
+                loginBtn.disabled = false;
+                loginBtn.style.opacity = "1";
+            }
         };
+
+        // Allow "Enter" key to trigger login
+        document.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') loginBtn.click();
+        });
     </script>
 </body>
 </html>
