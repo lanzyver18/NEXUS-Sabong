@@ -12,7 +12,6 @@
         
         body { background: #000; overflow-x: hidden; margin: 0; color: white; }
 
-        /* COMMAND NAV */
         .top-nav { 
             position: sticky; top: 0; z-index: 1000;
             display: flex; justify-content: space-between; align-items: center; 
@@ -27,7 +26,6 @@
             gap: 25px; padding: 0 15px; 
         }
 
-        /* COMMAND CENTER VISUALS */
         .display-area { 
             background: radial-gradient(circle at center, #151515 0%, #000 100%); 
             border-radius: 24px; border: 1px solid #222; 
@@ -36,7 +34,6 @@
             box-shadow: inset 0 0 100px rgba(0,0,0,1);
         }
 
-        /* Perspective Grid */
         .display-area::before {
             content: ''; position: absolute; width: 200%; height: 200%;
             background-image: linear-gradient(#1a1a1a 1px, transparent 1px), linear-gradient(90deg, #1a1a1a 1px, transparent 1px);
@@ -53,7 +50,6 @@
         
         canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 5; }
 
-        /* GLASS CONTROL PANEL */
         .control-panel { 
             background: rgba(15, 15, 15, 0.8); padding: 30px; border-radius: 24px; 
             border: 1px solid #333; display: flex; flex-direction: column; gap: 20px; 
@@ -66,7 +62,7 @@
             color: var(--gold); border-radius: 12px; outline: none; font-family: 'Goldman'; 
             transition: 0.3s; box-sizing: border-box; font-size: 1.1rem;
         }
-        input:focus { border-color: var(--gold); background: #050505; box-shadow: 0 0 15px rgba(212,175,55,0.1); }
+        input:focus { border-color: var(--gold); background: #050505; }
 
         .btn-action { 
             width: 100%; padding: 22px; border-radius: 16px; border: none; 
@@ -76,15 +72,10 @@
         }
         
         .btn-bet { background: var(--gold); color: black; }
-        .btn-bet:hover { transform: scale(1.02); box-shadow: 0 0 30px rgba(212,175,55,0.3); }
-        
         .btn-cashout { background: var(--green); color: black; display: none; }
-        .btn-cashout:hover { background: #00e67a; box-shadow: 0 0 30px rgba(0,255,136,0.3); }
-        
         .btn-waiting { background: #1a1a1a; color: #555; cursor: not-allowed; display: none; border: 1px solid #222; }
         .btn-cashout span { display: block; font-size: 0.7rem; opacity: 0.9; margin-top: 5px; font-family: sans-serif; letter-spacing: 0; }
 
-        /* HISTORY ROADMAP */
         .history-bar { 
             display: flex; gap: 8px; overflow-x: auto; padding: 15px; 
             background: rgba(0,0,0,0.5); border-radius: 12px; border: 1px solid #1a1a1a; 
@@ -104,7 +95,6 @@
         @media (max-width: 900px) { 
             .crash-layout { grid-template-columns: 1fr; } 
             .display-area { height: 350px; }
-            .top-nav { padding-left: 20px; }
         }
     </style>
 </head>
@@ -183,7 +173,7 @@
                 this.vy = (Math.random() * speed) + 1;
                 this.alpha = 1;
             }
-            update() { this.x += this.vx; this.y += this.vy; this.alpha -= 0.015; }
+            update() { this.x += this.vx; this.y += this.vy; this.alpha -= 0.02; }
             draw() {
                 ctx.globalAlpha = this.alpha;
                 ctx.fillStyle = this.color;
@@ -195,17 +185,12 @@
             ctx.save();
             ctx.translate(x, y);
             ctx.rotate(angle);
-            
-            // Rocket Flame
             particles.push(new Particle(0, 10, Math.random() > 0.5 ? '#FFD700' : '#FF4500', 5));
-            
-            // Rocket Emoji (Much cleaner than rectangles)
             ctx.font = "40px serif";
             ctx.textAlign = "center";
             ctx.textBaseline = "middle";
-            ctx.rotate(-Math.PI / 4); // Straighten emoji
+            ctx.rotate(-Math.PI / 4);
             ctx.fillText("🚀", 0, 0);
-            
             ctx.restore();
         }
 
@@ -228,7 +213,7 @@
                 countdown -= 0.1;
                 document.getElementById('status-text').innerText = `LAUNCH IN ${countdown.toFixed(1)}S`;
                 ctx.clearRect(0,0, canvas.width, canvas.height);
-                drawRocket(canvas.width * 0.1, canvas.height * 0.9, 0);
+                drawRocket(canvas.width * 0.15, canvas.height * 0.85, 0);
                 if (countdown <= 0) { clearInterval(timer); runRound(); }
             }, 100);
         }
@@ -252,10 +237,22 @@
 
                 ctx.clearRect(0,0, canvas.width, canvas.height);
                 
-                // Flight Path
-                rocketX = (elapsed / 15) * canvas.width + (canvas.width * 0.1);
-                rocketY = (canvas.height * 0.9) - (Math.pow(1.08, elapsed) - 1) * 70;
-                rocketAngle = -Math.atan2((Math.pow(1.08, elapsed+0.1) - Math.pow(1.08, elapsed)), 0.1);
+                // --- VIEWPORT CLAMP LOGIC ---
+                // We use a logarithmic scale to compress the flight path as it grows.
+                // This ensures the rocket stays within roughly 80% of the screen width and height.
+                const padding = 60;
+                const maxW = canvas.width - padding * 2;
+                const maxH = canvas.height - padding * 2;
+                
+                // Progressive scaling
+                const scaleX = Math.min(elapsed / 10, 1); // Caps horizontal progress at 10s
+                const scaleY = (currentMult - 1) / (currentMult + 2); // Asymptotic climb
+                
+                rocketX = padding + (maxW * scaleX);
+                rocketY = (canvas.height - padding) - (maxH * scaleY);
+                
+                // Calculate angle based on relative movement
+                rocketAngle = -0.3 - (scaleY * 0.5); 
 
                 particles.forEach((p, i) => { p.update(); p.draw(); if(p.alpha <= 0) particles.splice(i, 1); });
                 drawRocket(rocketX, rocketY, rocketAngle);
