@@ -6,27 +6,47 @@
     <title>Live Arena | NEXUS</title>
     <link rel="stylesheet" href="../style.css">
     <link rel="stylesheet" href="/menu.css">
+    <link href="https://fonts.googleapis.com/css2?family=Goldman:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        .arena-container { max-width: 1000px; margin: 20px auto; display: grid; grid-template-columns: 1fr 320px; gap: 20px; padding: 0 15px; }
+        .arena-container { max-width: 1200px; margin: 20px auto; display: grid; grid-template-columns: 1fr 350px; gap: 20px; padding: 0 15px; }
+        
         .video-player { background: #000; aspect-ratio: 16/9; border: 2px solid #222; border-radius: 12px; overflow: hidden; position: relative; }
-        .live-tag { position: absolute; top: 15px; left: 15px; background: #ff4444; color: white; padding: 5px 12px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; animation: pulse 1.5s infinite; }
-        .betting-panel { background: #111; padding: 20px; border-radius: 15px; border: 1px solid #333; }
-        .bet-card { border: 2px solid #333; padding: 20px; border-radius: 10px; margin-bottom: 15px; text-align: center; cursor: pointer; transition: 0.2s; }
-        .meron { border-color: #ff4444; color: #ff4444; }
-        .wala { border-color: #4444ff; color: #4444ff; }
-        .meron:hover, .meron.active { background: #ff4444; color: white; }
-        .wala:hover, .wala.active { background: #4444ff; color: white; }
-        .odds { font-size: 1.8rem; font-weight: bold; display: block; margin: 5px 0; }
-        .bet-input { background: #000; border: 1px solid #444; color: white; padding: 12px; width: 100%; border-radius: 8px; margin-top: 10px; text-align: center; font-size: 1.1rem; }
+        .live-tag { position: absolute; top: 15px; left: 15px; background: #ff4444; color: white; padding: 5px 12px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; animation: pulse 1.5s infinite; z-index: 10; }
+        
+        .betting-panel { background: #111; padding: 20px; border-radius: 15px; border: 1px solid #333; display: flex; flex-direction: column; }
+        
+        /* BET CARDS */
+        .bet-card { border: 2px solid #333; padding: 15px; border-radius: 12px; margin-bottom: 12px; text-align: center; cursor: pointer; transition: 0.2s; position: relative; overflow: hidden; }
+        .meron { border-color: #ff4444; color: #ff4444; background: rgba(255, 68, 68, 0.05); }
+        .wala { border-color: #4444ff; color: #4444ff; background: rgba(68, 68, 255, 0.05); }
+        .meron:hover { background: #ff4444; color: white; }
+        .wala:hover { background: #4444ff; color: white; }
+        .odds { font-family: 'Goldman'; font-size: 1.8rem; display: block; margin: 2px 0; }
+
+        /* QUICK CHIPS */
+        .chip-row { display: flex; gap: 8px; margin: 15px 0; overflow-x: auto; padding-bottom: 5px; }
+        .chip { background: #222; border: 1px solid #444; color: #eee; padding: 8px 12px; border-radius: 6px; font-size: 0.75rem; cursor: pointer; white-space: nowrap; transition: 0.2s; }
+        .chip:hover { border-color: var(--gold); color: var(--gold); }
+
+        .bet-input { background: #000; border: 1px solid #444; color: #00ff88; padding: 15px; width: 100%; border-radius: 8px; text-align: center; font-size: 1.2rem; font-family: 'Goldman'; box-sizing: border-box; }
+
+        /* RECENT BETS LIST */
+        .history-list { margin-top: 20px; flex-grow: 1; border-top: 1px solid #222; padding-top: 15px; }
+        .history-item { display: flex; justify-content: space-between; font-size: 0.75rem; padding: 8px 0; border-bottom: 1px solid #1a1a1a; }
+        .side-tag { font-weight: bold; padding: 2px 6px; border-radius: 3px; font-size: 0.6rem; }
+
+        /* NAV OVERLAP FIX */
+        .top-nav { position: relative; display: flex; justify-content: space-between; align-items: center; padding: 12px 20px 12px 75px; background: #000; border-bottom: 2px solid #222; }
+
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
-        @media (max-width: 850px) { .arena-container { grid-template-columns: 1fr; } }
+        @media (max-width: 900px) { .arena-container { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
 
     <nav class="top-nav">
-        <a href="/" style="color: var(--gold); text-decoration: none; font-weight: bold;">← LOBBY</a>
-        <div class="balance-box" style="color: #00ff88; font-weight: bold;">₱<span id="display-balance">0.00</span></div>
+        <div class="logo" style="color:var(--gold); font-family:'Goldman'; font-weight:bold; font-size:1.2rem;">NEXUS ARENA</div>
+        <div style="color: #00ff88; font-weight: bold; font-family: 'Goldman';">₱<span id="display-balance">0.00</span></div>
     </nav>
 
     <div class="arena-container">
@@ -36,7 +56,7 @@
         </div>
 
         <div class="betting-panel">
-            <h3 style="text-align: center; color: var(--gold); margin-top: 0;">FIGHT #125</h3>
+            <h3 style="text-align: center; color: var(--gold); margin-top: 0; font-family: 'Goldman'; letter-spacing: 1px;">FIGHT #125</h3>
             
             <div class="bet-card meron" onclick="placeBet('MERON')">
                 <small>BET ON</small>
@@ -50,15 +70,29 @@
                 <small id="wala-payout-label">Payout: ...</small>
             </div>
 
-            <input type="number" id="bet-amount" class="bet-input" placeholder="Bet Amount (₱)" value="100">
-            <p style="font-size: 0.65rem; color: #666; text-align: center; margin-top: 10px;">Min Bet: ₱100 | Max Bet: ₱10,000</p>
+            <div class="chip-row">
+                <div class="chip" onclick="setBet(100)">₱100</div>
+                <div class="chip" onclick="setBet(500)">₱500</div>
+                <div class="chip" onclick="setBet(1000)">₱1K</div>
+                <div class="chip" onclick="setBet(5000)">₱5K</div>
+                <div class="chip" onclick="setBet('MAX')">MAX</div>
+            </div>
+
+            <input type="number" id="bet-amount" class="bet-input" placeholder="Amount">
+            
+            <div class="history-list">
+                <h4 style="font-size: 0.7rem; color: #555; margin-bottom: 10px; letter-spacing: 1px;">MY RECENT BETS</h4>
+                <div id="local-bet-history">
+                    <p style="text-align: center; color: #333; font-size: 0.7rem; margin-top: 10px;">No bets in this session.</p>
+                </div>
+            </div>
         </div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
-        import { getFirestore, doc, onSnapshot, updateDoc, increment, addDoc, collection, getDoc, writeBatch } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+        import { getFirestore, doc, onSnapshot, updateDoc, increment, addDoc, collection, getDoc, writeBatch, query, where, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
         import { injectMenu } from "/menu.js";
 
         const firebaseConfig = {
@@ -84,8 +118,6 @@
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 const userRef = doc(db, "users", user.uid);
-                
-                // Sync User Balance
                 onSnapshot(userRef, (snapshot) => {
                     if (snapshot.exists()) {
                         currentUserData = snapshot.data();
@@ -94,19 +126,40 @@
                     }
                 });
 
-                // Sync Global Payout Odds from Admin
+                // Sync Global Payout Odds
                 onSnapshot(doc(db, "settings", "arena"), (docSnap) => {
-                    let multiplier = 1.90; // Default
-                    if (docSnap.exists()) {
-                        multiplier = docSnap.data().payoutMultiplier || 1.90;
-                    }
+                    let multiplier = 1.90;
+                    if (docSnap.exists()) multiplier = docSnap.data().payoutMultiplier || 1.90;
                     const text = `Payout: ${multiplier.toFixed(2)}`;
                     document.getElementById('meron-payout-label').innerText = text;
                     document.getElementById('wala-payout-label').innerText = text;
                 });
 
+                // Load Personal Session History
+                const q = query(collection(db, "bets"), where("uid", "==", user.uid), orderBy("timestamp", "desc"), limit(5));
+                onSnapshot(q, (snap) => {
+                    const hist = document.getElementById('local-bet-history');
+                    hist.innerHTML = "";
+                    snap.forEach(doc => {
+                        const b = doc.data();
+                        const color = b.side === 'MERON' ? '#ff4444' : '#4444ff';
+                        hist.innerHTML += `
+                            <div class="history-item">
+                                <span>₱${b.amount.toLocaleString()} <span class="side-tag" style="background:${color}; color:white">${b.side}</span></span>
+                                <span style="color:${b.status === 'WIN' ? '#00ff88' : '#666'}">${b.status}</span>
+                            </div>
+                        `;
+                    });
+                });
+
             } else { window.location.href = "/login/"; }
         });
+
+        window.setBet = (val) => {
+            const input = document.getElementById('bet-amount');
+            if (val === 'MAX') input.value = Math.floor(currentBalance);
+            else input.value = val;
+        };
 
         async function distributeCommissions(betAmount, uplinePath) {
             if (!uplinePath || uplinePath.length === 0) return;
@@ -118,26 +171,16 @@
                 const ref = doc(db, "users", uplineUid);
                 const snap = await getDoc(ref);
                 if (snap.exists()) {
-                    const uplineData = snap.data();
-                    const myRate = uplineData.commissionRate || 0;
-                    const mySharePercent = myRate - distributedSoFar;
-                    if (mySharePercent > 0) {
-                        const commissionEarned = betAmount * (mySharePercent / 100);
-                        batch.update(ref, {
-                            balance: increment(commissionEarned),
-                            totalTurnover: increment(betAmount),
-                            totalCommission: increment(commissionEarned)
+                    const uData = snap.data();
+                    const spread = (uData.commissionRate || 0) - distributedSoFar;
+                    if (spread > 0) {
+                        const earned = betAmount * (spread / 100);
+                        batch.update(ref, { balance: increment(earned), totalTurnover: increment(betAmount) });
+                        batch.set(doc(collection(db, "wallet_logs")), {
+                            uid: uplineUid, type: "COMMISSION", amount: earned,
+                            fromUser: currentUserData.username, status: "APPROVED", timestamp: new Date()
                         });
-                        const logRef = doc(collection(db, "wallet_logs"));
-                        batch.set(logRef, {
-                            uid: uplineUid,
-                            type: "COMMISSION",
-                            amount: commissionEarned,
-                            fromUser: currentUserData.username,
-                            status: "APPROVED",
-                            timestamp: new Date()
-                        });
-                        distributedSoFar = myRate;
+                        distributedSoFar = uData.commissionRate;
                     }
                 }
             }
@@ -146,25 +189,18 @@
 
         window.placeBet = async (side) => {
             const amount = parseInt(document.getElementById('bet-amount').value);
-            if (isNaN(amount) || amount < 100) return alert("Minimum bet is ₱100");
+            if (isNaN(amount) || amount < 100) return alert("Min bet ₱100");
             if (amount > currentBalance) return alert("Insufficient Balance!");
 
-            if (confirm(`Confirm ₱${amount} bet on ${side}?`)) {
+            if (confirm(`Bet ₱${amount} on ${side}?`)) {
                 try {
-                    const userRef = doc(db, "users", auth.currentUser.uid);
-                    await updateDoc(userRef, { balance: increment(-amount), totalBetAmount: increment(amount) });
+                    await updateDoc(doc(db, "users", auth.currentUser.uid), { balance: increment(-amount) });
                     await addDoc(collection(db, "bets"), {
-                        uid: auth.currentUser.uid,
-                        username: currentUserData.username,
-                        amount: amount,
-                        side: side,
-                        fightId: "125",
-                        status: "PENDING",
-                        timestamp: new Date()
+                        uid: auth.currentUser.uid, username: currentUserData.username,
+                        amount: amount, side: side, fightId: "125", status: "PENDING", timestamp: new Date()
                     });
                     await distributeCommissions(amount, currentUserData.uplinePath);
-                    alert(`Bet Placed!`);
-                } catch (e) { console.error(e); alert("Transaction failed."); }
+                } catch (e) { alert("Error!"); }
             }
         };
     </script>
