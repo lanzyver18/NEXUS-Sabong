@@ -1,40 +1,45 @@
 // menu.js
-import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+import { doc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
 
 export function injectMenu() {
     if (document.getElementById('nexus-side-menu')) return;
+
+    const currentPath = window.location.pathname;
 
     const menuHTML = `
         <button class="menu-trigger" id="menu-open-btn">☰</button>
         <div class="menu-overlay" id="nexus-menu-overlay"></div>
         <div id="nexus-side-menu" class="sidebar">
-            <div class="sidebar-header" style="display:flex; justify-content:space-between; align-items:center;">
-                <div style="color:#D4AF37; font-family:'Goldman'; font-size:1.5rem; font-weight:bold;">NEXUS</div>
-                <button id="menu-close-btn" style="background:none; border:none; color:#666; font-size:2rem; cursor:pointer;">&times;</button>
+            <div class="sidebar-header" style="display:flex; justify-content:space-between; align-items:center; padding: 25px 20px;">
+                <div style="color:#D4AF37; font-family:'Goldman'; font-size:1.5rem; font-weight:bold; letter-spacing:2px;">NEXUS</div>
+                <button id="menu-close-btn" style="background:none; border:none; color:#444; font-size:1.8rem; cursor:pointer;">&times;</button>
+            </div>
+
+            <div id="sidebar-user-box" style="padding: 0 20px 20px; border-bottom: 1px solid #1a1a1a; margin-bottom: 15px;">
+                <small style="color: #444; font-size: 0.6rem; text-transform: uppercase; letter-spacing: 1px;">Main Wallet</small>
+                <div id="sidebar-balance" style="color: #00ff88; font-family: 'Goldman'; font-size: 1.2rem; margin-top: 2px;">₱0.00</div>
+                <div id="sidebar-id" style="color: #666; font-size: 0.65rem; margin-top: 4px;">ID: LOADING...</div>
             </div>
             
             <div class="sidebar-links">
-                <a href="/">Home</a>
-                <a href="/games/">Sabong Arena</a>
-                <a href="/profile/">My Profile</a>
+                <a href="/" class="${currentPath === '/' ? 'active' : ''}">Arena Lobby</a>
+                <a href="/games/" class="${currentPath.includes('/games/') ? 'active' : ''}">Sabong Arena</a>
+                <a href="/profile/" class="${currentPath.includes('/profile/') ? 'active' : ''}">My Profile</a>
                 
-                <div style="margin: 15px 0 5px 0; color:#444; font-size:0.7rem; font-weight:bold; letter-spacing:1px;">RECORDS</div>
-                <a href="/history/wallet.html">Wallet History</a>
-                <a href="/history/bets.html">Bet History</a>
-                
-                <div style="margin: 15px 0 5px 0; color:#444; font-size:0.7rem; font-weight:bold; letter-spacing:1px;">FINANCE</div>
-                <a href="/wallet/" style="color:#D4AF37;">Cash-In / Out</a>
+                <div class="menu-category">FINANCE</div>
+                <a href="/wallet/" class="${currentPath.includes('/wallet/') ? 'active' : ''}" style="color:var(--gold);">Nexus Wallet</a>
+                <a href="/history/wallet.html" class="${currentPath.includes('wallet.html') ? 'active' : ''}">Transaction Logs</a>
+                <a href="/history/bets.html" class="${currentPath.includes('bets.html') ? 'active' : ''}">Betting Records</a>
                 
                 <div id="agent-manager-section"></div>
             </div>
 
-            <div class="sidebar-footer">
-                <button id="nexus-logout" class="logout-btn">LOGOUT SESSION</button>
+            <div class="sidebar-footer" style="padding: 20px; border-top: 1px solid #1a1a1a;">
+                <button id="nexus-logout" class="logout-btn" style="width:100%; padding:12px; border-radius:8px; background:#111; color:#ff4444; border:1px solid #222; font-size:0.7rem; font-weight:bold; cursor:pointer; transition: 0.3s;">LOGOUT SESSION</button>
             </div>
         </div>
     `;
 
-    // FIX: Inject into .top-nav if it exists, otherwise fallback to body
     const nav = document.querySelector('.top-nav');
     if (nav) {
         nav.insertAdjacentHTML('afterbegin', menuHTML);
@@ -55,8 +60,7 @@ export function injectMenu() {
     };
 
     const close = () => {
-        menu.classList.remove('active');
-        overlay.classList.remove('active');
+        menu.classList.remove('active'); overlay.classList.remove('active');
         document.body.style.overflow = ''; 
     };
 
@@ -65,57 +69,59 @@ export function injectMenu() {
 
     if (logoutBtn) {
         logoutBtn.onclick = () => {
-            if (confirm("Logout from NEXUS?")) {
-                if (window.firebaseAuth) {
-                    window.firebaseAuth.signOut().then(() => window.location.href = "/login/");
-                } else {
-                    window.location.href = "/login/";
-                }
+            if (confirm("Sign out from NEXUS?")) {
+                if (window.firebaseAuth) window.firebaseAuth.signOut().then(() => window.location.href = "/login/");
+                else window.location.href = "/login/";
             }
         };
     }
 
-    checkUserTier();
+    syncSidebarData();
 }
 
-async function checkUserTier() {
+async function syncSidebarData() {
     const auth = window.firebaseAuth;
     const db = window.firebaseDb;
 
     if (!auth || !db) {
-        setTimeout(checkUserTier, 500);
+        setTimeout(syncSidebarData, 500);
         return;
     }
 
     auth.onAuthStateChanged(async (user) => {
         if (user) {
-            try {
-                const userRef = doc(db, "users", user.uid);
-                const snap = await getDoc(userRef);
-                
+            const userRef = doc(db, "users", user.uid);
+            
+            // REAL-TIME DATA STREAM FOR SIDEBAR
+            onSnapshot(userRef, (snap) => {
                 if (snap.exists()) {
                     const data = snap.data();
-                    const level = data.level || 7; 
+                    const level = data.level || 6; 
+                    const bal = data.balance || 0;
+
+                    // Update Sidebar Balance & ID
+                    document.getElementById('sidebar-balance').innerText = `₱${bal.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
+                    document.getElementById('sidebar-id').innerText = `ID: ${data.username.toUpperCase()}`;
+
                     const container = document.getElementById('agent-manager-section');
-                    
                     if (!container) return;
 
-                    if (level >= 1 && level <= 6) {
+                    // UPDATED HIERARCHY LOGIC (1-5 are Management, 6 is Player)
+                    if (level >= 1 && level <= 5) {
+                        const currentPath = window.location.pathname;
                         let links = `
-                            <div style="margin: 15px 0 5px 0; color:#444; font-size:0.7rem; font-weight:bold; letter-spacing:1px;">MANAGEMENT</div>
-                            <a href="/admin/agents.html">Agent Manager</a>
+                            <div class="menu-category">MANAGEMENT</div>
+                            <a href="/admin/agents.html" class="${currentPath.includes('agents.html') ? 'active' : ''}">Network Manager</a>
                         `;
 
                         if (level === 1) {
-                            links += `<a href="/admin/index.html" style="color: #00ff88;">System Dashboard</a>`;
+                            links += `<a href="/admin/index.html" class="${currentPath.includes('index.html') ? 'active' : ''}" style="color: #00ff88; border-left: 2px solid #00ff88; background: rgba(0, 255, 136, 0.05);">Command Center</a>`;
                         }
 
                         container.innerHTML = links;
                     }
                 }
-            } catch (error) {
-                console.error("Menu Hierarchy Check Error:", error);
-            }
+            });
         }
     });
 }
