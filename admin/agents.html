@@ -10,7 +10,6 @@
     <style>
         :root { --gold: #D4AF37; }
         
-        /* FIXED NEXUS BUTTON SYSTEM */
         .btn-nexus {
             font-family: 'Goldman', sans-serif;
             font-weight: bold;
@@ -23,15 +22,13 @@
             align-items: center;
             justify-content: center;
             letter-spacing: 1px;
-            height: 45px; /* Fixed height for consistency */
+            height: 45px;
         }
 
         .btn-gold { background: var(--gold); color: black; min-width: 120px; }
         .btn-gold:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(212, 175, 55, 0.4); }
-
         .btn-outline { background: transparent; border: 1px solid var(--gold); color: var(--gold); }
         
-        /* LAYOUT & PANELS */
         .agent-container { max-width: 1100px; margin: 20px auto; padding: 20px; }
         .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 25px; }
         .stat-card { background: #111; padding: 20px; border-radius: 12px; border: 1px solid #222; text-align: center; }
@@ -43,21 +40,25 @@
         .ref-input-group input { flex: 1; background: #000; border: 1px solid #333; color: var(--gold); padding: 0 15px; border-radius: 8px; height: 45px; }
 
         .panel { background: #111; border-radius: 15px; border: 1px solid #333; padding: 25px; }
-        .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #222; padding-bottom: 15px; }
+        .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #222; padding-bottom: 15px; gap: 15px; }
         
+        /* SEARCH FILTER */
+        .search-wrapper { position: relative; flex: 1; max-width: 300px; }
+        .search-wrapper input { width: 100%; background: #000; border: 1px solid #333; color: white; padding: 10px 15px; border-radius: 8px; font-size: 0.8rem; outline: none; }
+        .search-wrapper input:focus { border-color: var(--gold); }
+
         .agent-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
         .agent-table th { text-align: left; color: #555; padding: 12px; border-bottom: 1px solid #222; text-transform: uppercase; font-size: 0.65rem; }
         .agent-table td { padding: 15px 12px; border-bottom: 1px solid #1a1a1a; }
         
         .role-badge { background: #000; padding: 4px 8px; border-radius: 4px; font-size: 0.65rem; color: var(--gold); text-transform: uppercase; border: 1px solid #333; }
 
-        /* MODAL & SEARCH */
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); display: flex; align-items: center; justify-content: center; z-index: 2000; }
         .modal-content { background: #0f0f0f; width: 90%; max-width: 420px; padding: 30px; border-radius: 20px; border: 1px solid var(--gold); }
         .modal label { font-size: 0.65rem; color: #666; text-transform: uppercase; display: block; margin-top: 15px; margin-bottom: 5px; }
         .modal input, .modal select { width: 100%; padding: 12px; background: #000; border: 1px solid #333; color: white; border-radius: 8px; box-sizing: border-box; }
         
-        #upline-verify-status { font-size: 0.7rem; margin-top: 5px; font-weight: bold; }
+        #upline-verify-status { font-size: 0.7rem; margin-top: 5px; font-weight: bold; min-height: 1em; }
 
         .top-nav { position: relative; display: flex; justify-content: space-between; align-items: center; padding: 12px 20px 12px 75px; background: #000; border-bottom: 2px solid #222; }
     </style>
@@ -88,6 +89,9 @@
         <div class="panel">
             <div class="panel-header">
                 <h3 style="margin:0; color: var(--gold); font-family: 'Goldman'; font-size: 1rem;">DOWNLINE MANAGEMENT</h3>
+                <div class="search-wrapper">
+                    <input type="text" id="table-search" placeholder="Search downline ID..." oninput="filterDownlineTable()">
+                </div>
                 <button class="btn-nexus btn-gold" style="font-size: 0.7rem; height: 38px;" onclick="toggleModal(true)">+ New Account</button>
             </div>
             <div style="overflow-x: auto;">
@@ -116,7 +120,7 @@
                 <input type="text" id="new-username" placeholder="Enter ID">
 
                 <label>Assigned Role</label>
-                <select id="new-role" onchange="updateMaxCommDisplay()"></select>
+                <select id="new-role"></select>
 
                 <label>Placement (Upline ID)</label>
                 <input type="text" id="new-upline" placeholder="Search Upline Username..." oninput="verifyUpline(this.value)">
@@ -154,21 +158,27 @@
         window.firebaseDb = db;
         injectMenu();
 
+        // UPDATED 6-TIER STRUCTURE
         const TIERS = [
-            { role: "ADMIN", level: 1 }, { role: "OPERATOR", level: 2 }, { role: "SUB_OPERATOR", level: 3 },
-            { role: "INCO", level: 4 }, { role: "MASTER_AGENT", level: 5 }, { role: "SUB_AGENT", level: 6 }, { role: "PLAYER", level: 7 }
+            { role: "ADMIN", level: 1 }, 
+            { role: "OPERATOR", level: 2 }, 
+            { role: "INCO", level: 3 },
+            { role: "SUBOP", level: 4 }, 
+            { role: "AGENT", level: 5 }, 
+            { role: "PLAYER", level: 6 }
         ];
 
         let myData = null;
         let editingUserId = null;
         let verifiedUplineData = null;
+        let allDownlines = [];
 
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 const snap = await getDoc(doc(db, "users", user.uid));
                 if(snap.exists()) {
                     myData = snap.data();
-                    if(myData.level >= 7) window.location.href = "/";
+                    if(myData.level >= 6) window.location.href = "/"; // Player redirect
                     setupUI();
                     loadDownlines();
                 }
@@ -180,7 +190,7 @@
             document.getElementById('my-comm-rate').innerText = `${myData.commissionRate}%`;
             document.getElementById('total-earned').innerText = `₱${(myData.totalCommission || 0).toLocaleString()}`;
             document.getElementById('referral-url').value = `${window.location.origin}/register/?ref=${auth.currentUser.uid}`;
-            document.getElementById('new-upline').value = myData.username; // Default to self
+            document.getElementById('new-upline').value = myData.username;
             verifyUpline(myData.username);
 
             const select = document.getElementById('new-role');
@@ -204,8 +214,15 @@
             const snap = await getDocs(q);
             
             if(!snap.empty) {
-                verifiedUplineData = { id: snap.docs[0].id, ...snap.docs[0].data() };
-                status.innerText = `✅ Valid: ${verifiedUplineData.role} (${verifiedUplineData.commissionRate}% max)`;
+                const data = snap.docs[0].data();
+                if (data.level >= 6) { // Can't place under a player
+                    verifiedUplineData = null;
+                    status.innerText = "❌ Cannot place under a PLAYER";
+                    status.style.color = "#ff4444";
+                    return;
+                }
+                verifiedUplineData = { id: snap.docs[0].id, ...data };
+                status.innerText = `✅ ${verifiedUplineData.role} (${verifiedUplineData.commissionRate}% max)`;
                 status.style.color = "#00ff88";
             } else {
                 verifiedUplineData = null;
@@ -217,35 +234,51 @@
         function loadDownlines() {
             const q = query(collection(db, "users"), where("uplineId", "==", auth.currentUser.uid));
             onSnapshot(q, (snap) => {
-                const list = document.getElementById('agent-list');
-                list.innerHTML = snap.empty ? '<tr><td colspan="5" style="text-align:center; padding:40px; color:#333;">No direct downlines.</td></tr>' : "";
-                document.getElementById('count-downlines').innerText = snap.size;
+                allDownlines = [];
                 let teamT = 0;
-                snap.forEach(userDoc => {
-                    const u = userDoc.data();
-                    teamT += (u.totalTurnover || 0);
-                    list.innerHTML += `
-                        <tr>
-                            <td><strong style="color:white;">${u.username}</strong></td>
-                            <td><span class="role-badge">${u.role}</span></td>
-                            <td>${u.commissionRate}%</td>
-                            <td style="color:#00ff88;">₱${(u.totalTurnover || 0).toLocaleString()}</td>
-                            <td><button class="btn-edit" style="color:var(--gold); border:none; background:none; cursor:pointer;" onclick="openEdit('${userDoc.id}', '${u.username}', ${u.commissionRate})">EDIT RATE</button></td>
-                        </tr>
-                    `;
+                snap.forEach(doc => {
+                    const d = doc.data();
+                    d.id = doc.id;
+                    allDownlines.push(d);
+                    teamT += (d.totalTurnover || 0);
                 });
+                document.getElementById('count-downlines').innerText = snap.size;
                 document.getElementById('team-turnover').innerText = `₱${teamT.toLocaleString()}`;
+                renderTable(allDownlines);
             });
         }
 
+        function renderTable(data) {
+            const list = document.getElementById('agent-list');
+            list.innerHTML = data.length ? "" : '<tr><td colspan="5" style="text-align:center; padding:40px; color:#333;">No direct downlines found.</td></tr>';
+            
+            data.forEach(u => {
+                list.innerHTML += `
+                    <tr>
+                        <td><strong style="color:white;">${u.username}</strong></td>
+                        <td><span class="role-badge">${u.role}</span></td>
+                        <td>${u.commissionRate}%</td>
+                        <td style="color:#00ff88;">₱${(u.totalTurnover || 0).toLocaleString()}</td>
+                        <td><button class="btn-edit" style="color:var(--gold); border:none; background:none; cursor:pointer;" onclick="openEdit('${u.id}', '${u.username}', ${u.commissionRate})">EDIT RATE</button></td>
+                    </tr>
+                `;
+            });
+        }
+
+        window.filterDownlineTable = () => {
+            const term = document.getElementById('table-search').value.toLowerCase();
+            const filtered = allDownlines.filter(u => u.username.includes(term));
+            renderTable(filtered);
+        };
+
         window.handleSave = async () => {
             const comm = parseFloat(document.getElementById('new-comm').value);
-            if (!verifiedUplineData) return alert("Please select a valid Upline first.");
-            if (isNaN(comm) || comm > verifiedUplineData.commissionRate) return alert("Commission too high.");
+            if (!verifiedUplineData && !editingUserId) return alert("Select a valid Upline.");
+            if (isNaN(comm) || comm > verifiedUplineData.commissionRate) return alert("Rate exceeds Upline limit.");
 
             const saveBtn = document.getElementById('btn-save');
             saveBtn.disabled = true;
-            saveBtn.innerText = "PLACING USER...";
+            saveBtn.innerText = "PROCESSING...";
 
             try {
                 if (editingUserId) {
@@ -263,7 +296,6 @@
                         balance: 0, totalTurnover: 0, totalCommission: 0, createdAt: new Date()
                     });
                 }
-                alert("Success!");
                 toggleModal(false);
             } catch (e) { alert(e.message); }
             finally { saveBtn.disabled = false; saveBtn.innerText = "Confirm Placement"; }
@@ -271,21 +303,25 @@
 
         window.copyReferral = () => {
             navigator.clipboard.writeText(document.getElementById("referral-url").value);
-            alert("Link Copied!");
+            alert("Referral Link Copied!");
         };
 
         window.openEdit = (uid, username, currentRate) => {
             editingUserId = uid;
-            document.getElementById('modal-title').innerText = `EDIT RATE: ${username.toUpperCase()}`;
+            document.getElementById('modal-title').innerText = `EDIT: ${username.toUpperCase()}`;
             document.getElementById('create-only-fields').style.display = "none";
             document.getElementById('new-comm').value = currentRate;
             toggleModal(true);
         };
 
         window.toggleModal = (show) => {
-            editingUserId = null;
+            if(!show) editingUserId = null;
             document.getElementById('create-modal').style.display = show ? 'flex' : 'none';
-            if(show) setupUI();
+            if(show && !editingUserId) {
+                document.getElementById('modal-title').innerText = "NETWORK PLACEMENT";
+                document.getElementById('create-only-fields').style.display = "block";
+                setupUI();
+            }
         };
 
         window.validateInputRate = () => {
