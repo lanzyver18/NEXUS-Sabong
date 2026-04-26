@@ -10,9 +10,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Goldman:wght@400;700&display=swap" rel="stylesheet">
     
     <style>
-        :root { --gold: #D4AF37; --green: #00ff88; --blue: #0084FF; }
+        :root { --gold: #D4AF37; --green: #00ff88; --blue: #0084FF; --panel-bg: #0f0f0f; }
 
-        /* NAVIGATION ADJUSTMENT */
         .top-nav {
             display: flex;
             justify-content: space-between;
@@ -31,33 +30,43 @@
         .balance-display small { color: #888; font-size: 0.6rem; letter-spacing: 1px; }
         .balance-display span { color: var(--green); font-weight: bold; font-size: 1.1rem; }
         
-        .nav-profile-btn {
-            background: transparent;
-            color: var(--gold);
-            border: 1px solid var(--gold);
-            padding: 8px 15px;
-            border-radius: 6px;
-            font-family: 'Goldman', sans-serif;
-            font-size: 0.7rem;
-            font-weight: bold;
-            cursor: pointer;
-            transition: 0.2s;
-            text-transform: uppercase;
+        /* ADS CAROUSEL STYLING */
+        .promo-container {
+            width: 100%;
+            height: 160px;
+            background: #000;
+            overflow: hidden;
+            position: relative;
+            border-bottom: 2px solid #111;
         }
-
-        /* HERO SECTION */
-        .hero {
-            height: 25vh;
-            background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), url('https://images.unsplash.com/photo-1511192336575-5a79af67a629?auto=format&fit=crop&q=80');
+        .ad-slide {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            transition: 1s ease-in-out;
             background-size: cover;
             background-position: center;
             display: flex;
             align-items: center;
-            justify-content: center;
-            text-align: center;
-            border-bottom: 2px solid var(--gold);
+            padding: 0 40px;
+            box-sizing: border-box;
         }
-        .hero h1 { font-size: 2rem; margin: 0; color: white; text-transform: uppercase; font-family: 'Goldman'; letter-spacing: 2px; }
+        .ad-slide.active { opacity: 1; }
+        .ad-content h2 { font-family: 'Goldman'; color: var(--gold); margin: 0; font-size: 1.2rem; text-shadow: 0 0 10px rgba(0,0,0,0.8); }
+        .ad-content p { color: #fff; font-size: 0.75rem; margin: 5px 0 10px; max-width: 250px; }
+
+        /* SERVER STATS BAR */
+        .stats-bar {
+            background: #080808;
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-around;
+            border-bottom: 1px solid #1a1a1a;
+        }
+        .stat-item { text-align: center; }
+        .stat-item small { display: block; font-size: 0.5rem; color: #444; text-transform: uppercase; letter-spacing: 1px; }
+        .stat-item span { font-family: 'Goldman'; font-size: 0.7rem; color: #eee; }
 
         /* LOBBY GRID */
         .lobby-grid { 
@@ -65,73 +74,55 @@
             max-width: 900px; 
             margin: auto; 
             display: grid; 
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); 
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); 
             gap: 20px; 
         }
         
         .game-card {
             background: #1a1a1a;
-            border-radius: 16px;
+            border-radius: 20px;
             overflow: hidden;
-            border: 1px solid #333;
+            border: 1px solid #222;
             cursor: pointer;
             position: relative;
-            min-height: 180px;
+            min-height: 160px;
             display: flex;
             align-items: flex-end;
             padding: 20px;
-            transition: 0.3s;
+            transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             text-decoration: none;
             background-size: cover;
             background-position: center;
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
-        .game-card:hover { border-color: var(--gold); transform: translateY(-5px); box-shadow: 0 15px 35px rgba(212, 175, 55, 0.15); }
+        .game-card:hover { border-color: var(--gold); transform: scale(1.02); box-shadow: 0 15px 40px rgba(212, 175, 55, 0.1); }
 
-        /* Background Images */
-        .card-sabong { background-image: linear-gradient(transparent, #000), url('https://images.unsplash.com/photo-1596727147705-61a532a655bd?auto=format&fit=crop&q=60'); }
-        .card-mines { background-image: linear-gradient(transparent, #000), url('https://images.unsplash.com/photo-1614028674026-a65e31bfd27c?auto=format&fit=crop&q=60'); }
-        .card-crash { background-image: linear-gradient(transparent, #000), url('https://images.unsplash.com/photo-1635070041078-e363dbe005cb?auto=format&fit=crop&q=60'); }
+        .card-sabong { background-image: linear-gradient(to right, rgba(0,0,0,0.9), transparent), url('https://images.unsplash.com/photo-1596727147705-61a532a655bd?auto=format&fit=crop&q=60'); }
+        .card-crash { background-image: linear-gradient(to right, rgba(0,0,0,0.9), transparent), url('https://images.unsplash.com/photo-1635070041078-e363dbe005cb?auto=format&fit=crop&q=60'); }
+        .card-mines { background-image: linear-gradient(to right, rgba(0,0,0,0.9), transparent), url('https://images.unsplash.com/photo-1614028674026-a65e31bfd27c?auto=format&fit=crop&q=60'); }
 
         .status-tag { 
-            position: absolute; top: 15px; left: 15px; 
-            background: #ff4444; color: white; font-size: 0.6rem; padding: 4px 10px; 
+            position: absolute; top: 15px; right: 15px; 
+            background: #ff4444; color: white; font-size: 0.55rem; padding: 4px 10px; 
             border-radius: 4px; font-weight: bold; display: flex; align-items: center; gap: 6px;
             letter-spacing: 1px;
-            z-index: 2;
         }
         .tag-new { background: var(--green); color: #000; }
-        .tag-hot { background: var(--blue); color: #fff; }
 
-        .pulse {
-            width: 6px; height: 6px; background: white; border-radius: 50%;
-            animation: pulse-animation 1.5s infinite;
-        }
+        .card-info h3 { margin: 0; color: white; font-size: 1.1rem; font-family: 'Goldman'; letter-spacing: 1px; }
+        .card-info p { margin: 3px 0 0; color: var(--gold); font-size: 0.7rem; font-weight: bold; text-transform: uppercase; }
 
-        @keyframes pulse-animation {
-            0% { transform: scale(0.95); opacity: 1; }
-            70% { transform: scale(1.5); opacity: 0; }
-            100% { transform: scale(0.95); opacity: 0; }
-        }
-
-        .card-info h3 { margin: 0; color: white; font-size: 1.2rem; font-family: 'Goldman'; }
-        .card-info p { margin: 3px 0 0; color: var(--gold); font-size: 0.75rem; font-weight: bold; }
-
-        /* BOTTOM ACTIONS */
+        /* QUICK ACTIONS */
         .quick-actions { 
             display: flex; gap: 10px; padding: 15px 20px; 
             background: #000; position: fixed; bottom: 0; left: 0; 
             width: 100%; box-sizing: border-box; border-top: 1px solid #222; z-index: 100; 
         }
-        .action-btn { flex: 1; padding: 15px; border: 1px solid var(--gold); background: transparent; color: var(--gold); border-radius: 8px; font-weight: bold; text-transform: uppercase; cursor: pointer; font-size: 0.8rem; font-family: 'Goldman'; }
+        .action-btn { flex: 1; padding: 16px; border: 1px solid var(--gold); background: transparent; color: var(--gold); border-radius: 12px; font-weight: bold; text-transform: uppercase; cursor: pointer; font-size: 0.75rem; font-family: 'Goldman'; transition: 0.3s; }
         .action-btn.gold { background: var(--gold); color: black; }
         .admin-action { border-color: var(--green); color: var(--green); display: none; }
 
-        @media (max-width: 600px) {
-            .hero { height: 20vh; }
-            .hero h1 { font-size: 1.5rem; }
-            .lobby-grid { grid-template-columns: 1fr; }
-        }
+        @media (max-width: 600px) { .promo-container { height: 130px; } .lobby-grid { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
@@ -143,52 +134,62 @@
                 <small id="user-display">LOADING...</small>
                 <span>₱<span id="nav-balance">0.00</span></span>
             </div>
-            <button class="nav-profile-btn" onclick="window.location.href='/profile/'">PROFILE</button>
+            <button class="nav-profile-btn" style="border:1px solid #333; color:#888; padding:8px 12px; border-radius:8px; background:transparent; font-size:0.6rem; cursor:pointer;" onclick="window.location.href='/profile/'">ID</button>
         </div>
     </nav>
 
-    <header class="hero">
-        <div class="hero-content">
-            <h1>NEXUS LOBBY</h1>
+    <div class="promo-container" id="ad-slider">
+        <div class="ad-slide active" style="background-image: linear-gradient(to right, #000, transparent), url('https://images.unsplash.com/photo-1614028674026-a65e31bfd27c?auto=format&fit=crop&q=80');">
+            <div class="ad-content">
+                <h2>NEXUS MINES</h2>
+                <p>New high-multiplier protocol now live. Risk for the diamond.</p>
+                <button onclick="window.location.href='/games/mines/'" style="background:var(--gold); border:none; padding:6px 12px; border-radius:4px; font-size:0.6rem; font-weight:bold; cursor:pointer;">PLAY NOW</button>
+            </div>
         </div>
-    </header>
+        <div class="ad-slide" style="background-image: linear-gradient(to right, #000, transparent), url('https://images.unsplash.com/photo-1518623489648-a173ef7824f3?auto=format&fit=crop&q=80');">
+            <div class="ad-content">
+                <h2>FAST PAYOUTS</h2>
+                <p>Withdrawals processed in under 15 minutes. Secure your wins.</p>
+                <button onclick="window.location.href='/wallet/'" style="background:#fff; border:none; padding:6px 12px; border-radius:4px; font-size:0.6rem; font-weight:bold; cursor:pointer;">CASH OUT</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="stats-bar">
+        <div class="stat-item"><small>Arena Status</small><span>● OPERATIONAL</span></div>
+        <div class="stat-item"><small>Active Players</small><span>1,402</span></div>
+        <div class="stat-item"><small>Network</small><span style="color:var(--green)">SECURE</span></div>
+    </div>
 
     <main class="lobby-grid">
         <a href="/games/sabong/" class="game-card card-sabong">
-            <div class="status-tag">
-                <div class="pulse"></div>
-                LIVE NOW
-            </div>
+            <div class="status-tag">LIVE NOW</div>
             <div class="card-info">
                 <h3>SABONG ARENA</h3>
-                <p>ENTER ARENA →</p>
+                <p>Enter Pit →</p>
             </div>
         </a>
 
         <a href="/games/crash/" class="game-card card-crash">
-            <div class="status-tag tag-hot">
-                HIGH ACTION
-            </div>
+            <div class="status-tag" style="background:var(--blue)">HOT</div>
             <div class="card-info">
                 <h3>NEXUS CRASH</h3>
-                <p>MULTIPLY NOW →</p>
+                <p>Multiply →</p>
             </div>
         </a>
 
         <a href="/games/mines/" class="game-card card-mines">
-            <div class="status-tag tag-new">
-                NEW PROTOCOL
-            </div>
+            <div class="status-tag tag-new">NEW</div>
             <div class="card-info">
                 <h3>NEXUS MINES</h3>
-                <p>PLAY NOW →</p>
+                <p>Play Protocol →</p>
             </div>
         </a>
     </main>
 
     <section class="quick-actions">
-        <button id="admin-btn" class="action-btn admin-action">ADMIN</button>
-        <button onclick="window.location.href='/wallet/'" class="action-btn gold">CASH IN</button>
+        <button id="admin-btn" class="action-btn admin-action">MANAGEMENT</button>
+        <button onclick="window.location.href='/wallet/'" class="action-btn gold">DEPOSIT</button>
         <button onclick="window.location.href='/wallet/'" class="action-btn">WITHDRAW</button>
     </section>
 
@@ -210,40 +211,40 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-
         window.firebaseAuth = auth;
         window.firebaseDb = db; 
 
         injectMenu();
 
+        // AD SLIDER LOGIC
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.ad-slide');
+        setInterval(() => {
+            slides[currentSlide].classList.remove('active');
+            currentSlide = (currentSlide + 1) % slides.length;
+            slides[currentSlide].classList.add('active');
+        }, 5000);
+
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 const userRef = doc(db, "users", user.uid);
-                
                 const snap = await getDoc(userRef);
                 if (snap.exists()) {
                     const data = snap.data();
                     document.getElementById('user-display').innerText = data.username ? data.username.toUpperCase() : "PLAYER";
-                    
                     const level = data.level || 6;
                     const adminBtn = document.getElementById('admin-btn');
                     if (level >= 1 && level <= 5) {
                         adminBtn.style.display = "block";
-                        adminBtn.onclick = () => {
-                            window.location.href = (level === 1) ? '/admin/index.html' : '/admin/agents.html';
-                        };
+                        adminBtn.onclick = () => { window.location.href = (level === 1) ? '/admin/index.html' : '/admin/agents.html'; };
                     }
                 }
-
                 onSnapshot(userRef, (doc) => {
                     if (doc.exists()) {
-                        const bal = doc.data().balance || 0;
-                        document.getElementById('nav-balance').innerText = bal.toLocaleString(undefined, {minimumFractionDigits: 2});
+                        document.getElementById('nav-balance').innerText = doc.data().balance.toLocaleString(undefined, {minimumFractionDigits: 2});
                     }
                 });
-            } else {
-                window.location.href = "/login/";
-            }
+            } else { window.location.href = "/login/"; }
         });
     </script>
 </body>
