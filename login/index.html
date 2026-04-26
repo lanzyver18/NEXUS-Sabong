@@ -6,32 +6,84 @@
     <title>Login | NEXUS</title>
     <link rel="stylesheet" href="/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Goldman:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --gold: #D4AF37; }
+        body.auth-page { 
+            background: #050505; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            height: 100vh; 
+            margin: 0;
+            font-family: 'Segoe UI', sans-serif;
+        }
+        .auth-card { 
+            background: #0f0f0f; 
+            padding: 40px; 
+            border-radius: 20px; 
+            border: 1px solid #222; 
+            width: 100%; 
+            max-width: 360px; 
+            text-align: center; 
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        }
+        .input-group { position: relative; text-align: left; margin-bottom: 15px; }
+        .input-group label { font-size: 0.65rem; color: #555; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 8px; }
+        
+        input { 
+            width: 100%; padding: 14px; background: #000; border: 1px solid #333; 
+            color: white; border-radius: 8px; box-sizing: border-box; transition: 0.3s;
+        }
+        input:focus { border-color: var(--gold); outline: none; box-shadow: 0 0 10px rgba(212, 175, 55, 0.1); }
+        
+        .toggle-pass { 
+            position: absolute; right: 12px; bottom: 12px; 
+            color: #444; cursor: pointer; font-size: 0.8rem; user-select: none;
+        }
+        
+        .remember-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; font-size: 0.75rem; color: #666; }
+        .remember-row input { width: auto; margin-right: 8px; }
+        
+        .btn-action.gold { 
+            background: var(--gold); color: black; border: none; border-radius: 8px;
+            font-family: 'Goldman', sans-serif; cursor: pointer; transition: 0.3s;
+        }
+        .btn-action.gold:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(212, 175, 55, 0.3); }
+    </style>
 </head>
 <body class="auth-page">
     <div class="auth-card">
-        <div class="logo" style="font-family: 'Goldman', sans-serif; color: var(--gold); font-size: 2rem; margin-bottom: 10px;">NEXUS</div>
-        <h2 style="font-size: 1rem; letter-spacing: 2px; margin-bottom: 20px;">SYSTEM ACCESS</h2>
+        <div class="logo" style="font-family: 'Goldman', sans-serif; color: var(--gold); font-size: 2.2rem; margin-bottom: 5px; letter-spacing: 2px;">NEXUS</div>
+        <h2 style="font-size: 0.8rem; letter-spacing: 3px; color: #444; margin-bottom: 30px; text-transform: uppercase;">Secure Access</h2>
         
-        <div style="text-align: left; margin-bottom: 15px;">
-            <label style="font-size: 0.7rem; color: #555; text-transform: uppercase;">Username</label>
+        <div class="input-group">
+            <label>Username</label>
             <input type="text" id="login-username" placeholder="Enter your ID" autocomplete="username">
         </div>
 
-        <div style="text-align: left; margin-bottom: 20px;">
-            <label style="font-size: 0.7rem; color: #555; text-transform: uppercase;">Password</label>
+        <div class="input-group">
+            <label>Password</label>
             <input type="password" id="login-pass" placeholder="••••••••" autocomplete="current-password">
+            <span class="toggle-pass" onclick="togglePassword()">SHOW</span>
+        </div>
+
+        <div class="remember-row">
+            <label style="display:flex; align-items:center; cursor:pointer;">
+                <input type="checkbox" id="remember-me"> Remember ID
+            </label>
+            <a href="#" style="color: #444; text-decoration: none;">Forgot?</a>
         </div>
         
-        <button class="btn-action gold" id="btn-login" style="width: 100%; padding: 15px; font-weight: bold;">SIGN IN</button>
+        <button class="btn-action gold" id="btn-login" style="width: 100%; padding: 16px; font-weight: bold; font-size: 0.9rem;">SIGN IN</button>
         
-        <p class="auth-footer" style="margin-top: 20px; font-size: 0.8rem; color: #666;">
-            No account yet? <a href="/register/" style="color: var(--gold); text-decoration: none;">Create one here</a>
+        <p class="auth-footer" style="margin-top: 25px; font-size: 0.8rem; color: #555;">
+            New to the Arena? <a href="/register/" style="color: var(--gold); text-decoration: none; font-weight: bold;">Register Now</a>
         </p>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
+        import { getAuth, signInWithEmailAndPassword, setPersistence, browserLocalPersistence, browserSessionPersistence } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCBvOw8HrMhZD0aYSHqFdE196ZITdYBU3Q",
@@ -46,37 +98,61 @@
         const auth = getAuth(app);
 
         const loginBtn = document.getElementById('btn-login');
+        const userField = document.getElementById('login-username');
+        const rememberCheck = document.getElementById('remember-me');
+
+        // Check for remembered ID
+        const savedID = localStorage.getItem('nexus_remembered_user');
+        if (savedID) {
+            userField.value = savedID;
+            rememberCheck.checked = true;
+        }
+
+        window.togglePassword = () => {
+            const passField = document.getElementById('login-pass');
+            const toggleBtn = document.querySelector('.toggle-pass');
+            if (passField.type === "password") {
+                passField.type = "text";
+                toggleBtn.innerText = "HIDE";
+            } else {
+                passField.type = "password";
+                toggleBtn.innerText = "SHOW";
+            }
+        };
 
         loginBtn.onclick = async () => {
-            const user = document.getElementById('login-username').value.trim().toLowerCase();
+            const user = userField.value.trim().toLowerCase();
             const pass = document.getElementById('login-pass').value;
 
             if (!user || !pass) return alert("Please fill in all fields.");
 
-            // Visual feedback
-            loginBtn.innerText = "AUTHENTICATING...";
+            loginBtn.innerText = "VERIFYING...";
             loginBtn.disabled = true;
-            loginBtn.style.opacity = "0.7";
 
             try {
-                // Compatibility with the custom username system
+                // Set persistence based on "Remember Me"
+                const persistence = rememberCheck.checked ? browserLocalPersistence : browserSessionPersistence;
+                await setPersistence(auth, persistence);
+
+                // Handle ID remembering
+                if (rememberCheck.checked) {
+                    localStorage.setItem('nexus_remembered_user', user);
+                } else {
+                    localStorage.removeItem('nexus_remembered_user');
+                }
+
                 const fakeEmail = `${user}@nexus-sabong.com`;
                 await signInWithEmailAndPassword(auth, fakeEmail, pass);
                 
-                // Redirect to the root (Home Arena)
                 window.location.href = "/";
             } catch (error) { 
                 console.error(error);
-                alert("Login failed. Please check your username and password.");
-                
-                // Reset button
+                alert("Invalid Credentials. Please try again.");
                 loginBtn.innerText = "SIGN IN";
                 loginBtn.disabled = false;
-                loginBtn.style.opacity = "1";
             }
         };
 
-        // Allow "Enter" key to trigger login
         document.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') loginBtn.click();
         });
