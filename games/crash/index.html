@@ -26,29 +26,30 @@
             justify-content: center; position: relative; overflow: hidden;
             box-shadow: inset 0 0 50px rgba(0,0,0,1);
         }
-        #main-mult { font-family: 'Goldman'; font-size: 5rem; color: white; transition: 0.1s; z-index: 2; }
-        #main-mult.crashed { color: var(--red); }
+        #main-mult { font-family: 'Goldman'; font-size: 5rem; color: white; transition: 0.1s; z-index: 2; text-shadow: 0 0 20px rgba(255,255,255,0.2); }
+        #main-mult.crashed { color: var(--red); text-shadow: 0 0 20px rgba(255,68,68,0.4); }
         
-        .canvas-bg { position: absolute; bottom: 0; left: 0; width: 100%; height: 100%; z-index: 1; opacity: 0.3; }
+        canvas { position: absolute; bottom: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
 
         /* CONTROLS */
-        .control-panel { background: var(--panel-bg); padding: 25px; border-radius: 20px; border: 1px solid #222; display: flex; flex-direction: column; gap: 15px; }
+        .control-panel { background: var(--panel-bg); padding: 25px; border-radius: 20px; border: 1px solid #222; display: flex; flex-direction: column; gap: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         
         .input-group label { display: block; font-size: 0.6rem; color: #555; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px; }
-        input { width: 100%; padding: 14px; background: #000; border: 1px solid #333; color: white; border-radius: 10px; outline: none; font-family: 'Goldman'; }
+        input { width: 100%; padding: 14px; background: #000; border: 1px solid #333; color: white; border-radius: 10px; outline: none; font-family: 'Goldman'; transition: 0.3s; }
+        input:focus { border-color: var(--gold); }
 
         .btn-action { width: 100%; padding: 18px; border-radius: 12px; border: none; font-weight: bold; font-family: 'Goldman'; cursor: pointer; text-transform: uppercase; transition: 0.3s; }
         .btn-bet { background: var(--gold); color: black; }
         .btn-cashout { background: var(--green); color: black; display: none; }
-        .btn-waiting { background: #222; color: #555; cursor: not-allowed; display: none; }
+        .btn-waiting { background: #1a1a1a; color: #444; cursor: not-allowed; display: none; border: 1px solid #222; }
 
         /* HISTORY BAR */
-        .history-bar { display: flex; gap: 8px; overflow-x: auto; padding: 15px; background: #000; border-radius: 12px; border: 1px solid #1a1a1a; margin-top: 15px; }
-        .hist-item { padding: 4px 10px; border-radius: 6px; font-size: 0.7rem; font-family: 'Goldman'; font-weight: bold; background: #111; }
-        .hist-green { color: var(--green); }
-        .hist-red { color: var(--red); }
+        .history-bar { display: flex; gap: 8px; overflow-x: auto; padding: 15px; background: #000; border-radius: 12px; border: 1px solid #1a1a1a; margin-top: 15px; scrollbar-width: none; }
+        .hist-item { padding: 4px 10px; border-radius: 6px; font-size: 0.7rem; font-family: 'Goldman'; font-weight: bold; background: #111; flex-shrink: 0; }
+        .hist-green { color: var(--green); border: 1px solid rgba(0,255,136,0.2); }
+        .hist-red { color: var(--red); border: 1px solid rgba(255,68,68,0.2); }
 
-        @media (max-width: 800px) { .crash-wrapper { grid-template-columns: 1fr; } .display-area { height: 250px; } }
+        @media (max-width: 800px) { .crash-wrapper { grid-template-columns: 1fr; } .display-area { height: 280px; } }
     </style>
 </head>
 <body>
@@ -66,22 +67,21 @@
             </div>
 
             <div class="input-group">
-                <label>Auto Cashout (Optional)</label>
+                <label>Auto Cashout</label>
                 <input type="number" id="auto-cashout" placeholder="2.00" step="0.1">
             </div>
 
             <button id="btn-bet" class="btn-action btn-bet" onclick="placeBet()">Place Bet</button>
             <button id="btn-cashout" class="btn-action btn-cashout" onclick="cashout()">Cashout</button>
-            <button id="btn-waiting" class="btn-action btn-waiting">Waiting for Round...</button>
+            <button id="btn-waiting" class="btn-action btn-waiting">Bet Placed...</button>
 
-            <div class="history-bar" id="history">
-                </div>
+            <div class="history-bar" id="history"></div>
         </div>
 
         <div class="display-area">
-            <div id="status-text" style="color: #444; font-size: 0.7rem; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 2px;">Next Round in 5s</div>
+            <div id="status-text" style="color: #444; font-size: 0.6rem; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 2px; position: absolute; top: 20px;">Initializing Engine...</div>
             <div id="main-mult">1.00x</div>
-            <canvas id="crash-chart" class="canvas-bg"></canvas>
+            <canvas id="crash-canvas"></canvas>
         </div>
     </div>
 
@@ -91,37 +91,59 @@
         import { getFirestore, doc, onSnapshot, updateDoc, increment, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
         import { injectMenu } from "/menu.js";
 
-        const firebaseConfig = { /* Your Config */ };
+        const firebaseConfig = {
+            apiKey: "AIzaSyCBvOw8HrMhZD0aYSHqFdE196ZITdYBU3Q",
+            authDomain: "nexus-sabong.firebaseapp.com",
+            projectId: "nexus-sabong",
+            storageBucket: "nexus-sabong.firebasestorage.app",
+            messagingSenderId: "421723311",
+            appId: "1:421723311:web:1780f179e7c2a7cc0e285a"
+        };
+
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
+        window.firebaseAuth = auth;
+        window.firebaseDb = db;
         injectMenu();
 
         let balance = 0;
         let currentMult = 1.00;
-        let gameStatus = "WAITING"; // WAITING, RUNNING, CRASHED
+        let gameStatus = "WAITING"; 
         let hasBet = false;
         let betPlacedForNext = false;
         let myBetAmt = 0;
         let crashPoint = 0;
         let startTime = 0;
 
+        // CANVAS ENGINE
+        const canvas = document.getElementById('crash-canvas');
+        const ctx = canvas.getContext('2d');
+        function resizeCanvas() {
+            canvas.width = canvas.parentElement.clientWidth;
+            canvas.height = canvas.parentElement.clientHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
         onAuthStateChanged(auth, user => {
             if (user) {
                 onSnapshot(doc(db, "users", user.uid), snap => {
-                    balance = snap.data().balance;
-                    document.getElementById('display-balance').innerText = `₱${balance.toLocaleString()}`;
+                    if(snap.exists()) {
+                        balance = snap.data().balance;
+                        document.getElementById('display-balance').innerText = `₱${balance.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
+                    }
                 });
-            }
+            } else { window.location.href = "/login/"; }
         });
 
-        // SIMULATED ENGINE
         function initEngine() {
             gameStatus = "WAITING";
-            let countdown = 5;
+            let countdown = 5.0;
             const timer = setInterval(() => {
                 countdown -= 0.1;
                 document.getElementById('status-text').innerText = `Next Round in ${countdown.toFixed(1)}s`;
+                ctx.clearRect(0,0, canvas.width, canvas.height); // Clear curve
                 if (countdown <= 0) {
                     clearInterval(timer);
                     runRound();
@@ -131,28 +153,33 @@
 
         function runRound() {
             gameStatus = "RUNNING";
-            document.getElementById('status-text').innerText = "LIVE";
+            document.getElementById('status-text').innerText = "PROTOCOL LIVE";
             
-            // Logic for crash point (House Edge 3%)
+            // Logic: 3% Instant Crash at 1.00x, else random exponential
             if (Math.random() < 0.03) crashPoint = 1.00;
-            else crashPoint = (Math.max(1.01, 0.99 / (1 - Math.random()))).toFixed(2);
+            else crashPoint = parseFloat((Math.max(1.01, 0.98 / (1 - Math.random()))).toFixed(2));
 
             if (betPlacedForNext) {
                 hasBet = true;
                 betPlacedForNext = false;
-                updateButtons();
             }
+            updateButtons();
 
             startTime = Date.now();
             const tick = setInterval(() => {
                 let elapsed = (Date.now() - startTime) / 1000;
-                currentMult = Math.pow(1.06, elapsed); // Growth speed
+                currentMult = Math.pow(1.07, elapsed); 
                 
                 document.getElementById('main-mult').innerText = currentMult.toFixed(2) + "x";
 
+                // Draw Curve
+                drawCurve(elapsed);
+
                 // Auto Cashout
                 const auto = parseFloat(document.getElementById('auto-cashout').value);
-                if (hasBet && !isNaN(auto) && currentMult >= auto) cashout();
+                if (hasBet && !isNaN(auto) && auto > 1 && currentMult >= auto) {
+                    cashout();
+                }
 
                 if (currentMult >= crashPoint) {
                     clearInterval(tick);
@@ -161,10 +188,26 @@
             }, 50);
         }
 
+        function drawCurve(t) {
+            ctx.clearRect(0,0, canvas.width, canvas.height);
+            ctx.beginPath();
+            ctx.lineWidth = 4;
+            ctx.strokeStyle = '#D4AF37';
+            ctx.moveTo(0, canvas.height);
+            
+            for(let i=0; i<t; i+=0.1) {
+                let x = (i / 15) * canvas.width; // Scale time to width
+                let y = canvas.height - (Math.pow(1.07, i) - 1) * 50; // Scale mult to height
+                ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+        }
+
         function doCrash() {
             gameStatus = "CRASHED";
             hasBet = false;
             document.getElementById('main-mult').classList.add('crashed');
+            document.getElementById('main-mult').innerText = crashPoint.toFixed(2) + "x";
             document.getElementById('status-text').innerText = "CRASHED";
             
             addHistory(crashPoint);
@@ -179,16 +222,14 @@
 
         window.placeBet = async () => {
             const amt = parseInt(document.getElementById('bet-amount').value);
-            if (amt > balance || amt < 10) return alert("Invalid Bet");
+            if (amt > balance || amt < 10) return alert("Insufficient Balance");
 
             await updateDoc(doc(db, "users", auth.currentUser.uid), { balance: increment(-amt) });
             myBetAmt = amt;
 
-            if (gameStatus === "WAITING") {
-                hasBet = true;
-            } else {
-                betPlacedForNext = true;
-            }
+            if (gameStatus === "WAITING") hasBet = true;
+            else betPlacedForNext = true;
+            
             updateButtons();
         };
 
@@ -203,7 +244,7 @@
             });
             
             updateButtons();
-            alert(`Cashed out ₱${win.toLocaleString()}!`);
+            alert(`SECURED: ₱${win.toLocaleString()}`);
         };
 
         function updateButtons() {
@@ -217,10 +258,9 @@
 
             if (hasBet && gameStatus === "RUNNING") {
                 bCash.style.display = "block";
-                bCash.innerText = `Cashout ₱${Math.floor(myBetAmt * currentMult)}`;
+                bCash.innerText = `CASHOUT ₱${Math.floor(myBetAmt * currentMult)}`;
             } else if (betPlacedForNext || (hasBet && gameStatus === "WAITING")) {
                 bWait.style.display = "block";
-                bWait.innerText = "BET PLACED...";
             } else {
                 bBet.style.display = "block";
             }
@@ -230,9 +270,9 @@
             const bar = document.getElementById('history');
             const item = document.createElement('div');
             item.className = `hist-item ${val >= 2 ? 'hist-green' : 'hist-red'}`;
-            item.innerText = val + "x";
+            item.innerText = val.toFixed(2) + "x";
             bar.prepend(item);
-            if (bar.children.length > 8) bar.lastChild.remove();
+            if (bar.children.length > 10) bar.lastChild.remove();
         }
 
         initEngine();
