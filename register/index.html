@@ -4,19 +4,92 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Register | NEXUS</title>
-    <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Goldman:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --gold: #D4AF37; }
+        body.auth-page { 
+            background: #050505; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            min-height: 100vh; 
+            margin: 0;
+            font-family: 'Segoe UI', sans-serif;
+        }
+        .auth-card { 
+            background: #0f0f0f; 
+            padding: 40px; 
+            border-radius: 20px; 
+            border: 1px solid #222; 
+            width: 100%; 
+            max-width: 380px; 
+            text-align: center; 
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        }
+        .logo { font-family: 'Goldman', sans-serif; color: var(--gold); font-size: 2.2rem; margin-bottom: 5px; letter-spacing: 2px; }
+        
+        .input-group { text-align: left; margin-bottom: 15px; }
+        .input-group label { font-size: 0.65rem; color: #555; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 8px; }
+        
+        input { 
+            width: 100%; padding: 14px; background: #000; border: 1px solid #333; 
+            color: white; border-radius: 8px; box-sizing: border-box; transition: 0.3s;
+        }
+        input:focus { border-color: var(--gold); outline: none; }
+
+        .tier-badge {
+            background: rgba(212, 175, 55, 0.1);
+            border: 1px solid var(--gold);
+            color: var(--gold);
+            font-size: 0.7rem;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+            font-family: 'Goldman', sans-serif;
+        }
+        
+        .strength-meter { height: 4px; background: #222; margin-top: 5px; border-radius: 2px; overflow: hidden; }
+        .strength-bar { height: 100%; width: 0%; transition: 0.5s; }
+
+        .btn-action.gold { 
+            width: 100%; padding: 16px; font-weight: bold; font-size: 0.9rem;
+            background: var(--gold); color: black; border: none; border-radius: 8px;
+            font-family: 'Goldman', sans-serif; cursor: pointer; transition: 0.3s;
+            margin-top: 10px;
+        }
+        .btn-action.gold:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(212, 175, 55, 0.3); }
+        .btn-action.gold:disabled { opacity: 0.5; cursor: not-allowed; }
+    </style>
 </head>
 <body class="auth-page">
     <div class="auth-card">
         <div class="logo">NEXUS</div>
-        <h2 id="reg-title">CREATE ACCOUNT</h2>
-        <p class="text-muted" id="ref-status">Choose a unique name to use as your ID.</p>
+        <h2 style="font-size: 0.8rem; letter-spacing: 3px; color: #444; margin-bottom: 25px; text-transform: uppercase;">Recruitment Center</h2>
         
-        <input type="text" id="reg-username" placeholder="Enter Username (e.g. BossKenny)">
-        <input type="password" id="reg-pass" placeholder="Create Password">
+        <div id="tier-preview" class="tier-badge">
+            JOINING AS: <span id="assigned-role-text">PLAYER</span>
+        </div>
+
+        <p id="ref-status" style="font-size: 0.75rem; color: #666; margin-bottom: 20px;">Choose a unique username to serve as your Arena ID.</p>
+        
+        <div class="input-group">
+            <label>Username (ID)</label>
+            <input type="text" id="reg-username" placeholder="e.g. MasterRider">
+        </div>
+
+        <div class="input-group">
+            <label>Create Password</label>
+            <input type="password" id="reg-pass" placeholder="Minimum 6 characters" oninput="checkStrength(this.value)">
+            <div class="strength-meter"><div id="strength-bar" class="strength-bar"></div></div>
+        </div>
         
         <button class="btn-action gold" id="btn-register">REGISTER & ENTER</button>
-        <p class="auth-footer">Existing player? <a href="/login/">Login here</a></p>
+        
+        <p class="auth-footer" style="margin-top: 25px; font-size: 0.8rem; color: #555;">
+            Already a member? <a href="/login/" style="color: var(--gold); text-decoration: none; font-weight: bold;">Sign In</a>
+        </p>
     </div>
 
     <script type="module">
@@ -37,7 +110,6 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // Defined Hierarchy with corresponding Levels
         const TIERS = [
             { role: "ADMIN", level: 1 },
             { role: "OPERATOR", level: 2 },
@@ -48,7 +120,6 @@
             { role: "PLAYER", level: 7 }
         ];
 
-        // 1. URL REFERRAL DETECTION
         const urlParams = new URLSearchParams(window.location.search);
         const referrerUid = urlParams.get('ref');
 
@@ -58,23 +129,40 @@
                     const refSnap = await getDoc(doc(db, "users", referrerUid));
                     if (refSnap.exists()) {
                         const refData = refSnap.data();
-                        document.getElementById('ref-status').innerHTML = `You are being recruited by <b>${refData.username.toUpperCase()}</b>`;
-                        document.getElementById('ref-status').style.color = "#D4AF37";
+                        const currentTierIndex = TIERS.findIndex(t => t.role === refData.role);
+                        const nextTier = TIERS[currentTierIndex + 1] || TIERS[6];
+
+                        document.getElementById('ref-status').innerHTML = `Recruited by <b>${refData.username.toUpperCase()}</b>`;
+                        document.getElementById('tier-preview').style.display = "block";
+                        document.getElementById('assigned-role-text').innerText = nextTier.role.replace("_", " ");
                     }
                 } catch (e) { console.log("Referral invalid"); }
             }
         }
         checkReferral();
 
+        window.checkStrength = (p) => {
+            const bar = document.getElementById('strength-bar');
+            let s = 0;
+            if (p.length > 5) s += 33;
+            if (/[A-Z]/.test(p)) s += 33;
+            if (/[0-9]/.test(p)) s += 34;
+            bar.style.width = s + "%";
+            bar.style.background = s < 40 ? "#ff4444" : s < 80 ? "#ffaa00" : "#00ff88";
+        };
+
         document.getElementById('btn-register').onclick = async () => {
             const user = document.getElementById('reg-username').value.trim().toLowerCase();
             const pass = document.getElementById('reg-pass').value;
+            const btn = document.getElementById('btn-register');
 
             if(user.length < 4) return alert("Username too short!");
-            if(pass.length < 6) return alert("Password must be at least 6 characters.");
+            if(pass.length < 6) return alert("Password must be 6+ characters.");
+
+            btn.disabled = true;
+            btn.innerText = "CREATING IDENTITY...";
 
             try {
-                // Determine Upline, Role, and Level
                 let uplineId = "SYSTEM";
                 let uplinePath = [];
                 let assignedRole = "PLAYER";
@@ -85,14 +173,9 @@
                     if (refSnap.exists()) {
                         const refData = refSnap.data();
                         uplineId = referrerUid;
-                        
-                        // Path inheritance: All parents + the person who invited them
                         uplinePath = [...(refData.uplinePath || []), referrerUid];
-                        
-                        // Logic: Find current index in TIERS and move down by 1
                         const currentTierIndex = TIERS.findIndex(t => t.role === refData.role);
-                        const nextTier = TIERS[currentTierIndex + 1] || TIERS[TIERS.length - 1];
-                        
+                        const nextTier = TIERS[currentTierIndex + 1] || TIERS[6];
                         assignedRole = nextTier.role;
                         assignedLevel = nextTier.level;
                     }
@@ -101,25 +184,27 @@
                 const fakeEmail = `${user}@nexus-sabong.com`;
                 const userCredential = await createUserWithEmailAndPassword(auth, fakeEmail, pass);
                 
-                // FINAL DATABASE SCHEMA
                 await setDoc(doc(db, "users", userCredential.user.uid), {
                     uid: userCredential.user.uid,
                     username: user,
                     role: assignedRole,
-                    level: assignedLevel, // CRITICAL: Used by menu.js for admin visibility
+                    level: assignedLevel,
                     commissionRate: 0, 
                     uplineId: uplineId,
-                    uplinePath: uplinePath, // CRITICAL: Used by payout engine for spreads
+                    uplinePath: uplinePath,
                     balance: 0,
                     totalTurnover: 0,
-                    isAdmin: (assignedLevel === 1), // Legacy support
+                    totalCommission: 0,
+                    isAdmin: (assignedLevel === 1),
                     createdAt: new Date()
                 });
 
                 window.location.href = "/";
             } catch (error) { 
                 console.error(error);
-                alert("Username taken or error during registration."); 
+                alert("Username is taken or connection lost."); 
+                btn.disabled = false;
+                btn.innerText = "REGISTER & ENTER";
             }
         };
     </script>
