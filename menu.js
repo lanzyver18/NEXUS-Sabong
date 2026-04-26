@@ -14,27 +14,33 @@ export function injectMenu() {
             </div>
             
             <div class="sidebar-links">
-                <a href="/"Home</a>
-                <a href="/games/">Sabong Arena</a>
-                <a href="/profile/">My Profile</a>
+                <a href="/">🏠 Home</a>
+                <a href="/games/">🐓 Sabong Arena</a>
+                <a href="/profile/">👤 My Profile</a>
                 
                 <div style="margin: 15px 0 5px 0; color:#444; font-size:0.7rem; font-weight:bold; letter-spacing:1px;">RECORDS</div>
-                <a href="/history/wallet.html">Wallet History</a>
-                <a href="/history/bets.html">Bet History</a>
+                <a href="/history/wallet.html">💰 Wallet History</a>
+                <a href="/history/bets.html">📝 Bet History</a>
                 
                 <div style="margin: 15px 0 5px 0; color:#444; font-size:0.7rem; font-weight:bold; letter-spacing:1px;">FINANCE</div>
-                <a href="/wallet/" style="color:#D4AF37;">Cash-In / Out</a>
+                <a href="/wallet/" style="color:#D4AF37;">📥 Cash-In / Out</a>
                 
                 <div id="agent-manager-section"></div>
             </div>
 
             <div class="sidebar-footer">
-                <button id="nexus-logout" class="logout-btn">LOGOUT SESSION</button>
+                <button id="nexus-logout" class="logout-btn">🚪 LOGOUT SESSION</button>
             </div>
         </div>
     `;
 
-    document.body.insertAdjacentHTML('afterbegin', menuHTML);
+    // FIX: Inject into .top-nav if it exists, otherwise fallback to body
+    const nav = document.querySelector('.top-nav');
+    if (nav) {
+        nav.insertAdjacentHTML('afterbegin', menuHTML);
+    } else {
+        document.body.insertAdjacentHTML('afterbegin', menuHTML);
+    }
 
     const menu = document.getElementById('nexus-side-menu');
     const overlay = document.getElementById('nexus-menu-overlay');
@@ -69,7 +75,6 @@ export function injectMenu() {
         };
     }
 
-    // Initialize Hierarchy Check
     checkUserTier();
 }
 
@@ -77,7 +82,6 @@ async function checkUserTier() {
     const auth = window.firebaseAuth;
     const db = window.firebaseDb;
 
-    // Retry if Firebase hasn't attached to window yet
     if (!auth || !db) {
         setTimeout(checkUserTier, 500);
         return;
@@ -96,16 +100,14 @@ async function checkUserTier() {
                     
                     if (!container) return;
 
-                    // Levels 1-6 are Admin/Agents
                     if (level >= 1 && level <= 6) {
                         let links = `
                             <div style="margin: 15px 0 5px 0; color:#444; font-size:0.7rem; font-weight:bold; letter-spacing:1px;">MANAGEMENT</div>
-                            <a href="/admin/agents.html">Agent Manager</a>
+                            <a href="/admin/agents.html">👥 Agent Manager</a>
                         `;
 
-                        // Level 1 (Master Admin) gets the System Dashboard too
                         if (level === 1) {
-                            links += `<a href="/admin/index.html" style="color: #00ff88;">System Dashboard</a>`;
+                            links += `<a href="/admin/index.html" style="color: #00ff88;">🛠 System Dashboard</a>`;
                         }
 
                         container.innerHTML = links;
