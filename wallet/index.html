@@ -10,6 +10,7 @@
     <style>
         :root { --gold: #D4AF37; --green: #00ff88; --bg-dark: #050505; --panel-bg: #0f0f0f; --red: #ff4444; }
         
+        /* FIX: Navigation layout */
         .top-nav { 
             position: sticky; top: 0; z-index: 1000;
             display: flex; justify-content: space-between; align-items: center; 
@@ -22,12 +23,26 @@
         /* PREMIUM HEADER */
         .wallet-card { 
             background: linear-gradient(145deg, #121212, #080808); border-radius: 24px; border: 1px solid #222; 
-            padding: 30px; margin-bottom: 25px; text-align: center; position: relative;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            padding: 35px 30px; margin-bottom: 25px; text-align: center; position: relative;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.6);
         }
-        .balance-display { font-family: 'Goldman'; font-size: 2.6rem; color: var(--green); margin: 8px 0; cursor: pointer; transition: 0.3s; letter-spacing: -1px; }
-        .balance-display.blurred { filter: blur(15px); }
-        .eye-btn { position: absolute; top: 20px; right: 25px; color: #444; cursor: pointer; font-size: 1.2rem; transition: 0.3s; }
+
+        /* START BLURRED */
+        .balance-display { 
+            font-family: 'Goldman'; font-size: 2.6rem; color: var(--green); 
+            margin: 8px 0; cursor: pointer; transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1); 
+            letter-spacing: -1px; filter: blur(15px); /* Initial State */
+        }
+        .balance-display.visible { filter: blur(0); }
+
+        /* CUSTOM SVG EYE ICON */
+        .eye-btn { 
+            position: absolute; top: 22px; right: 25px; 
+            width: 24px; height: 24px; cursor: pointer; 
+            fill: #444; transition: 0.3s; 
+        }
+        .eye-btn:hover { fill: var(--gold); }
+        .eye-btn.active { fill: var(--green); }
 
         /* TABS */
         .wallet-tabs { display: flex; gap: 8px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 10px; scrollbar-width: none; }
@@ -51,24 +66,22 @@
         .vault-item small { color: var(--gold); font-size: 0.55rem; font-weight: bold; text-transform: uppercase; }
         .vault-item div { font-size: 0.8rem; margin-top: 4px; color: #eee; }
 
-        /* DISCLAIMER */
-        .fee-disclaimer { font-size: 0.6rem; color: #666; margin-top: 15px; line-height: 1.4; font-style: italic; }
-
         /* LOGS */
         .log-item { display: flex; justify-content: space-between; align-items: center; padding: 15px; border-bottom: 1px solid #1a1a1a; font-size: 0.75rem; }
         .amt-pos { color: var(--green); } .amt-neg { color: var(--red); }
 
         .form-group { margin-bottom: 20px; text-align: left; }
         .form-group label { display: block; font-size: 0.6rem; color: #555; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px; }
-        input, select { width: 100%; padding: 16px; background: #000; border: 1px solid #333; color: white; border-radius: 12px; box-sizing: border-box; outline: none; }
+        input, select { width: 100%; padding: 16px; background: #000; border: 1px solid #333; color: white; border-radius: 12px; box-sizing: border-box; outline: none; transition: 0.3s; }
         
         .chip-row { display: flex; gap: 8px; margin: 10px 0 20px; overflow-x: auto; padding-bottom: 5px; }
         .chip { background: #1a1a1a; border: 1px solid #333; color: #777; padding: 8px 14px; border-radius: 8px; font-size: 0.65rem; cursor: pointer; font-family: 'Goldman'; }
         .chip.active { border-color: var(--gold); color: var(--gold); }
 
-        .btn-submit { width: 100%; padding: 18px; border-radius: 12px; border: none; font-weight: bold; cursor: pointer; font-family: 'Goldman'; text-transform: uppercase; margin-top: 10px; }
+        .btn-submit { width: 100%; padding: 18px; border-radius: 12px; border: none; font-weight: bold; font-family: 'Goldman'; text-transform: uppercase; margin-top: 10px; cursor: pointer; transition: 0.3s; }
+        .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(0,0,0,0.4); }
 
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
@@ -81,7 +94,9 @@
     <div class="wallet-wrapper">
         
         <div class="wallet-card">
-            <span class="eye-btn" id="eye-toggle">👁️</span>
+            <svg class="eye-btn" id="eye-toggle" viewBox="0 0 24 24">
+                <path id="eye-path" d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+            </svg>
             <small style="color: #666; letter-spacing: 3px; font-size: 0.6rem;">SECURE WALLET</small>
             <div class="balance-display" id="main-balance">₱0.00</div>
             <div id="player-id" style="font-size: 0.6rem; color: #444; letter-spacing: 1.5px; font-family: 'Goldman';">ID: ---</div>
@@ -95,12 +110,11 @@
         </div>
 
         <div id="withdraw" class="panel active">
-            <label style="font-size: 0.6rem; color: #555; letter-spacing: 1px; display:block; margin-bottom:10px;">CHOOSE PAYOUT DESTINATION</label>
-            <div id="vault-items" style="display:flex; gap:10px; overflow-x:auto; padding-bottom:15px; margin-bottom:10px;">
-                </div>
+            <label style="font-size: 0.6rem; color: #555; letter-spacing: 1px; display:block; margin-bottom:10px;">CASHOUT DESTINATION</label>
+            <div id="vault-items" style="display:flex; gap:10px; overflow-x:auto; padding-bottom:15px; margin-bottom:10px;"></div>
 
             <div class="form-group">
-                <label>Withdrawal Amount</label>
+                <label>Amount</label>
                 <div class="chip-row">
                     <div class="chip" onclick="setWAmount(500)">₱500</div>
                     <div class="chip" onclick="setWAmount(1000)">₱1,000</div>
@@ -111,51 +125,46 @@
             </div>
 
             <button class="btn-submit" id="btn-withdraw" style="background:var(--gold); color:black;">REQUEST CASHOUT</button>
-            
-            <div class="fee-disclaimer">
-                * Note: Third-party transfer fees (e.g., InstaPay, GCash surcharges) may be deducted from the total disbursement by the processing bank.
-            </div>
+            <p style="font-size:0.55rem; color:#444; text-align:center; margin-top:15px; letter-spacing:0.5px;">* Standard processing time: 5-30 minutes.</p>
         </div>
 
         <div id="p2p" class="panel">
             <div class="form-group">
-                <label>Recipient Nexus ID</label>
+                <label>Recipient ID</label>
                 <input type="text" id="p2p-target" placeholder="Recipient Username">
             </div>
             <div class="form-group">
                 <label>Amount to Send</label>
                 <input type="number" id="p2p-amount" placeholder="₱0.00">
             </div>
-            <button class="btn-submit" onclick="handleP2P()" style="background:var(--green); color:black;">EXECUTE P2P TRANSFER</button>
+            <button class="btn-submit" onclick="handleP2P()" style="background:var(--green); color:black;">SEND CREDITS</button>
         </div>
 
         <div id="history" class="panel">
-            <label style="letter-spacing: 1px; font-size:0.6rem;">TRANSACTION LOGS (LAST 10)</label>
+            <label style="letter-spacing: 1px; font-size:0.6rem;">ACTIVITY LOG</label>
             <div id="wallet-history-list" style="margin-top:15px;"></div>
         </div>
 
         <div id="vault" class="panel">
             <div class="form-group">
-                <label>Payout Channel</label>
+                <label>Payout Protocol</label>
                 <select id="v-bank">
                     <option value="GCASH">GCASH</option>
                     <option value="MAYA">MAYA</option>
-                    <option value="BDO">BDO (UNIBANK)</option>
+                    <option value="BDO">BDO</option>
                     <option value="BPI">BPI</option>
                     <option value="GOTYME">GOTYME</option>
-                    <option value="UNIONBANK">UNIONBANK</option>
                 </select>
             </div>
             <div class="form-group">
-                <label>Legal Name on Account</label>
-                <input type="text" id="v-name" placeholder="Name as seen on Bank/ID">
+                <label>Account Holder Name</label>
+                <input type="text" id="v-name" placeholder="Full Legal Name">
             </div>
             <div class="form-group">
                 <label>Account Number</label>
-                <input type="text" id="v-number" placeholder="09XX or Bank #">
+                <input type="text" id="v-number" placeholder="09XX or Card #">
             </div>
             <button class="btn-submit" onclick="saveToVault()" style="background:#222; color:var(--gold); border:1px solid var(--gold);">SECURE TO VAULT</button>
-            
             <div id="vault-manager" style="margin-top: 25px; border-top: 1px solid #222; padding-top: 20px;"></div>
         </div>
 
@@ -205,18 +214,28 @@
             document.getElementById('player-id').innerText = `ID: ${myData.username.toUpperCase()}`;
         }
 
+        // PRIVACY TOGGLE LOGIC
+        const eyeBtn = document.getElementById('eye-toggle');
+        const balDisplay = document.getElementById('main-balance');
+        
+        eyeBtn.onclick = () => {
+            const isVisible = balDisplay.classList.toggle('visible');
+            eyeBtn.classList.toggle('active', isVisible);
+            // Optional: Toggle SVG path if you want to switch to a 'crossed-eye' icon
+        };
+
         async function loadRecentActivity(uid) {
             const q = query(collection(db, "wallet_logs"), where("uid", "==", uid), orderBy("timestamp", "desc"), limit(10));
             onSnapshot(q, (snap) => {
                 const list = document.getElementById('wallet-history-list');
-                list.innerHTML = snap.empty ? `<p style="text-align:center; color:#333; font-size:0.7rem;">No activity.</p>` : "";
+                list.innerHTML = snap.empty ? `<p style="text-align:center; color:#333; font-size:0.7rem;">No logs found.</p>` : "";
                 snap.forEach(doc => {
                     const l = doc.data();
                     const isNeg = ["TRANSFER_OUT", "WITHDRAWAL"].includes(l.type);
                     list.innerHTML += `
                         <div class="log-item">
-                            <div><div style="font-weight:bold; color:#eee; font-size:0.65rem;">${l.type.replace("_", " ")}</div><small style="color:#444;">${l.timestamp.toDate().toLocaleDateString()}</small></div>
-                            <div class="${isNeg ? 'amt-neg' : 'amt-pos'} font-family: 'Goldman';">${isNeg ? '-' : '+'}₱${l.amount.toLocaleString()}</div>
+                            <div><div style="font-weight:bold; color:#eee; font-size:0.6rem; letter-spacing:1px;">${l.type.replace("_", " ")}</div><small style="color:#333;">${l.timestamp.toDate().toLocaleDateString()}</small></div>
+                            <div class="${isNeg ? 'amt-neg' : 'amt-pos'}" style="font-family:'Goldman';">${isNeg ? '-' : '+'}₱${l.amount.toLocaleString()}</div>
                         </div>`;
                 });
             });
@@ -229,39 +248,33 @@
             el.classList.add('active');
         };
 
-        document.getElementById('eye-toggle').onclick = () => document.getElementById('main-balance').classList.toggle('blurred');
-
         window.setWAmount = (val) => {
             document.getElementById('w-amount').value = (val === 'MAX') ? Math.floor(myData.balance) : val;
         };
 
         window.saveToVault = async () => {
-            const name = document.getElementById('v-name').value;
-            const num = document.getElementById('v-number').value;
+            const name = document.getElementById('v-name').value.trim();
+            const num = document.getElementById('v-number').value.trim();
             const bank = document.getElementById('v-bank').value;
-            if(!name || !num) return alert("Please fill details.");
+            if(!name || !num) return alert("Missing data");
             const vault = myData.vault || [];
-            vault.push({ name, number: num, bank: bank });
+            vault.push({ name, number: num, bank });
             await updateDoc(doc(db, "users", auth.currentUser.uid), { vault });
             document.getElementById('v-name').value = ""; document.getElementById('v-number').value = "";
-            alert("Protocol Secured: Profile Added.");
         };
 
         function renderVault() {
             const container = document.getElementById('vault-items');
             const manager = document.getElementById('vault-manager');
             const vault = myData.vault || [];
-            container.innerHTML = vault.length ? "" : '<small style="color:#333;">No profiles saved.</small>';
+            container.innerHTML = vault.length ? "" : '<small style="color:#333;">No accounts.</small>';
             manager.innerHTML = "";
 
             vault.forEach((acc, i) => {
                 const card = document.createElement('div');
                 card.className = `vault-item ${selectedAcc && selectedAcc.number === acc.number ? 'selected' : ''}`;
                 card.innerHTML = `<small>${acc.bank}</small><div>${acc.name}</div>`;
-                card.onclick = () => { 
-                    selectedAcc = acc; 
-                    renderVault(); // Refresh selection visual
-                };
+                card.onclick = () => { selectedAcc = acc; renderVault(); };
                 container.appendChild(card);
 
                 manager.innerHTML += `<div style="display:flex; justify-content:space-between; align-items:center; background:#000; padding:15px; border-radius:12px; margin-bottom:10px; border:1px solid #1a1a1a;">
@@ -280,39 +293,36 @@
             const target = document.getElementById('p2p-target').value.trim().toLowerCase();
             const amt = parseInt(document.getElementById('p2p-amount').value);
             if(!target || isNaN(amt) || amt < 10) return alert("Min transfer ₱10");
-            if(amt > myData.balance) return alert("Low balance.");
+            if(amt > myData.balance) return alert("Insufficient Balance");
 
             const q = query(collection(db, "users"), where("username", "==", target));
             const snap = await getDocs(q);
             if(snap.empty) return alert("ID not found.");
 
-            if(confirm(`AUTHORIZE P2P: ₱${amt} to ${target.toUpperCase()}?`)) {
+            if(confirm(`TRANSFER ₱${amt} TO ${target.toUpperCase()}?`)) {
                 const batch = writeBatch(db);
                 batch.update(doc(db, "users", auth.currentUser.uid), { balance: increment(-amt) });
                 batch.update(doc(db, "users", snap.docs[0].id), { balance: increment(amt) });
-                batch.set(doc(collection(db, "wallet_logs")), { uid: auth.currentUser.uid, type: "TRANSFER_OUT", to: target, amount: amt, timestamp: new Date() });
-                batch.set(doc(collection(db, "wallet_logs")), { uid: snap.docs[0].id, type: "TRANSFER_IN", from: myData.username, amount: amt, timestamp: new Date() });
+                batch.set(doc(collection(db, "wallet_logs")), { uid: auth.currentUser.uid, type: "TRANSFER_OUT", amount: amt, timestamp: new Date() });
+                batch.set(doc(collection(db, "wallet_logs")), { uid: snap.docs[0].id, type: "TRANSFER_IN", amount: amt, timestamp: new Date() });
                 await batch.commit();
-                alert("Transfer Protocol Complete.");
+                alert("Protocol Complete.");
             }
         };
 
         document.getElementById('btn-withdraw').onclick = async () => {
             const amt = parseInt(document.getElementById('w-amount').value);
-            if(!amt || amt < 100) return alert("Min withdrawal ₱100");
-            if(!selectedAcc) return alert("Please select a Saved Account from the Vault above.");
+            if(!amt || amt < 100) return alert("Min ₱100");
+            if(!selectedAcc) return alert("Select an account.");
 
-            if(confirm(`CONFIRM CASHOUT:\n₱${amt} to ${selectedAcc.bank} (${selectedAcc.name})?`)) {
-                await updateDoc(doc(db, "users", auth.currentUser.uid), { balance: increment(-amt) });
-                await addDoc(collection(db, "withdrawals"), {
-                    uid: auth.currentUser.uid, username: myData.username,
-                    bank: selectedAcc.bank, accountName: selectedAcc.name, accountNumber: selectedAcc.number,
-                    amount: amt, status: "PENDING", timestamp: new Date()
-                });
-                // Log activity
-                await addDoc(collection(db, "wallet_logs")), { uid: auth.currentUser.uid, type: "WITHDRAWAL", amount: amt, timestamp: new Date() };
-                alert("Withdrawal Logged. Awaiting Admin processing.");
-            }
+            await updateDoc(doc(db, "users", auth.currentUser.uid), { balance: increment(-amt) });
+            await addDoc(collection(db, "withdrawals"), {
+                uid: auth.currentUser.uid, username: myData.username,
+                bank: selectedAcc.bank, accountName: selectedAcc.name, accountNumber: selectedAcc.number,
+                amount: amt, status: "PENDING", timestamp: new Date()
+            });
+            await addDoc(collection(db, "wallet_logs"), { uid: auth.currentUser.uid, type: "WITHDRAWAL", amount: amt, timestamp: new Date() });
+            alert("Request Submitted.");
         };
     </script>
 </body>
