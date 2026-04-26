@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Nexus Crash | PRO</title>
     <link rel="stylesheet" href="/style.css">
     <link rel="stylesheet" href="/menu.css">
@@ -10,75 +10,110 @@
     <style>
         :root { --gold: #D4AF37; --green: #00ff88; --red: #ff4444; --panel-bg: #0f0f0f; }
         
+        body { background: #000; overflow-x: hidden; }
+
         .top-nav { 
             position: sticky; top: 0; z-index: 1000;
             display: flex; justify-content: space-between; align-items: center; 
             padding: 12px 20px 12px 75px;
-            background: #000; border-bottom: 2px solid #222; 
+            background: rgba(0,0,0,0.9); border-bottom: 2px solid #222; 
+            backdrop-filter: blur(10px);
         }
 
-        .crash-wrapper { max-width: 1000px; margin: 20px auto; display: grid; grid-template-columns: 320px 1fr; gap: 20px; padding: 0 15px; }
+        .crash-layout { 
+            max-width: 1200px; margin: 20px auto; 
+            display: grid; grid-template-columns: 320px 1fr 280px; 
+            gap: 20px; padding: 0 15px; 
+        }
 
+        /* MULTIPLIER DISPLAY */
         .display-area { 
-            background: #080808; border-radius: 24px; border: 1px solid #222; 
-            height: 400px; display: flex; flex-direction: column; align-items: center; 
+            background: radial-gradient(circle at center, #111 0%, #000 100%); 
+            border-radius: 24px; border: 1px solid #222; 
+            height: 450px; display: flex; flex-direction: column; align-items: center; 
             justify-content: center; position: relative; overflow: hidden;
-            box-shadow: inset 0 0 50px rgba(0,0,0,1);
+            box-shadow: inset 0 0 100px rgba(0,0,0,1);
         }
-        #main-mult { font-family: 'Goldman'; font-size: 5rem; color: white; transition: 0.1s; z-index: 2; text-shadow: 0 0 20px rgba(255,255,255,0.2); }
-        #main-mult.crashed { color: var(--red); text-shadow: 0 0 20px rgba(255,68,68,0.4); }
+        #main-mult { 
+            font-family: 'Goldman'; font-size: 5.5rem; color: white; 
+            z-index: 2; text-shadow: 0 0 30px rgba(255,255,255,0.1); 
+            transition: transform 0.05s ease-out;
+        }
+        #main-mult.crashed { color: var(--red); text-shadow: 0 0 40px rgba(255,68,68,0.5); transform: scale(0.9); }
         
         canvas { position: absolute; bottom: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
 
-        .control-panel { background: var(--panel-bg); padding: 25px; border-radius: 20px; border: 1px solid #222; display: flex; flex-direction: column; gap: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        
-        .input-group label { display: block; font-size: 0.6rem; color: #555; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px; }
-        input { width: 100%; padding: 14px; background: #000; border: 1px solid #333; color: white; border-radius: 10px; outline: none; font-family: 'Goldman'; transition: 0.3s; }
-        input:focus { border-color: var(--gold); }
+        /* CONTROLS */
+        .control-panel { background: var(--panel-bg); padding: 25px; border-radius: 24px; border: 1px solid #222; display: flex; flex-direction: column; gap: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .input-group label { display: block; font-size: 0.6rem; color: #555; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 8px; font-weight: bold; }
+        input { width: 100%; padding: 16px; background: #000; border: 1px solid #333; color: white; border-radius: 12px; outline: none; font-family: 'Goldman'; transition: 0.3s; box-sizing: border-box; }
+        input:focus { border-color: var(--gold); background: #050505; }
 
-        .btn-action { width: 100%; padding: 18px; border-radius: 12px; border: none; font-weight: bold; font-family: 'Goldman'; cursor: pointer; text-transform: uppercase; transition: 0.3s; }
-        .btn-bet { background: var(--gold); color: black; }
-        .btn-cashout { background: var(--green); color: black; display: none; }
+        .btn-action { width: 100%; padding: 20px; border-radius: 14px; border: none; font-weight: bold; font-family: 'Goldman'; cursor: pointer; text-transform: uppercase; transition: 0.3s; letter-spacing: 1px; }
+        .btn-bet { background: var(--gold); color: black; box-shadow: 0 5px 15px rgba(212, 175, 55, 0.2); }
+        .btn-cashout { background: var(--green); color: black; display: none; box-shadow: 0 5px 20px rgba(0, 255, 136, 0.3); }
         .btn-waiting { background: #1a1a1a; color: #444; cursor: not-allowed; display: none; border: 1px solid #222; }
+        
+        .btn-cashout span { display: block; font-size: 0.6rem; opacity: 0.7; margin-top: 4px; }
+
+        /* LEADERBOARD / LIVE BETS */
+        .live-bets-panel { background: #080808; border-radius: 24px; border: 1px solid #222; padding: 20px; display: flex; flex-direction: column; gap: 15px; }
+        .panel-title { font-size: 0.6rem; color: #444; text-transform: uppercase; letter-spacing: 2px; font-weight: bold; border-bottom: 1px solid #1a1a1a; padding-bottom: 10px; display: flex; justify-content: space-between; }
+        .bet-row { display: flex; justify-content: space-between; font-size: 0.75rem; color: #888; animation: slideIn 0.3s ease-out; }
+        .bet-row b { color: #eee; }
+        .bet-row.cashed { color: var(--green); font-weight: bold; }
 
         .history-bar { display: flex; gap: 8px; overflow-x: auto; padding: 15px; background: #000; border-radius: 12px; border: 1px solid #1a1a1a; margin-top: 15px; scrollbar-width: none; }
-        .hist-item { padding: 4px 10px; border-radius: 6px; font-size: 0.7rem; font-family: 'Goldman'; font-weight: bold; background: #111; flex-shrink: 0; }
-        .hist-green { color: var(--green); border: 1px solid rgba(0,255,136,0.2); }
-        .hist-red { color: var(--red); border: 1px solid rgba(255,68,68,0.2); }
+        .hist-item { padding: 5px 12px; border-radius: 6px; font-size: 0.7rem; font-family: 'Goldman'; font-weight: bold; background: #111; flex-shrink: 0; border: 1px solid #222; }
+        .hist-green { color: var(--green); border-color: rgba(0,255,136,0.2); }
+        .hist-red { color: var(--red); border-color: rgba(255,68,68,0.2); }
 
-        @media (max-width: 800px) { .crash-wrapper { grid-template-columns: 1fr; } .display-area { height: 280px; } }
+        @keyframes slideIn { from { opacity: 0; transform: translateX(10px); } to { opacity: 1; transform: translateX(0); } }
+        @media (max-width: 1000px) { .crash-layout { grid-template-columns: 1fr; } .live-bets-panel { display: none; } }
     </style>
 </head>
 <body>
 
     <nav class="top-nav">
-        <div class="logo" style="color:var(--gold); font-family:'Goldman'; font-weight:bold; font-size:1.2rem;">NEXUS CRASH</div>
+        <div class="logo" style="color:var(--gold); font-family:'Goldman'; font-weight:bold; font-size:1.2rem; letter-spacing:2px;">NEXUS CRASH</div>
         <div style="color: var(--green); font-weight: bold; font-family: 'Goldman';" id="display-balance">₱0.00</div>
     </nav>
 
-    <div class="crash-wrapper">
+    <div class="crash-layout">
         <div class="control-panel">
             <div class="input-group">
-                <label>Bet Amount</label>
-                <input type="number" id="bet-amount" value="100" min="10">
+                <label>Investment Amount</label>
+                <input type="number" id="bet-amount" value="100" min="10" step="10">
             </div>
 
             <div class="input-group">
-                <label>Auto Cashout</label>
-                <input type="number" id="auto-cashout" placeholder="2.00" step="0.1">
+                <label>Auto-Exit Multiplier</label>
+                <input type="number" id="auto-cashout" placeholder="2.00" step="0.1" min="1.1">
             </div>
 
             <button id="btn-bet" class="btn-action btn-bet" onclick="placeBet()">Place Bet</button>
-            <button id="btn-cashout" class="btn-action btn-cashout" onclick="cashout()">Cashout</button>
-            <button id="btn-waiting" class="btn-action btn-waiting">Bet Placed...</button>
+            <button id="btn-cashout" class="btn-action btn-cashout" onclick="cashout()">
+                CASHOUT
+                <span id="cashout-preview">₱0.00</span>
+            </button>
+            <button id="btn-waiting" class="btn-action btn-waiting">Awaiting Protocol...</button>
 
             <div class="history-bar" id="history"></div>
         </div>
 
         <div class="display-area">
-            <div id="status-text" style="color: #444; font-size: 0.6rem; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 2px; position: absolute; top: 20px;">Synchronizing...</div>
+            <div id="status-text" style="color: #555; font-size: 0.6rem; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 3px; position: absolute; top: 25px; font-weight: bold;">Syncing Nodes...</div>
             <div id="main-mult">1.00x</div>
             <canvas id="crash-canvas"></canvas>
+        </div>
+
+        <div class="live-bets-panel">
+            <div class="panel-title">
+                <span>LIVE PROTOCOLS</span>
+                <span style="color:var(--green)" id="online-count">● 1,204</span>
+            </div>
+            <div id="live-bets-list" style="display: flex; flex-direction: column; gap: 12px;">
+                </div>
         </div>
     </div>
 
@@ -136,6 +171,11 @@
         function initEngine() {
             gameStatus = "WAITING";
             let countdown = 5.0;
+            updateButtons();
+            
+            // Generate some random fake bets for the sidebar
+            generateFakeBets();
+
             const timer = setInterval(() => {
                 countdown -= 0.1;
                 document.getElementById('status-text').innerText = `Next Round in ${countdown.toFixed(1)}s`;
@@ -149,15 +189,11 @@
 
         function runRound() {
             gameStatus = "RUNNING";
-            document.getElementById('status-text').innerText = "PROTOCOL LIVE";
+            document.getElementById('status-text').innerText = "PROTOCOL ACTIVE";
             
-            // INCREASED HOUSE EDGE: 7% Instant Crash chance
-            if (Math.random() < 0.07) {
-                crashPoint = 1.00;
-            } else {
-                // Lower Winrate Distribution: Tightened 0.94 multiplier
-                crashPoint = parseFloat((Math.max(1.01, 0.94 / (1 - Math.random()))).toFixed(2));
-            }
+            // House Edge Management: 7% Instant Crash
+            if (Math.random() < 0.07) crashPoint = 1.00;
+            else crashPoint = parseFloat((Math.max(1.01, 0.94 / (1 - Math.random()))).toFixed(2));
 
             if (betPlacedForNext) {
                 hasBet = true;
@@ -168,10 +204,15 @@
             startTime = Date.now();
             const tick = setInterval(() => {
                 let elapsed = (Date.now() - startTime) / 1000;
-                // Faster curve (1.08) to force longer stays and more losses
                 currentMult = Math.pow(1.08, elapsed); 
                 
                 document.getElementById('main-mult').innerText = currentMult.toFixed(2) + "x";
+                
+                // Real-time button preview
+                if(hasBet) {
+                    document.getElementById('cashout-preview').innerText = `₱${Math.floor(myBetAmt * currentMult).toLocaleString()}`;
+                }
+
                 drawCurve(elapsed);
 
                 const auto = parseFloat(document.getElementById('auto-cashout').value);
@@ -189,8 +230,10 @@
         function drawCurve(t) {
             ctx.clearRect(0,0, canvas.width, canvas.height);
             ctx.beginPath();
-            ctx.lineWidth = 4;
+            ctx.lineWidth = 5;
             ctx.strokeStyle = '#D4AF37';
+            ctx.shadowBlur = 15;
+            ctx.shadowColor = 'rgba(212,175,55,0.5)';
             ctx.moveTo(0, canvas.height);
             for(let i=0; i<t; i+=0.1) {
                 let x = (i / 12) * canvas.width; 
@@ -198,6 +241,7 @@
                 ctx.lineTo(x, y);
             }
             ctx.stroke();
+            ctx.shadowBlur = 0;
         }
 
         function doCrash() {
@@ -205,7 +249,7 @@
             hasBet = false;
             document.getElementById('main-mult').classList.add('crashed');
             document.getElementById('main-mult').innerText = crashPoint.toFixed(2) + "x";
-            document.getElementById('status-text').innerText = "CRASHED";
+            document.getElementById('status-text').innerText = "CRITICAL FAILURE: CRASHED";
             addHistory(crashPoint);
             updateButtons();
             setTimeout(() => {
@@ -244,9 +288,9 @@
 
             if (hasBet && gameStatus === "RUNNING") {
                 bCash.style.display = "block";
-                bCash.innerText = `CASHOUT ₱${Math.floor(myBetAmt * currentMult)}`;
             } else if (betPlacedForNext || (hasBet && gameStatus === "WAITING")) {
                 bWait.style.display = "block";
+                bWait.innerText = "WAITING FOR NEXT...";
             } else {
                 bBet.style.display = "block";
             }
@@ -259,6 +303,16 @@
             item.innerText = val.toFixed(2) + "x";
             bar.prepend(item);
             if (bar.children.length > 10) bar.lastChild.remove();
+        }
+
+        function generateFakeBets() {
+            const list = document.getElementById('live-bets-list');
+            list.innerHTML = "";
+            const users = ["Zy***at", "Ke***2", "Pl***X", "Agent_0", "Lucky_J", "Nexus_1"];
+            users.forEach(u => {
+                const amt = Math.floor(Math.random() * 5000) + 100;
+                list.innerHTML += `<div class="bet-row"><span>${u}</span><b>₱${amt.toLocaleString()}</b></div>`;
+            });
         }
 
         initEngine();
