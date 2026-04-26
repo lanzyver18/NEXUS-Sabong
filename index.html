@@ -12,18 +12,20 @@
     <style>
         :root { --gold: #D4AF37; }
 
-        /* NAVIGATION ADJUSTMENT FOR MENU BUTTON */
+        /* NAVIGATION ADJUSTMENT */
         .top-nav {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 12px 20px 12px 60px; 
+            /* 75px padding-left creates a clear pocket for the absolute-positioned menu button */
+            padding: 12px 20px 12px 75px; 
             background: #000;
             border-bottom: 2px solid #222;
             position: sticky;
             top: 0;
             z-index: 1000;
         }
+        
         .user-controls { display: flex; align-items: center; gap: 15px; }
         .balance-display { text-align: right; display: flex; flex-direction: column; }
         .balance-display small { color: #888; font-size: 0.6rem; letter-spacing: 1px; }
@@ -58,7 +60,7 @@
         .hero h1 { font-size: 2.2rem; margin: 0; color: white; text-transform: uppercase; font-family: 'Goldman'; letter-spacing: 2px; }
         .hero p { color: #ccc; margin: 10px 0 20px; font-size: 0.9rem; }
 
-        /* SINGLE GAME DISPLAY */
+        /* LOBBY DISPLAY */
         .lobby-grid { padding: 40px 20px 120px; max-width: 600px; margin: auto; }
         
         .game-card {
@@ -152,10 +154,9 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
-        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
         import { getFirestore, doc, onSnapshot, getDoc } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
         
-        // Import from absolute root path
         import { injectMenu } from "/menu.js"; 
 
         const firebaseConfig = {
@@ -171,7 +172,7 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // GLOBALS FOR menu.js
+        // Required for hierarchy-aware menu.js
         window.firebaseAuth = auth;
         window.firebaseDb = db; 
 
@@ -191,7 +192,7 @@
                     const data = snap.data();
                     document.getElementById('user-display').innerText = data.username ? data.username.toUpperCase() : "PLAYER";
                     
-                    // Display admin button if user is Tier 1-6
+                    // Display admin button if user is Tier 1-6 (Admin to Sub-Agent)
                     const level = data.level || 7;
                     if (level >= 1 && level <= 6) {
                         document.getElementById('admin-btn').style.display = "block";
