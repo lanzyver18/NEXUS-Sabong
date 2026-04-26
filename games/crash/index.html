@@ -12,6 +12,7 @@
         
         body { background: #000; overflow-x: hidden; margin: 0; color: white; }
 
+        /* COMMAND NAV */
         .top-nav { 
             position: sticky; top: 0; z-index: 1000;
             display: flex; justify-content: space-between; align-items: center; 
@@ -26,19 +27,13 @@
             gap: 25px; padding: 0 15px; 
         }
 
+        /* ARENA VISUALS */
         .display-area { 
-            background: radial-gradient(circle at center, #151515 0%, #000 100%); 
+            background: #050505; 
             border-radius: 24px; border: 1px solid #222; 
             height: 550px; display: flex; flex-direction: column; align-items: center; 
             justify-content: center; position: relative; overflow: hidden;
             box-shadow: inset 0 0 100px rgba(0,0,0,1);
-        }
-
-        .display-area::before {
-            content: ''; position: absolute; width: 200%; height: 200%;
-            background-image: linear-gradient(#1a1a1a 1px, transparent 1px), linear-gradient(90deg, #1a1a1a 1px, transparent 1px);
-            background-size: 50px 50px; transform: perspective(500px) rotateX(60deg);
-            bottom: -50%; opacity: 0.3; pointer-events: none;
         }
 
         #main-mult { 
@@ -50,6 +45,7 @@
         
         canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 5; }
 
+        /* GLASS CONTROL PANEL */
         .control-panel { 
             background: rgba(15, 15, 15, 0.8); padding: 30px; border-radius: 24px; 
             border: 1px solid #333; display: flex; flex-direction: column; gap: 20px; 
@@ -94,7 +90,7 @@
 
         @media (max-width: 900px) { 
             .crash-layout { grid-template-columns: 1fr; } 
-            .display-area { height: 350px; }
+            .display-area { height: 400px; }
         }
     </style>
 </head>
@@ -116,12 +112,12 @@
                 <input type="number" id="auto-cashout" value="2.00" step="0.1" min="1.1">
             </div>
 
-            <button id="btn-bet" class="btn-action btn-bet" onclick="placeBet()">Initiate Launch</button>
+            <button id="btn-bet" class="btn-action btn-bet" onclick="placeBet()">Place Bet</button>
             <button id="btn-cashout" class="btn-action btn-cashout" onclick="cashout()">
                 CASHOUT
                 <span id="cashout-preview">SECURE ₱0.00</span>
             </button>
-            <button id="btn-waiting" class="btn-action btn-waiting">Awaiting Ignition...</button>
+            <button id="btn-waiting" class="btn-action btn-waiting">Awaiting Round...</button>
 
             <div class="history-bar" id="history"></div>
         </div>
@@ -159,40 +155,9 @@
         
         const canvas = document.getElementById('crash-canvas');
         const ctx = canvas.getContext('2d');
-        let particles = [];
-        let rocketY = 0, rocketX = 0, rocketAngle = 0;
 
         function resize() { canvas.width = canvas.parentElement.clientWidth; canvas.height = canvas.parentElement.clientHeight; }
         window.addEventListener('resize', resize); resize();
-
-        class Particle {
-            constructor(x, y, color, speed) {
-                this.x = x; this.y = y; this.color = color;
-                this.size = Math.random() * 3 + 1;
-                this.vx = (Math.random() - 0.5) * 4;
-                this.vy = (Math.random() * speed) + 1;
-                this.alpha = 1;
-            }
-            update() { this.x += this.vx; this.y += this.vy; this.alpha -= 0.02; }
-            draw() {
-                ctx.globalAlpha = this.alpha;
-                ctx.fillStyle = this.color;
-                ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI*2); ctx.fill();
-            }
-        }
-
-        function drawRocket(x, y, angle) {
-            ctx.save();
-            ctx.translate(x, y);
-            ctx.rotate(angle);
-            particles.push(new Particle(0, 10, Math.random() > 0.5 ? '#FFD700' : '#FF4500', 5));
-            ctx.font = "40px serif";
-            ctx.textAlign = "center";
-            ctx.textBaseline = "middle";
-            ctx.rotate(-Math.PI / 4);
-            ctx.fillText("🚀", 0, 0);
-            ctx.restore();
-        }
 
         onAuthStateChanged(auth, user => {
             if (user) {
@@ -211,16 +176,17 @@
             updateButtons();
             const timer = setInterval(() => {
                 countdown -= 0.1;
-                document.getElementById('status-text').innerText = `LAUNCH IN ${countdown.toFixed(1)}S`;
+                document.getElementById('status-text').innerText = `NEXT ROUND IN ${countdown.toFixed(1)}S`;
                 ctx.clearRect(0,0, canvas.width, canvas.height);
-                drawRocket(canvas.width * 0.15, canvas.height * 0.85, 0);
                 if (countdown <= 0) { clearInterval(timer); runRound(); }
             }, 100);
         }
 
         function runRound() {
             gameStatus = "RUNNING";
-            document.getElementById('status-text').innerText = "IN ORBIT";
+            document.getElementById('status-text').innerText = "LIVE CLIMB";
+            
+            // House Edge Management: 7% Instant Crash
             if (Math.random() < 0.07) crashPoint = 1.00;
             else crashPoint = parseFloat((Math.max(1.01, 0.94 / (1 - Math.random()))).toFixed(2));
 
@@ -235,27 +201,40 @@
                 
                 if(hasBet) document.getElementById('cashout-preview').innerText = `SECURE ₱${Math.floor(myBetAmt * currentMult).toLocaleString()}`;
 
+                // --- LINE DRAWING LOGIC ---
                 ctx.clearRect(0,0, canvas.width, canvas.height);
                 
-                // --- VIEWPORT CLAMP LOGIC ---
-                // We use a logarithmic scale to compress the flight path as it grows.
-                // This ensures the rocket stays within roughly 80% of the screen width and height.
                 const padding = 60;
                 const maxW = canvas.width - padding * 2;
                 const maxH = canvas.height - padding * 2;
                 
-                // Progressive scaling
-                const scaleX = Math.min(elapsed / 10, 1); // Caps horizontal progress at 10s
-                const scaleY = (currentMult - 1) / (currentMult + 2); // Asymptotic climb
+                // Drawing the Progress Line
+                ctx.beginPath();
+                ctx.lineWidth = 6;
+                ctx.strokeStyle = '#D4AF37';
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                ctx.shadowBlur = 15;
+                ctx.shadowColor = 'rgba(212,175,55,0.5)';
                 
-                rocketX = padding + (maxW * scaleX);
-                rocketY = (canvas.height - padding) - (maxH * scaleY);
+                ctx.moveTo(padding, canvas.height - padding);
                 
-                // Calculate angle based on relative movement
-                rocketAngle = -0.3 - (scaleY * 0.5); 
+                for(let i=0; i <= elapsed; i+=0.1) {
+                    const scaleX = Math.min(i / 10, 1);
+                    const scaleY = (Math.pow(1.08, i) - 1) / (Math.pow(1.08, elapsed) + 1);
+                    const lx = padding + (maxW * scaleX);
+                    const ly = (canvas.height - padding) - (maxH * scaleY);
+                    ctx.lineTo(lx, ly);
+                }
+                ctx.stroke();
 
-                particles.forEach((p, i) => { p.update(); p.draw(); if(p.alpha <= 0) particles.splice(i, 1); });
-                drawRocket(rocketX, rocketY, rocketAngle);
+                // Draw end point dot
+                const currentX = padding + (maxW * Math.min(elapsed / 10, 1));
+                const currentY = (canvas.height - padding) - (maxH * ((currentMult - 1) / (currentMult + 1)));
+                ctx.beginPath();
+                ctx.fillStyle = "#fff";
+                ctx.arc(currentX, currentY, 5, 0, Math.PI * 2);
+                ctx.fill();
 
                 const auto = parseFloat(document.getElementById('auto-cashout').value);
                 if (hasBet && !isNaN(auto) && auto > 1 && currentMult >= auto) cashout();
@@ -269,9 +248,7 @@
             hasBet = false;
             document.getElementById('main-mult').classList.add('crashed');
             document.getElementById('main-mult').innerText = crashPoint.toFixed(2) + "x";
-            document.getElementById('status-text').innerText = "COMMUNICATION LOST";
-            
-            for(let i=0; i<60; i++) particles.push(new Particle(rocketX, rocketY, '#ff4444', 10));
+            document.getElementById('status-text').innerText = "CRASHED";
             
             addHistory(crashPoint);
             updateButtons();
@@ -279,14 +256,13 @@
             setTimeout(() => {
                 document.getElementById('main-mult').classList.remove('crashed');
                 document.getElementById('main-mult').innerText = "1.00x";
-                particles = [];
                 initEngine();
             }, 3000);
         }
 
         window.placeBet = async () => {
             const amt = parseInt(document.getElementById('bet-amount').value);
-            if (amt > balance || amt < 10) return alert("Balance insufficient");
+            if (amt > balance || amt < 10) return alert("Insufficient balance");
             await updateDoc(doc(db, "users", auth.currentUser.uid), { balance: increment(-amt) });
             myBetAmt = amt;
             if (gameStatus === "WAITING") hasBet = true;
