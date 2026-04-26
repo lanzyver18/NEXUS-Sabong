@@ -41,13 +41,13 @@
             <div class="bet-card meron" onclick="placeBet('MERON')">
                 <small>BET ON</small>
                 <span class="odds">MERON</span>
-                <small>Payout: 1.90</small>
+                <small id="meron-payout-label">Payout: ...</small>
             </div>
 
             <div class="bet-card wala" onclick="placeBet('WALA')">
                 <small>BET ON</small>
                 <span class="odds">WALA</span>
-                <small>Payout: 1.80</small>
+                <small id="wala-payout-label">Payout: ...</small>
             </div>
 
             <input type="number" id="bet-amount" class="bet-input" placeholder="Bet Amount (₱)" value="100">
@@ -84,6 +84,8 @@
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 const userRef = doc(db, "users", user.uid);
+                
+                // Sync User Balance
                 onSnapshot(userRef, (snapshot) => {
                     if (snapshot.exists()) {
                         currentUserData = snapshot.data();
@@ -91,42 +93,41 @@
                         document.getElementById('display-balance').innerText = currentBalance.toLocaleString(undefined, {minimumFractionDigits: 2});
                     }
                 });
+
+                // Sync Global Payout Odds from Admin
+                onSnapshot(doc(db, "settings", "arena"), (docSnap) => {
+                    let multiplier = 1.90; // Default
+                    if (docSnap.exists()) {
+                        multiplier = docSnap.data().payoutMultiplier || 1.90;
+                    }
+                    const text = `Payout: ${multiplier.toFixed(2)}`;
+                    document.getElementById('meron-payout-label').innerText = text;
+                    document.getElementById('wala-payout-label').innerText = text;
+                });
+
             } else { window.location.href = "/login/"; }
         });
 
-        // --- THE PAYOUT ENGINE (COMMISSION LOGIC) ---
         async function distributeCommissions(betAmount, uplinePath) {
             if (!uplinePath || uplinePath.length === 0) return;
-
             const batch = writeBatch(db);
             let distributedSoFar = 0;
-
-            // Loop from Player's immediate Upline up to Admin
-            // uplinePath: [Admin_UID, Op_UID, SubOp_UID, ...]
-            // We reverse it to process bottom-up
             const reversedPath = [...uplinePath].reverse();
 
             for (const uplineUid of reversedPath) {
                 const ref = doc(db, "users", uplineUid);
                 const snap = await getDoc(ref);
-                
                 if (snap.exists()) {
                     const uplineData = snap.data();
                     const myRate = uplineData.commissionRate || 0;
-                    
-                    // The "Spread" calculation
                     const mySharePercent = myRate - distributedSoFar;
-
                     if (mySharePercent > 0) {
                         const commissionEarned = betAmount * (mySharePercent / 100);
-                        
                         batch.update(ref, {
                             balance: increment(commissionEarned),
                             totalTurnover: increment(betAmount),
                             totalCommission: increment(commissionEarned)
                         });
-
-                        // Log the commission for the Agent's History
                         const logRef = doc(collection(db, "wallet_logs"));
                         batch.set(logRef, {
                             uid: uplineUid,
@@ -136,7 +137,6 @@
                             status: "APPROVED",
                             timestamp: new Date()
                         });
-
                         distributedSoFar = myRate;
                     }
                 }
@@ -146,21 +146,13 @@
 
         window.placeBet = async (side) => {
             const amount = parseInt(document.getElementById('bet-amount').value);
-
             if (isNaN(amount) || amount < 100) return alert("Minimum bet is ₱100");
             if (amount > currentBalance) return alert("Insufficient Balance!");
 
             if (confirm(`Confirm ₱${amount} bet on ${side}?`)) {
                 try {
                     const userRef = doc(db, "users", auth.currentUser.uid);
-                    
-                    // 1. Deduct Player Balance
-                    await updateDoc(userRef, {
-                        balance: increment(-amount),
-                        totalBetAmount: increment(amount)
-                    });
-
-                    // 2. Create Bet Record
+                    await updateDoc(userRef, { balance: increment(-amount), totalBetAmount: increment(amount) });
                     await addDoc(collection(db, "bets"), {
                         uid: auth.currentUser.uid,
                         username: currentUserData.username,
@@ -170,16 +162,9 @@
                         status: "PENDING",
                         timestamp: new Date()
                     });
-
-                    // 3. TRIGGER PAYOUT ENGINE (Distribute Commission Upwards)
                     await distributeCommissions(amount, currentUserData.uplinePath);
-
-                    alert(`Bet Placed! Commission distributed to your uplines.`);
-
-                } catch (e) {
-                    console.error(e);
-                    alert("Transaction failed.");
-                }
+                    alert(`Bet Placed!`);
+                } catch (e) { console.error(e); alert("Transaction failed."); }
             }
         };
     </script>
