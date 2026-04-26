@@ -12,16 +12,34 @@
     <style>
         :root { --gold: #D4AF37; --green: #00ff88; --panel-bg: #0f0f0f; --red: #ff4444; }
 
-        body { background: #000; overflow-x: hidden; }
+        body { background: #000; overflow-x: hidden; color: white; }
+
+        /* MENU FIX: Ensure menu-container from injectMenu is opaque and on top */
+        #menu-container {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            background: #000 !important; /* Forces solid background */
+            z-index: 10001 !important; /* Sits above everything */
+            display: none;
+        }
+
+        #menu-overlay {
+            background: rgba(0, 0, 0, 0.95) !important;
+            backdrop-filter: blur(15px) !important;
+            z-index: 10000 !important;
+        }
         
         .top-nav { 
             display: flex; justify-content: space-between; align-items: center; 
-            padding: 12px 20px 12px 75px; background: rgba(0,0,0,0.9); 
+            padding: 12px 20px 12px 75px; background: #000; 
             border-bottom: 2px solid #222; position: sticky; top: 0; z-index: 1000;
-            backdrop-filter: blur(10px);
         }
 
-        .library-layout { display: grid; grid-template-columns: 1fr 300px; gap: 25px; max-width: 1300px; margin: 20px auto; padding: 0 20px 100px; }
+        /* Widened Layout after removing sidebar */
+        .library-layout { display: block; max-width: 1200px; margin: 20px auto; padding: 0 20px 100px; }
 
         /* ADVANCED AD CAROUSEL */
         .ad-banner {
@@ -43,7 +61,7 @@
         .ad-overlay h2 { color: var(--gold); margin: 0; font-family: 'Goldman'; font-size: 1.8rem; letter-spacing: 2px; }
         .ad-overlay p { color: #aaa; font-size: 0.85rem; margin: 10px 0 20px; max-width: 300px; line-height: 1.4; }
 
-        /* SEARCH & CATEGORY LOGIC */
+        /* FILTERS */
         .filter-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; gap: 20px; }
         .search-container { position: relative; flex: 1; }
         .search-container input { 
@@ -61,8 +79,8 @@
         }
         .cat-tab.active { border-color: var(--gold); color: var(--gold); background: rgba(212,175,55,0.08); }
 
-        /* GAMES GRID - PREMIUM GLASS CARDS */
-        .games-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px; }
+        /* GAMES GRID */
+        .games-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 25px; }
         .game-item {
             background: #0a0a0a; border-radius: 20px; border: 1px solid #1a1a1a;
             overflow: hidden; text-decoration: none; transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
@@ -72,37 +90,24 @@
         .game-thumb { width: 100%; aspect-ratio: 4/5; background-size: cover; background-position: center; transition: 0.5s; }
         .game-item:hover .game-thumb { transform: scale(1.1); }
         
-        .game-meta { padding: 18px; background: linear-gradient(to top, #000, transparent); }
-        .game-meta h4 { margin: 0; color: #fff; font-family: 'Goldman'; font-size: 0.9rem; letter-spacing: 1px; }
+        .game-meta { padding: 18px; background: linear-gradient(to top, #000, transparent); position: relative; }
+        .game-meta h4 { margin: 0; color: #fff; font-family: 'Goldman'; font-size: 0.95rem; letter-spacing: 1px; }
         .game-meta small { color: var(--gold); font-size: 0.6rem; text-transform: uppercase; font-weight: bold; }
 
-        /* ACTIVITY SIDEBAR */
-        .activity-panel { background: #080808; border-radius: 24px; border: 1px solid #1a1a1a; padding: 20px; height: fit-content; position: sticky; top: 90px; }
-        .activity-header { color: #444; font-size: 0.6rem; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 20px; display: block; font-weight: bold; }
-        .feed-item { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; animation: slideIn 0.5s ease; }
-        .feed-icon { width: 32px; height: 32px; background: #111; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; border: 1px solid #222; }
-        .feed-info { flex: 1; }
-        .feed-info b { display: block; color: #eee; font-size: 0.75rem; }
-        .feed-info small { color: #555; font-size: 0.65rem; }
-        .feed-amt { color: var(--green); font-family: 'Goldman'; font-size: 0.75rem; }
+        .badge-hot { position: absolute; top: 15px; right: 15px; background: var(--red); color: white; font-size: 0.55rem; padding: 4px 8px; border-radius: 6px; font-weight: bold; }
 
-        @keyframes slideIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
-
-        @media (max-width: 1000px) {
-            .library-layout { grid-template-columns: 1fr; }
-            .activity-panel { display: none; }
-        }
         @media (max-width: 600px) { 
             .ad-banner { height: 160px; } 
             .ad-overlay h2 { font-size: 1.2rem; }
             .filter-row { flex-direction: column; align-items: stretch; }
+            .games-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
         }
     </style>
 </head>
 <body>
 
     <nav class="top-nav">
-        <div class="logo" style="color:var(--gold); font-family:'Goldman'; font-weight:bold; font-size:1.2rem; letter-spacing:2px;">NEXUS LIBRARY</div>
+        <div class="logo" style="color:var(--gold); font-family:'Goldman'; font-weight:bold; font-size:1.4rem; letter-spacing:2px;">NEXUS LIBRARY</div>
         <div style="color: var(--green); font-weight: bold; font-family: 'Goldman'; font-size: 1rem;" id="nav-bal">₱0.00</div>
     </nav>
 
@@ -113,14 +118,14 @@
                     <div class="ad-overlay">
                         <h2>WEEKEND REBATE</h2>
                         <p>Enjoy a 3.0% instant rebate on all Arena losses. High stakes, lower risk.</p>
-                        <button class="nav-profile-btn" style="width:fit-content; font-size:0.7rem; background:var(--gold); color:#000; border:none;">COLLECT NOW</button>
+                        <button class="nav-profile-btn" style="width:fit-content; font-size:0.7rem; background:var(--gold); color:#000; border:none; padding:10px 15px; border-radius:8px; font-weight:bold; cursor:pointer;">COLLECT NOW</button>
                     </div>
                 </div>
                 <div class="ad-slide" style="background-image: linear-gradient(to right, #000, transparent), url('https://images.unsplash.com/photo-1642104704074-907c0698cbd9?w=1200&q=60');">
                     <div class="ad-overlay">
                         <h2>MINES PROTOCOL</h2>
                         <p>The newest high-risk, high-reward protocol is now active. Unlock 1000x.</p>
-                        <button class="nav-profile-btn" onclick="window.location.href='/games/mines/'" style="width:fit-content; font-size:0.7rem; background:var(--gold); color:#000; border:none;">INITIALIZE</button>
+                        <button class="nav-profile-btn" onclick="window.location.href='/games/mines/'" style="width:fit-content; font-size:0.7rem; background:var(--gold); color:#000; border:none; padding:10px 15px; border-radius:8px; font-weight:bold; cursor:pointer;">INITIALIZE</button>
                     </div>
                 </div>
             </div>
@@ -164,14 +169,6 @@
                 </a>
             </div>
         </main>
-
-        <aside class="activity-sidebar">
-            <div class="activity-panel">
-                <span class="activity-header">Network Wins</span>
-                <div id="live-wins-feed">
-                    </div>
-            </div>
-        </aside>
     </div>
 
     <script type="module">
@@ -220,39 +217,15 @@
             };
         });
 
-        // LIVE WINS SIMULATOR (Builds trust/hype)
-        const winners = ["Ken_02", "Zyver99", "Player_X", "NexusAgent", "LuckyPinoy", "Jom_S"];
-        const games = ["Mines", "Crash", "Sabong"];
-        function addLiveWin() {
-            const feed = document.getElementById('live-wins-feed');
-            const win = {
-                user: winners[Math.floor(Math.random()*winners.length)],
-                game: games[Math.floor(Math.random()*games.length)],
-                amt: (Math.random() * 5000 + 100).toFixed(0)
-            };
-
-            const html = `
-                <div class="feed-item">
-                    <div class="feed-icon">💎</div>
-                    <div class="feed-info">
-                        <b>${win.user}</b>
-                        <small>${win.game}</small>
-                    </div>
-                    <div class="feed-amt">₱${parseInt(win.amt).toLocaleString()}</div>
-                </div>
-            `;
-            feed.insertAdjacentHTML('afterbegin', html);
-            if(feed.children.length > 8) feed.lastChild.remove();
-        }
-        setInterval(addLiveWin, 4000);
-
         // Ad Logic
         let currentAd = 0;
         const slides = document.querySelectorAll('.ad-slide');
         setInterval(() => {
-            slides[currentAd].classList.remove('active');
-            currentAd = (currentAd + 1) % slides.length;
-            slides[currentAd].classList.add('active');
+            if(slides.length > 0) {
+                slides[currentAd].classList.remove('active');
+                currentAd = (currentAd + 1) % slides.length;
+                slides[currentAd].classList.add('active');
+            }
         }, 7000);
 
         onAuthStateChanged(auth, user => {
