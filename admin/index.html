@@ -6,29 +6,30 @@
     <title>Management Suite | NEXUS</title>
     <link rel="stylesheet" href="../style.css">
     <link rel="stylesheet" href="/menu.css">
+    <link href="https://fonts.googleapis.com/css2?family=Goldman:wght@400;700&display=swap" rel="stylesheet">
     <style>
         .admin-grid { display: grid; grid-template-columns: 1fr 350px; gap: 20px; max-width: 1200px; margin: 20px auto; padding: 0 20px; }
         .insight-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
         .insight-card { background: #111; padding: 20px; border-radius: 12px; border: 1px solid #222; text-align: center; }
-        .insight-card h4 { color: #888; font-size: 0.7rem; margin: 0; text-transform: uppercase; }
-        .insight-card .val { color: var(--gold); font-size: 1.5rem; font-weight: bold; margin-top: 5px; display: block; }
+        .insight-card h4 { color: #888; font-size: 0.7rem; margin: 0; text-transform: uppercase; letter-spacing: 1px; }
+        .insight-card .val { color: var(--gold); font-size: 1.5rem; font-weight: bold; margin-top: 5px; display: block; font-family: 'Goldman'; }
 
         .panel { background: #111; border-radius: 15px; border: 1px solid #333; padding: 20px; margin-bottom: 20px; }
         .panel-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #222; margin-bottom: 15px; padding-bottom: 10px; }
         
         .w-request { background: #000; padding: 15px; border-radius: 10px; border-left: 4px solid var(--gold); margin-bottom: 12px; }
         .w-actions { display: flex; gap: 10px; margin-top: 12px; }
-        .btn-sm { padding: 8px 12px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 0.7rem; }
+        .btn-sm { padding: 8px 12px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 0.7rem; text-transform: uppercase; }
         .btn-approve { background: #00ff88; color: black; }
         .btn-reject { background: #ff4444; color: white; }
 
         .log-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; color: #eee; }
-        .log-table th { text-align: left; color: #555; padding: 10px; border-bottom: 1px solid #222; text-transform: uppercase; }
+        .log-table th { text-align: left; color: #555; padding: 10px; border-bottom: 1px solid #222; text-transform: uppercase; font-size: 0.65rem; }
         .log-table td { padding: 12px 10px; border-bottom: 1px solid #1a1a1a; }
         
-        .type-cashin { color: #00ff88; font-weight: bold; }
+        .role-tag { font-size: 0.6rem; padding: 2px 6px; border-radius: 3px; background: #222; color: var(--gold); border: 1px solid #333; }
         .search-box { background: #000; border: 1px solid var(--gold); padding: 15px; border-radius: 10px; }
-        input { width: 100%; padding: 12px; margin: 10px 0; background: #000; border: 1px solid #333; color: white; border-radius: 5px; box-sizing: border-box; }
+        input, select { width: 100%; padding: 12px; margin: 10px 0; background: #000; border: 1px solid #333; color: white; border-radius: 5px; box-sizing: border-box; }
         
         @media (max-width: 900px) { .admin-grid { grid-template-columns: 1fr; } }
     </style>
@@ -36,8 +37,8 @@
 <body>
 
     <nav class="top-nav">
-        <div class="logo" style="color:var(--gold); font-family:'Goldman';">NEXUS MANAGEMENT</div>
-        <div id="session-status" style="color: #00ff88; font-size: 0.8rem;">● TIER VERIFIED</div>
+        <div class="logo" style="color:var(--gold); font-family:'Goldman'; font-weight:bold; font-size:1.2rem;">NEXUS MANAGEMENT</div>
+        <div id="session-status" style="color: #00ff88; font-size: 0.8rem; font-weight: bold;">● TIER VERIFIED</div>
     </nav>
 
     <div class="admin-grid">
@@ -45,59 +46,72 @@
             
             <div class="insight-row">
                 <div class="insight-card"><h4>System Float</h4><span class="val" id="stat-total-bank">₱0</span></div>
-                <div class="insight-card"><h4>Your Downlines</h4><span class="val" id="stat-players">0</span></div>
+                <div class="insight-card"><h4>Active Downlines</h4><span class="val" id="stat-players">0</span></div>
                 <div class="insight-card"><h4>Pending Cash-Out</h4><span class="val" id="stat-pending-w" style="color:#ffaa00;">₱0</span></div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header">
+                    <h3 style="margin:0; color: var(--gold); font-family: 'Goldman'; font-size: 1rem;">DOWNLINE OVERVIEW</h3>
+                </div>
+                <div style="overflow-x: auto;">
+                    <table class="log-table">
+                        <thead>
+                            <tr>
+                                <th>Username / Role</th>
+                                <th>Balance</th>
+                                <th>Total Turnover</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="downline-table-body">
+                            <tr><td colspan="4" style="text-align:center; color:#444; padding:20px;">Loading downline data...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
             <div class="panel" id="withdrawal-panel">
                 <div class="panel-header">
-                    <h3 style="margin:0; color: var(--gold);">WITHDRAWAL TICKETS</h3>
-                    <span id="w-count" style="color:#888;">0 PENDING</span>
+                    <h3 style="margin:0; color: var(--gold); font-family: 'Goldman'; font-size: 1rem;">WITHDRAWAL TICKETS</h3>
+                    <span id="w-count" style="color:#888; font-size: 0.7rem;">0 PENDING</span>
                 </div>
                 <div id="withdrawal-list">
                     <p style="text-align:center; color:#444; padding:20px;">Restricted to System Admin.</p>
                 </div>
             </div>
-
-            <div class="panel">
-                <div class="panel-header"><h3 style="margin:0; color: var(--gold);">RECENT TRANSACTIONS</h3></div>
-                <table class="log-table">
-                    <thead><tr><th>Time</th><th>Target</th><th>Type</th><th>Amount</th></tr></thead>
-                    <tbody id="master-log-list"></tbody>
-                </table>
-            </div>
         </div>
 
         <div class="sidebar-admin">
             <div class="panel search-box" id="arena-settings-panel" style="border-color: #00ff88; display: none; margin-bottom: 20px;">
-                <h3 style="margin-top:0; font-size: 1rem; color: #00ff88;">ARENA SETTINGS</h3>
-                <label style="font-size: 0.7rem; color: #555;">GLOBAL PAYOUT MULTIPLIER</label>
+                <h3 style="margin-top:0; font-size: 0.9rem; color: #00ff88; font-family: 'Goldman';">ARENA SETTINGS</h3>
+                <label style="font-size: 0.65rem; color: #555; text-transform: uppercase;">Global Multiplier</label>
                 <div style="display: flex; gap: 10px; margin-top: 5px;">
-                    <input type="number" id="payout-multiplier" step="0.01" placeholder="e.g. 1.90" style="margin:0;">
+                    <input type="number" id="payout-multiplier" step="0.01" style="margin:0; font-family: 'Goldman';">
                     <button onclick="updatePayout()" class="btn-sm btn-approve" style="padding: 0 15px;">SAVE</button>
                 </div>
-                <p style="font-size: 0.6rem; color: #666; margin-top: 8px;">Current: 1.00 bet pays ₱<span id="current-payout-display">...</span></p>
+                <p style="font-size: 0.6rem; color: #666; margin-top: 8px;">Payout per ₱1.00: ₱<span id="current-payout-display">...</span></p>
             </div>
 
             <div class="panel" id="fight-control-panel" style="border: 1px solid var(--gold); display:none; margin-bottom: 20px;">
-                <h3 style="margin:0; color: var(--gold); margin-bottom:10px;">GLOBAL SETTLEMENT</h3>
+                <h3 style="margin:0; color: var(--gold); margin-bottom:10px; font-size: 0.9rem; font-family: 'Goldman';">FIGHT CONTROL</h3>
                 <div style="display: grid; grid-template-columns: 1fr; gap: 8px;">
-                    <button onclick="settleFight('MERON')" style="background:#ff4444; color:white; padding:12px; border:none; border-radius:5px; font-weight:bold; cursor:pointer;">MERON WINS</button>
-                    <button onclick="settleFight('WALA')" style="background:#4444ff; color:white; padding:12px; border:none; border-radius:5px; font-weight:bold; cursor:pointer;">WALA WINS</button>
-                    <button onclick="settleFight('DRAW')" style="background:#333; color:white; padding:12px; border:none; border-radius:5px; font-weight:bold; cursor:pointer;">CANCEL / DRAW</button>
+                    <button onclick="settleFight('MERON')" style="background:#ff4444; color:white; padding:12px; border:none; border-radius:5px; font-weight:bold; cursor:pointer; font-size: 0.7rem;">SETTLE MERON</button>
+                    <button onclick="settleFight('WALA')" style="background:#4444ff; color:white; padding:12px; border:none; border-radius:5px; font-weight:bold; cursor:pointer; font-size: 0.7rem;">SETTLE WALA</button>
+                    <button onclick="settleFight('DRAW')" style="background:#333; color:white; padding:12px; border:none; border-radius:5px; font-weight:bold; cursor:pointer; font-size: 0.7rem;">CANCEL / DRAW</button>
                 </div>
             </div>
 
             <div class="panel search-box">
-                <h3 style="margin-top:0; font-size: 1rem; color: var(--gold);">CREDIT LOADER</h3>
-                <input type="text" id="target-username" placeholder="Downline Username">
-                <button onclick="checkUser()" style="width:100%; margin-bottom:10px; background:#222; color:white; padding:10px; border:none; border-radius:5px; cursor:pointer;">SEARCH USER</button>
-                <div id="player-preview" style="display:none; background:#0a0a0a; padding:10px; border-radius:5px; margin-bottom:15px; border-left:3px solid var(--gold);">
-                    <span id="res-name" style="font-weight:bold; color:white;">---</span><br>
-                    <span id="res-bal" style="color:#00ff88; font-weight:bold;">₱0</span>
+                <h3 style="margin-top:0; font-size: 0.9rem; color: var(--gold); font-family: 'Goldman';">CREDIT LOADER</h3>
+                <input type="text" id="target-username" placeholder="Search Username...">
+                <button onclick="checkUser()" style="width:100%; margin-bottom:10px; background:#222; color:white; padding:10px; border:none; border-radius:5px; cursor:pointer; font-size: 0.7rem; font-weight: bold;">SEARCH USER</button>
+                <div id="player-preview" style="display:none; background:#0a0a0a; padding:12px; border-radius:8px; margin-bottom:15px; border-left:3px solid var(--gold);">
+                    <span id="res-name" style="font-weight:bold; color:white; font-size: 0.8rem;">---</span><br>
+                    <span id="res-bal" style="color:#00ff88; font-weight:bold; font-family: 'Goldman';">₱0</span>
                 </div>
-                <input type="number" id="load-amt" placeholder="Amount (₱)">
-                <button onclick="confirmLoad()" style="width:100%; background:var(--gold); padding:15px; border:none; border-radius:5px; font-weight:bold; cursor:pointer;">LOAD CREDITS</button>
+                <input type="number" id="load-amt" placeholder="Enter Amount (₱)">
+                <button onclick="confirmLoad()" style="width:100%; background:var(--gold); color: black; padding:15px; border:none; border-radius:5px; font-weight:bold; cursor:pointer; font-size: 0.8rem;">LOAD CREDITS</button>
             </div>
         </div>
     </div>
@@ -127,7 +141,7 @@
 
         let myTierData = null;
         let activePlayerId = null;
-        window.currentMultiplier = 1.90; // Fallback
+        window.currentMultiplier = 1.90;
 
         onAuthStateChanged(auth, async (user) => {
             if (user) {
@@ -140,168 +154,140 @@
         });
 
         function initManagement() {
-            // Stats based on hierarchy
+            // Real-time Downline Table & Stats
             const downlineQuery = query(collection(db, "users"), where("uplineId", "==", auth.currentUser.uid));
             onSnapshot(downlineQuery, (snap) => {
-                let total = 0;
+                let totalBank = 0;
+                const table = document.getElementById('downline-table-body');
+                table.innerHTML = snap.empty ? '<tr><td colspan="4" style="text-align:center; color:#444; padding:20px;">No direct downlines found.</td></tr>' : '';
+                
                 document.getElementById('stat-players').innerText = snap.size;
-                snap.forEach(u => total += (u.data().balance || 0));
-                document.getElementById('stat-total-bank').innerText = "₱" + total.toLocaleString();
+
+                snap.forEach(uDoc => {
+                    const u = uDoc.data();
+                    totalBank += (u.balance || 0);
+                    table.innerHTML += `
+                        <tr>
+                            <td>
+                                <strong>${u.username}</strong><br>
+                                <span class="role-tag">${u.role}</span>
+                            </td>
+                            <td style="color:#00ff88; font-weight:bold;">₱${(u.balance || 0).toLocaleString()}</td>
+                            <td style="color:#888;">₱${(u.totalTurnover || 0).toLocaleString()}</td>
+                            <td>
+                                <button class="btn-sm" style="background:#222; color:var(--gold); border:1px solid var(--gold);" onclick="quickSelectUser('${u.username}')">LOAD</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+                document.getElementById('stat-total-bank').innerText = "₱" + totalBank.toLocaleString();
             });
 
-            // Admin Only Panels (Level 1)
             if (myTierData.level === 1) {
                 document.getElementById('fight-control-panel').style.display = "block";
                 document.getElementById('arena-settings-panel').style.display = "block";
                 loadWithdrawals();
                 loadArenaSettings();
             }
-
-            // Transaction Logs
-            const logQ = query(collection(db, "wallet_logs"), where("uid", "==", auth.currentUser.uid), orderBy("timestamp", "desc"), limit(20));
-            onSnapshot(logQ, (snap) => {
-                const l = document.getElementById('master-log-list');
-                l.innerHTML = "";
-                snap.forEach(doc => {
-                    const d = doc.data();
-                    const time = d.timestamp?.toDate().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) || '--:--';
-                    l.innerHTML += `<tr><td>${time}</td><td>${d.fromUser || d.toUser || 'System'}</td><td class="type-cashin">${d.type}</td><td style="color:#00ff88;">₱${d.amount.toLocaleString()}</td></tr>`;
-                });
-            });
         }
+
+        window.quickSelectUser = (username) => {
+            document.getElementById('target-username').value = username;
+            window.checkUser();
+        };
 
         function loadArenaSettings() {
             onSnapshot(doc(db, "settings", "arena"), (docSnap) => {
                 if (docSnap.exists()) {
-                    const multiplier = docSnap.data().payoutMultiplier || 1.90;
-                    document.getElementById('payout-multiplier').value = multiplier;
-                    document.getElementById('current-payout-display').innerText = multiplier.toFixed(2);
-                    window.currentMultiplier = multiplier;
+                    const m = docSnap.data().payoutMultiplier || 1.90;
+                    document.getElementById('payout-multiplier').value = m;
+                    document.getElementById('current-payout-display').innerText = m.toFixed(2);
+                    window.currentMultiplier = m;
                 }
             });
         }
 
         window.updatePayout = async () => {
             const newVal = parseFloat(document.getElementById('payout-multiplier').value);
-            if (isNaN(newVal) || newVal < 1) return alert("Invalid multiplier. Must be at least 1.0");
-            
-            try {
-                await setDoc(doc(db, "settings", "arena"), {
-                    payoutMultiplier: newVal,
-                    lastUpdated: new Date()
-                }, { merge: true });
-                alert("Global Arena Payout Updated!");
-            } catch (e) { 
-                console.error(e);
-                alert("Failed to update settings."); 
-            }
+            if (isNaN(newVal) || newVal < 1) return alert("Min 1.0");
+            await setDoc(doc(db, "settings", "arena"), { payoutMultiplier: newVal, lastUpdated: new Date() }, { merge: true });
+            alert("Payout Updated");
         };
 
         window.settleFight = async (winner) => {
-            if (myTierData.level !== 1) return alert("Unauthorized.");
-            const multiplier = window.currentMultiplier;
-            if (!confirm(`Settle fight as ${winner} with ${multiplier} payout?`)) return;
+            if (myTierData.level !== 1) return;
+            const m = window.currentMultiplier;
+            if (!confirm(`Settle as ${winner} (@${m})?`)) return;
             
             const q = query(collection(db, "bets"), where("status", "==", "PENDING"));
             const snap = await getDocs(q);
             const batch = writeBatch(db);
             
-            for (const b of snap.docs) {
-                const bd = b.data();
-                const userRef = doc(db, "users", bd.uid);
-                const betRef = doc(db, "bets", b.id);
-
-                if (bd.side === winner) {
-                    const pay = Math.floor(bd.amount * multiplier);
-                    batch.update(userRef, { balance: increment(pay) });
-                    batch.update(betRef, { status: "WIN", payout: pay });
+            snap.forEach(bDoc => {
+                const b = bDoc.data();
+                if (b.side === winner) {
+                    const win = Math.floor(b.amount * m);
+                    batch.update(doc(db, "users", b.uid), { balance: increment(win) });
+                    batch.update(doc(db, "bets", bDoc.id), { status: "WIN", payout: win });
                 } else if (winner === "DRAW") {
-                    batch.update(userRef, { balance: increment(bd.amount) });
-                    batch.update(betRef, { status: "DRAW", payout: bd.amount });
+                    batch.update(doc(db, "users", b.uid), { balance: increment(b.amount) });
+                    batch.update(doc(db, "bets", bDoc.id), { status: "DRAW", payout: b.amount });
                 } else {
-                    batch.update(betRef, { status: "LOSS", payout: 0 });
+                    batch.update(doc(db, "bets", bDoc.id), { status: "LOSS", payout: 0 });
                 }
-            }
+            });
             await batch.commit();
-            alert(`Fight Settled! Multiplier used: ${multiplier}`);
+            alert("Fight Settled");
         };
 
-        // ... Keep existing checkUser, confirmLoad, and handleWithdraw functions below ...
         window.checkUser = async () => {
             const username = document.getElementById('target-username').value.trim().toLowerCase();
             const q = query(collection(db, "users"), where("username", "==", username));
             const snap = await getDocs(q);
             if (!snap.empty) {
                 const p = snap.docs[0];
-                const pData = p.data();
-                if (pData.uplineId !== auth.currentUser.uid && myTierData.level !== 1) {
-                    return alert("You can only load credits to your direct downlines.");
-                }
+                if (p.data().uplineId !== auth.currentUser.uid && myTierData.level !== 1) return alert("Not your downline");
                 activePlayerId = p.id;
-                document.getElementById('res-name').innerText = pData.username.toUpperCase();
-                document.getElementById('res-bal').innerText = "₱" + (pData.balance || 0).toLocaleString();
+                document.getElementById('res-name').innerText = p.data().username.toUpperCase();
+                document.getElementById('res-bal').innerText = "₱" + (p.data().balance || 0).toLocaleString();
                 document.getElementById('player-preview').style.display = "block";
-            } else { alert("User not found."); }
+            } else alert("User not found");
         };
 
         window.confirmLoad = async () => {
             const amt = parseInt(document.getElementById('load-amt').value);
-            if (!activePlayerId || isNaN(amt)) return alert("Select user and amount.");
-            if (myTierData.level > 1 && myTierData.balance < amt) {
-                return alert("Insufficient commission balance to load credits.");
-            }
-            if (confirm(`Send ₱${amt} to ${document.getElementById('res-name').innerText}?`)) {
-                try {
-                    if (myTierData.level > 1) {
-                        await updateDoc(doc(db, "users", auth.currentUser.uid), { balance: increment(-amt) });
-                    }
-                    await updateDoc(doc(db, "users", activePlayerId), { balance: increment(amt) });
-                    await addDoc(collection(db, "wallet_logs"), { 
-                        uid: auth.currentUser.uid,
-                        type: "LOAD",
-                        toUser: document.getElementById('res-name').innerText, 
-                        amount: amt, 
-                        timestamp: new Date() 
-                    });
-                    alert("Credit Load Successful");
-                    location.reload();
-                } catch (e) { alert("Transfer failed."); }
-            }
-        };
-
-        window.handleWithdraw = async (id, status, pUid, amt) => {
-            if (!confirm(`Mark as ${status}?`)) return;
-            try {
-                if (status === 'REJECTED') {
-                    await updateDoc(doc(db, "users", pUid), { balance: increment(amt) });
-                }
-                await updateDoc(doc(db, "withdrawals", id), { status: status });
+            if (!activePlayerId || isNaN(amt)) return;
+            if (myTierData.level > 1 && myTierData.balance < amt) return alert("Low balance");
+            
+            if (confirm(`Load ₱${amt}?`)) {
+                if (myTierData.level > 1) await updateDoc(doc(db, "users", auth.currentUser.uid), { balance: increment(-amt) });
+                await updateDoc(doc(db, "users", activePlayerId), { balance: increment(amt) });
+                await addDoc(collection(db, "wallet_logs"), { uid: auth.currentUser.uid, type: "LOAD", toUser: document.getElementById('res-name').innerText, amount: amt, timestamp: new Date() });
                 alert("Success");
-            } catch (e) { alert("Error"); }
+                location.reload();
+            }
         };
 
         function loadWithdrawals() {
             onSnapshot(query(collection(db, "withdrawals"), where("status", "==", "PENDING")), (snap) => {
                 const list = document.getElementById('withdrawal-list');
-                let totalP = 0;
-                list.innerHTML = snap.empty ? '<p style="text-align:center; color:#444; padding:20px;">No pending withdrawals.</p>' : '';
+                let total = 0;
+                list.innerHTML = snap.empty ? '<p style="text-align:center; color:#444; padding:20px;">No pending tickets.</p>' : '';
                 document.getElementById('w-count').innerText = snap.size + " PENDING";
-                snap.forEach(req => {
-                    const d = req.data();
-                    totalP += d.amount;
-                    list.innerHTML += `
-                        <div class="w-request">
-                            <strong style="color:var(--gold)">${d.username.toUpperCase()}</strong> 
-                            <span style="float:right; font-weight:bold; color:#00ff88;">₱${d.amount.toLocaleString()}</span>
-                            <div class="w-actions">
-                                <button class="btn-sm btn-approve" onclick="handleWithdraw('${req.id}', 'APPROVED')">MARK PAID</button>
-                                <button class="btn-sm btn-reject" onclick="handleWithdraw('${req.id}', 'REJECTED', '${d.uid}', ${d.amount})">REJECT</button>
-                            </div>
-                        </div>`;
+                snap.forEach(doc => {
+                    const d = doc.data();
+                    total += d.amount;
+                    list.innerHTML += `<div class="w-request"><strong>${d.username.toUpperCase()}</strong> <span style="float:right; color:#00ff88;">₱${d.amount.toLocaleString()}</span><div class="w-actions"><button class="btn-sm btn-approve" onclick="handleWithdraw('${doc.id}', 'APPROVED')">PAID</button><button class="btn-sm btn-reject" onclick="handleWithdraw('${doc.id}', 'REJECTED', '${d.uid}', ${d.amount})">REJECT</button></div></div>`;
                 });
-                document.getElementById('stat-pending-w').innerText = "₱" + totalP.toLocaleString();
+                document.getElementById('stat-pending-w').innerText = "₱" + total.toLocaleString();
             });
         }
+
+        window.handleWithdraw = async (id, status, pUid, amt) => {
+            if (status === 'REJECTED') await updateDoc(doc(db, "users", pUid), { balance: increment(amt) });
+            await updateDoc(doc(db, "withdrawals", id), { status });
+            alert(status);
+        };
     </script>
 </body>
 </html>
