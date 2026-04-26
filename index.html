@@ -147,7 +147,7 @@
     </main>
 
     <section class="quick-actions">
-        <button onclick="window.location.href='/admin/agents.html'" id="admin-btn" class="action-btn admin-action">ADMIN</button>
+        <button id="admin-btn" class="action-btn admin-action">ADMIN</button>
         <button onclick="window.location.href='/wallet/'" class="action-btn gold">CASH IN</button>
         <button onclick="window.location.href='/wallet/'" class="action-btn">WITHDRAW</button>
     </section>
@@ -177,11 +177,7 @@
         window.firebaseDb = db; 
 
         // Run Menu Injection
-        try {
-            injectMenu();
-        } catch (e) {
-            console.error("Menu injection failed:", e);
-        }
+        injectMenu();
 
         onAuthStateChanged(auth, async (user) => {
             if (user) {
@@ -192,10 +188,15 @@
                     const data = snap.data();
                     document.getElementById('user-display').innerText = data.username ? data.username.toUpperCase() : "PLAYER";
                     
-                    // Display admin button if user is Tier 1-6 (Admin to Sub-Agent)
+                    // Display admin button if user is Tier 1-6
                     const level = data.level || 7;
+                    const adminBtn = document.getElementById('admin-btn');
                     if (level >= 1 && level <= 6) {
-                        document.getElementById('admin-btn').style.display = "block";
+                        adminBtn.style.display = "block";
+                        // Send level 1 to dashboard, others to agent manager
+                        adminBtn.onclick = () => {
+                            window.location.href = (level === 1) ? '/admin/index.html' : '/admin/agents.html';
+                        };
                     }
                 }
 
