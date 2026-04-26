@@ -32,7 +32,7 @@
         .panel-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #222; margin-bottom: 15px; padding-bottom: 10px; }
         
         /* TREND CHART */
-        .trend-container { display: flex; gap: 5px; overflow-x: auto; padding: 10px 0; }
+        .trend-container { display: flex; gap: 5px; overflow-x: auto; padding: 10px 0; scrollbar-width: none; }
         .dot { width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0; cursor: pointer; transition: 0.2s; }
         .dot:hover { transform: scale(1.2); filter: brightness(1.5); }
         .dot.meron { background: #ff4444; box-shadow: 0 0 8px #ff4444; }
@@ -47,7 +47,8 @@
 
         .lock-btn { width: 100%; padding: 14px; border-radius: 8px; font-weight: bold; cursor: pointer; border: none; font-family: 'Goldman'; margin-bottom: 15px; transition: 0.3s; text-transform: uppercase; letter-spacing: 1px; }
 
-        .w-request { background: #000; padding: 15px; border-radius: 10px; border-left: 4px solid var(--gold); margin-bottom: 12px; }
+        .w-request { background: #000; padding: 15px; border-radius: 10px; border-left: 4px solid var(--gold); margin-bottom: 12px; transition: 0.3s; }
+        .w-request:hover { background: #050505; }
         .w-actions { display: flex; gap: 8px; margin-top: 10px; }
         .btn-sm { padding: 8px 12px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 0.7rem; text-transform: uppercase; font-family: 'Goldman'; }
         .btn-approve { background: #00ff88; color: black; }
@@ -58,7 +59,8 @@
         .log-table td { padding: 12px 10px; border-bottom: 1px solid #1a1a1a; }
         
         .search-box { background: #000; border: 1px solid var(--gold); padding: 15px; border-radius: 10px; }
-        input { width: 100%; padding: 12px; margin: 10px 0; background: #000; border: 1px solid #333; color: white; border-radius: 5px; box-sizing: border-box; outline: none; }
+        input { width: 100%; padding: 12px; margin: 10px 0; background: #000; border: 1px solid #333; color: white; border-radius: 5px; box-sizing: border-box; outline: none; transition: 0.2s; }
+        input:focus { border-color: var(--gold); }
         
         @media (max-width: 900px) { .admin-grid { grid-template-columns: 1fr; } }
     </style>
@@ -82,6 +84,7 @@
             <div class="panel" id="live-bet-panel" style="display:none;">
                 <div class="panel-header">
                     <h3 style="margin:0; color: var(--gold); font-family: 'Goldman'; font-size: 0.9rem;">LIVE FIGHT MONITOR</h3>
+                    <span style="font-size: 0.6rem; color: #555;">HYPE ENGINE ACTIVE</span>
                 </div>
                 <div class="live-bets">
                     <div class="side-monitor m">
@@ -98,7 +101,7 @@
             <div class="panel" id="trend-panel" style="display: none;">
                 <div class="panel-header">
                     <h3 style="margin:0; color: var(--gold); font-family: 'Goldman'; font-size: 0.9rem;">ARENA ROADMAP (LAST 50)</h3>
-                    <button class="btn-sm" style="background:#222; color:#555;" onclick="clearRoadmap()">RESET HISTORY</button>
+                    <button class="btn-sm" style="background:#222; color:#ff4444; border: 1px solid #333;" onclick="clearRoadmap()">WIPE HISTORY</button>
                 </div>
                 <div class="trend-container" id="roadmap-display"></div>
             </div>
@@ -106,6 +109,7 @@
             <div class="panel">
                 <div class="panel-header">
                     <h3 style="margin:0; color: var(--gold); font-family: 'Goldman'; font-size: 1rem;">DOWNLINE OVERVIEW</h3>
+                    <input type="text" id="downline-search" placeholder="Search team ID..." oninput="filterDownlines()" style="width: 200px; margin: 0; padding: 8px 12px; font-size: 0.75rem;">
                 </div>
                 <div style="overflow-x: auto;">
                     <table class="log-table">
@@ -171,7 +175,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc, updateDoc, increment, collection, query, where, onSnapshot, writeBatch, getDocs } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, setDoc, updateDoc, increment, collection, query, where, onSnapshot, writeBatch, getDocs, addDoc } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
         import { injectMenu } from "/menu.js";
 
         const firebaseConfig = {
@@ -194,6 +198,7 @@
         let myTierData = null;
         let activePlayerId = null;
         let arenaLocked = false;
+        let allDownlines = [];
         window.currentMultiplier = 1.90;
 
         onAuthStateChanged(auth, async (user) => {
@@ -210,28 +215,42 @@
             const downlineQuery = query(collection(db, "users"), where("uplineId", "==", auth.currentUser.uid));
             onSnapshot(downlineQuery, (snap) => {
                 let totalBank = 0, networkComm = 0;
-                const table = document.getElementById('downline-table-body');
-                table.innerHTML = "";
+                allDownlines = [];
                 snap.forEach(uDoc => {
                     const u = uDoc.data();
                     totalBank += (u.balance || 0);
                     networkComm += (u.totalCommission || 0);
-                    table.innerHTML += `<tr><td><strong>${u.username}</strong><br><span style="font-size:0.6rem; color:var(--gold); border:1px solid #333; padding:2px 5px; border-radius:3px;">${u.role}</span></td><td style="color:#00ff88;">₱${(u.balance || 0).toLocaleString()}</td><td>₱${(u.totalCommission || 0).toLocaleString()}</td><td><button class="btn-sm" style="background:#222; color:var(--gold); border:1px solid var(--gold);" onclick="quickSelectUser('${u.username}')">LOAD</button></td></tr>`;
+                    allDownlines.push(u);
                 });
                 document.getElementById('stat-total-bank').innerText = "₱" + totalBank.toLocaleString();
                 document.getElementById('stat-network-comm').innerText = "₱" + networkComm.toLocaleString();
+                renderDownlineTable(allDownlines);
             });
 
             if (myTierData.level === 1) {
+                document.getElementById('live-bet-panel').style.display = "block";
                 document.getElementById('fight-control-panel').style.display = "block";
                 document.getElementById('arena-settings-panel').style.display = "block";
                 document.getElementById('trend-panel').style.display = "block";
-                document.getElementById('live-bet-panel').style.display = "block";
                 loadWithdrawals();
                 syncArenaControl();
                 syncLiveMonitor();
             }
         }
+
+        function renderDownlineTable(data) {
+            const table = document.getElementById('downline-table-body');
+            table.innerHTML = "";
+            data.forEach(u => {
+                table.innerHTML += `<tr><td><strong>${u.username}</strong><br><span style="font-size:0.6rem; color:var(--gold); border:1px solid #333; padding:2px 5px; border-radius:3px;">${u.role}</span></td><td style="color:#00ff88;">₱${(u.balance || 0).toLocaleString()}</td><td>₱${(u.totalCommission || 0).toLocaleString()}</td><td><button class="btn-sm" style="background:#222; color:var(--gold); border:1px solid var(--gold);" onclick="quickSelectUser('${u.username}')">LOAD</button></td></tr>`;
+            });
+        }
+
+        window.filterDownlines = () => {
+            const term = document.getElementById('downline-search').value.toLowerCase();
+            const filtered = allDownlines.filter(u => u.username.toLowerCase().includes(term));
+            renderDownlineTable(filtered);
+        };
 
         function syncLiveMonitor() {
             const q = query(collection(db, "bets"), where("status", "==", "PENDING"));
@@ -274,7 +293,7 @@
         }
 
         window.clearRoadmap = async () => {
-            if(confirm("Clear Arena History?")) {
+            if(confirm("DANGER: Wiping Arena History cannot be undone. Proceed?")) {
                 await updateDoc(doc(db, "settings", "arena"), { history: [] });
             }
         };
@@ -287,12 +306,12 @@
             const m = parseFloat(document.getElementById('payout-multiplier').value);
             const fid = document.getElementById('fight-id-input').value;
             await updateDoc(doc(db, "settings", "arena"), { payoutMultiplier: m, currentFightId: fid });
-            alert("Settings Updated.");
+            alert("Settings Applied Successfully.");
         };
 
         window.settleFight = async (winner) => {
             if (myTierData.level !== 1) return;
-            if (!confirm(`Settle as ${winner}?`)) return;
+            if (!confirm(`Confirm settlement: ${winner}? This will credit wins and close pending bets.`)) return;
             
             const batch = writeBatch(db);
             const q = query(collection(db, "bets"), where("status", "==", "PENDING"));
@@ -319,7 +338,7 @@
             batch.update(arenaRef, { history: history.slice(-100), isLocked: true });
 
             await batch.commit();
-            alert("Fight Settled.");
+            alert("Protocol Complete: Arena results locked.");
         };
 
         function loadWithdrawals() {
@@ -327,18 +346,22 @@
                 const list = document.getElementById('withdrawal-list');
                 let total = 0;
                 list.innerHTML = "";
-                document.getElementById('w-count').innerText = snap.size + " PENDING";
+                document.getElementById('w-count').innerText = snap.size + " PENDING TICKETS";
                 snap.forEach(doc => {
                     const d = doc.data();
                     total += d.amount;
                     list.innerHTML += `
                         <div class="w-request">
-                            <strong style="color:white;">${d.username.toUpperCase()}</strong> 
-                            <span style="float:right; color:#00ff88; font-family:'Goldman';">₱${d.amount.toLocaleString()}</span>
-                            <div style="font-size:0.6rem; color:#555; margin-top:5px;">${d.bank || 'Vault Account'}: ${d.accountNumber || ''}</div>
+                            <div style="display:flex; justify-content:space-between;">
+                                <strong style="color:white;">${d.username.toUpperCase()}</strong> 
+                                <span style="color:#00ff88; font-family:'Goldman'; font-size: 0.9rem;">₱${d.amount.toLocaleString()}</span>
+                            </div>
+                            <div style="font-size:0.6rem; color:#555; margin-top:5px; background:#111; padding:5px; border-radius:4px;">
+                                <span style="color:var(--gold)">${d.bank || 'PROFILE'}:</span> ${d.accountName} <br> ${d.accountNumber}
+                            </div>
                             <div class="w-actions">
                                 <button class="btn-sm btn-approve" onclick="handleWithdraw('${doc.id}', 'APPROVED')">PAID</button>
-                                <button class="btn-sm btn-reject" onclick="handleWithdraw('${doc.id}', 'REJECTED', '${d.uid}', ${d.amount})">CANCEL / REFUND</button>
+                                <button class="btn-sm btn-reject" onclick="handleWithdraw('${doc.id}', 'REJECTED', '${d.uid}', ${d.amount})">REJECT / REFUND</button>
                             </div>
                         </div>`;
                 });
@@ -351,19 +374,19 @@
             const wRef = doc(db, "withdrawals", id);
 
             if (status === 'REJECTED') {
-                if(!confirm(`Reject and refund ₱${amt} to user?`)) return;
+                if(!confirm(`REJECT PROTOCOL: Refund ₱${amt} to ${pUid}?`)) return;
                 batch.update(doc(db, "users", pUid), { balance: increment(amt) });
                 batch.update(wRef, { status: "REJECTED" });
                 batch.set(doc(collection(db, "wallet_logs")), {
                     uid: pUid, type: "REFUND", amount: amt, timestamp: new Date()
                 });
             } else {
-                if(!confirm(`Confirm payout of ₱${amt}?`)) return;
+                if(!confirm(`EXECUTE PAYOUT: Mark ₱${amt} as completed?`)) return;
                 batch.update(wRef, { status: "APPROVED" });
             }
 
             await batch.commit();
-            alert(status);
+            alert("Protocol Synchronized.");
         };
 
         window.checkUser = async () => {
@@ -376,13 +399,13 @@
                 document.getElementById('res-name').innerText = p.data().username.toUpperCase();
                 document.getElementById('res-bal').innerText = "₱" + (p.data().balance || 0).toLocaleString();
                 document.getElementById('player-preview').style.display = "block";
-            } else alert("User not found");
+            } else alert("Target ID not found in database.");
         };
 
         window.confirmLoad = async () => {
             const amt = parseInt(document.getElementById('load-amt').value);
             if (!activePlayerId || isNaN(amt) || amt <= 0) return;
-            if (confirm(`Load ₱${amt}?`)) {
+            if (confirm(`INITIATE LOAD: Transfer ₱${amt} to ${document.getElementById('res-name').innerText}?`)) {
                 const batch = writeBatch(db);
                 batch.update(doc(db, "users", activePlayerId), { balance: increment(amt) });
                 batch.set(doc(collection(db, "wallet_logs")), { 
@@ -392,7 +415,7 @@
                     uid: activePlayerId, type: "LOAD_IN", fromUser: myTierData.username, amount: amt, timestamp: new Date() 
                 });
                 await batch.commit();
-                alert("Load Successful");
+                alert("Protocol Complete: Credits Transferred.");
                 document.getElementById('player-preview').style.display = "none";
             }
         };
