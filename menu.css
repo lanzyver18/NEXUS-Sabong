@@ -5,18 +5,19 @@
     --text-gray: #ccc;
 }
 
-/* ☰ Hamburger Button */
+/* ☰ Hamburger Button - Adjusted to prevent logo overlap */
 .menu-trigger {
-    position: fixed;
-    top: 15px;
+    position: absolute; /* Changed from fixed to align with nav */
+    top: 50%;
     left: 15px;
-    z-index: 9999;
+    transform: translateY(-50%); /* Perfectly centers vertically */
+    z-index: 1001; 
     background: #000;
     color: var(--gold);
     border: 1px solid var(--gold);
-    padding: 10px 14px;
+    padding: 8px 12px;
     border-radius: 8px;
-    font-size: 1.4rem;
+    font-size: 1.2rem;
     cursor: pointer;
     box-shadow: 0 4px 15px rgba(0,0,0,0.5);
     font-family: 'Goldman', sans-serif;
@@ -27,7 +28,7 @@
 .sidebar {
     position: fixed;
     top: 0;
-    left: -100%; /* Hidden off-screen */
+    left: -100%; 
     width: 280px;
     height: 100%;
     background: var(--bg-dark);
@@ -68,7 +69,7 @@
 /* Links Section */
 .sidebar-links {
     margin-top: 20px;
-    overflow-y: auto; /* Allow scrolling if list is long */
+    overflow-y: auto;
 }
 
 .sidebar-links a {
@@ -116,7 +117,7 @@
     border-color: #ff4444;
 }
 
-/* Utility - Prevent Body Scroll when Menu is Open */
+/* Utility */
 body.menu-open {
     overflow: hidden;
 }
