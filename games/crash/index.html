@@ -19,7 +19,6 @@
 
         .crash-wrapper { max-width: 1000px; margin: 20px auto; display: grid; grid-template-columns: 320px 1fr; gap: 20px; padding: 0 15px; }
 
-        /* MULTIPLIER DISPLAY */
         .display-area { 
             background: #080808; border-radius: 24px; border: 1px solid #222; 
             height: 400px; display: flex; flex-direction: column; align-items: center; 
@@ -31,7 +30,6 @@
         
         canvas { position: absolute; bottom: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
 
-        /* CONTROLS */
         .control-panel { background: var(--panel-bg); padding: 25px; border-radius: 20px; border: 1px solid #222; display: flex; flex-direction: column; gap: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         
         .input-group label { display: block; font-size: 0.6rem; color: #555; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px; }
@@ -43,7 +41,6 @@
         .btn-cashout { background: var(--green); color: black; display: none; }
         .btn-waiting { background: #1a1a1a; color: #444; cursor: not-allowed; display: none; border: 1px solid #222; }
 
-        /* HISTORY BAR */
         .history-bar { display: flex; gap: 8px; overflow-x: auto; padding: 15px; background: #000; border-radius: 12px; border: 1px solid #1a1a1a; margin-top: 15px; scrollbar-width: none; }
         .hist-item { padding: 4px 10px; border-radius: 6px; font-size: 0.7rem; font-family: 'Goldman'; font-weight: bold; background: #111; flex-shrink: 0; }
         .hist-green { color: var(--green); border: 1px solid rgba(0,255,136,0.2); }
@@ -79,7 +76,7 @@
         </div>
 
         <div class="display-area">
-            <div id="status-text" style="color: #444; font-size: 0.6rem; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 2px; position: absolute; top: 20px;">Initializing Engine...</div>
+            <div id="status-text" style="color: #444; font-size: 0.6rem; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 2px; position: absolute; top: 20px;">Synchronizing...</div>
             <div id="main-mult">1.00x</div>
             <canvas id="crash-canvas"></canvas>
         </div>
@@ -116,7 +113,6 @@
         let crashPoint = 0;
         let startTime = 0;
 
-        // CANVAS ENGINE
         const canvas = document.getElementById('crash-canvas');
         const ctx = canvas.getContext('2d');
         function resizeCanvas() {
@@ -143,7 +139,7 @@
             const timer = setInterval(() => {
                 countdown -= 0.1;
                 document.getElementById('status-text').innerText = `Next Round in ${countdown.toFixed(1)}s`;
-                ctx.clearRect(0,0, canvas.width, canvas.height); // Clear curve
+                ctx.clearRect(0,0, canvas.width, canvas.height);
                 if (countdown <= 0) {
                     clearInterval(timer);
                     runRound();
@@ -155,9 +151,13 @@
             gameStatus = "RUNNING";
             document.getElementById('status-text').innerText = "PROTOCOL LIVE";
             
-            // Logic: 3% Instant Crash at 1.00x, else random exponential
-            if (Math.random() < 0.03) crashPoint = 1.00;
-            else crashPoint = parseFloat((Math.max(1.01, 0.98 / (1 - Math.random()))).toFixed(2));
+            // INCREASED HOUSE EDGE: 7% Instant Crash chance
+            if (Math.random() < 0.07) {
+                crashPoint = 1.00;
+            } else {
+                // Lower Winrate Distribution: Tightened 0.94 multiplier
+                crashPoint = parseFloat((Math.max(1.01, 0.94 / (1 - Math.random()))).toFixed(2));
+            }
 
             if (betPlacedForNext) {
                 hasBet = true;
@@ -168,14 +168,12 @@
             startTime = Date.now();
             const tick = setInterval(() => {
                 let elapsed = (Date.now() - startTime) / 1000;
-                currentMult = Math.pow(1.07, elapsed); 
+                // Faster curve (1.08) to force longer stays and more losses
+                currentMult = Math.pow(1.08, elapsed); 
                 
                 document.getElementById('main-mult').innerText = currentMult.toFixed(2) + "x";
-
-                // Draw Curve
                 drawCurve(elapsed);
 
-                // Auto Cashout
                 const auto = parseFloat(document.getElementById('auto-cashout').value);
                 if (hasBet && !isNaN(auto) && auto > 1 && currentMult >= auto) {
                     cashout();
@@ -194,10 +192,9 @@
             ctx.lineWidth = 4;
             ctx.strokeStyle = '#D4AF37';
             ctx.moveTo(0, canvas.height);
-            
             for(let i=0; i<t; i+=0.1) {
-                let x = (i / 15) * canvas.width; // Scale time to width
-                let y = canvas.height - (Math.pow(1.07, i) - 1) * 50; // Scale mult to height
+                let x = (i / 12) * canvas.width; 
+                let y = canvas.height - (Math.pow(1.08, i) - 1) * 60;
                 ctx.lineTo(x, y);
             }
             ctx.stroke();
@@ -209,10 +206,8 @@
             document.getElementById('main-mult').classList.add('crashed');
             document.getElementById('main-mult').innerText = crashPoint.toFixed(2) + "x";
             document.getElementById('status-text').innerText = "CRASHED";
-            
             addHistory(crashPoint);
             updateButtons();
-
             setTimeout(() => {
                 document.getElementById('main-mult').classList.remove('crashed');
                 document.getElementById('main-mult').innerText = "1.00x";
@@ -223,13 +218,10 @@
         window.placeBet = async () => {
             const amt = parseInt(document.getElementById('bet-amount').value);
             if (amt > balance || amt < 10) return alert("Insufficient Balance");
-
             await updateDoc(doc(db, "users", auth.currentUser.uid), { balance: increment(-amt) });
             myBetAmt = amt;
-
             if (gameStatus === "WAITING") hasBet = true;
             else betPlacedForNext = true;
-            
             updateButtons();
         };
 
@@ -237,24 +229,18 @@
             if (!hasBet || gameStatus !== "RUNNING") return;
             const win = Math.floor(myBetAmt * currentMult);
             hasBet = false;
-            
             await updateDoc(doc(db, "users", auth.currentUser.uid), { balance: increment(win) });
             await addDoc(collection(db, "wallet_logs"), {
                 uid: auth.currentUser.uid, type: "CRASH_WIN", amount: win, timestamp: new Date()
             });
-            
             updateButtons();
-            alert(`SECURED: ₱${win.toLocaleString()}`);
         };
 
         function updateButtons() {
             const bBet = document.getElementById('btn-bet');
             const bCash = document.getElementById('btn-cashout');
             const bWait = document.getElementById('btn-waiting');
-
-            bBet.style.display = "none";
-            bCash.style.display = "none";
-            bWait.style.display = "none";
+            bBet.style.display = "none"; bCash.style.display = "none"; bWait.style.display = "none";
 
             if (hasBet && gameStatus === "RUNNING") {
                 bCash.style.display = "block";
