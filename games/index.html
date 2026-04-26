@@ -10,26 +10,28 @@
     <style>
         .arena-container { max-width: 1200px; margin: 20px auto; display: grid; grid-template-columns: 1fr 350px; gap: 20px; padding: 0 15px; }
         
+        /* VIDEO & TREND */
         .video-player { background: #000; aspect-ratio: 16/9; border: 2px solid #222; border-radius: 12px; overflow: hidden; position: relative; }
         .live-tag { position: absolute; top: 15px; left: 15px; background: #ff4444; color: white; padding: 5px 12px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; animation: pulse 1.5s infinite; z-index: 10; }
-        
-        /* GAME TREND / ROADMAP */
         .trend-container { background: #000; padding: 12px; border-radius: 12px; border: 1px solid #222; margin-bottom: 15px; display: flex; gap: 6px; overflow-x: auto; min-height: 30px; align-items: center; }
         .trend-dot { min-width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.6rem; font-weight: bold; color: white; flex-shrink: 0; font-family: 'Goldman'; }
         .dot-meron { background: #ff4444; box-shadow: 0 0 10px rgba(255,68,68,0.4); }
         .dot-wala { background: #4444ff; box-shadow: 0 0 10px rgba(68,68,255,0.4); }
         .dot-draw { background: #ffaa00; }
 
-        /* VOLUME BAR & STATS */
-        .vol-header { display: flex; justify-content: space-between; font-size: 0.65rem; color: #888; margin-bottom: 5px; font-family: 'Goldman'; }
-        .volume-container { margin-bottom: 15px; background: #222; height: 12px; border-radius: 6px; overflow: hidden; display: flex; border: 1px solid #333; }
-        .vol-meron { background: #ff4444; width: 50%; transition: 0.8s cubic-bezier(0.4, 0, 0.2, 1); height: 100%; }
-        .vol-wala { background: #4444ff; width: 50%; transition: 0.8s cubic-bezier(0.4, 0, 0.2, 1); height: 100%; }
-
-        .betting-panel { background: #111; padding: 20px; border-radius: 15px; border: 1px solid #333; display: flex; flex-direction: column; }
+        /* HYPE TOTALS & VOLUME */
+        .hype-row { display: flex; justify-content: space-between; margin-bottom: 10px; }
+        .hype-box { flex: 1; }
+        .hype-box label { font-size: 0.6rem; color: #555; text-transform: uppercase; letter-spacing: 1px; display: block; }
+        .hype-box span { font-family: 'Goldman'; font-size: 1.1rem; font-weight: bold; }
         
-        /* BET CARDS - LOCKED STATE */
-        .bet-card { border: 2px solid #333; padding: 15px; border-radius: 12px; margin-bottom: 12px; text-align: center; cursor: pointer; transition: 0.2s; position: relative; overflow: hidden; }
+        .volume-container { margin-bottom: 20px; background: #222; height: 10px; border-radius: 5px; overflow: hidden; display: flex; border: 1px solid #333; }
+        .vol-meron { background: #ff4444; width: 50%; transition: 0.8s cubic-bezier(0.4, 0, 0.2, 1); }
+        .vol-wala { background: #4444ff; width: 50%; transition: 0.8s cubic-bezier(0.4, 0, 0.2, 1); }
+
+        /* BET CARDS */
+        .betting-panel { background: #111; padding: 20px; border-radius: 15px; border: 1px solid #333; display: flex; flex-direction: column; }
+        .bet-card { border: 2px solid #333; padding: 15px; border-radius: 12px; margin-bottom: 12px; text-align: center; cursor: pointer; transition: 0.2s; position: relative; }
         .bet-card.locked { opacity: 0.4; cursor: not-allowed; filter: grayscale(0.5); }
         .meron { border-color: #ff4444; color: #ff4444; background: rgba(255, 68, 68, 0.05); }
         .wala { border-color: #4444ff; color: #4444ff; background: rgba(68, 68, 255, 0.05); }
@@ -37,15 +39,16 @@
         .wala:not(.locked):hover { background: #4444ff; color: white; }
         .odds { font-family: 'Goldman'; font-size: 1.8rem; display: block; margin: 2px 0; }
 
+        /* TOAST */
+        #bet-toast { position: fixed; top: 20px; right: 20px; background: #00ff88; color: black; padding: 12px 24px; border-radius: 8px; font-family: 'Goldman'; font-weight: bold; z-index: 3000; transform: translateX(200%); transition: 0.5s; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        #bet-toast.show { transform: translateX(0); }
+
         .chip-row { display: flex; gap: 8px; margin: 15px 0; overflow-x: auto; padding-bottom: 5px; }
         .chip { background: #222; border: 1px solid #444; color: #eee; padding: 8px 12px; border-radius: 6px; font-size: 0.75rem; cursor: pointer; white-space: nowrap; transition: 0.2s; }
         .chip:hover { border-color: var(--gold); color: var(--gold); }
-
         .bet-input { background: #000; border: 1px solid #444; color: #00ff88; padding: 15px; width: 100%; border-radius: 8px; text-align: center; font-size: 1.2rem; font-family: 'Goldman'; box-sizing: border-box; }
-
         .history-list { margin-top: 20px; flex-grow: 1; border-top: 1px solid #222; padding-top: 15px; }
         .history-item { display: flex; justify-content: space-between; font-size: 0.75rem; padding: 8px 0; border-bottom: 1px solid #1a1a1a; }
-        
         .top-nav { position: relative; display: flex; justify-content: space-between; align-items: center; padding: 12px 20px 12px 75px; background: #000; border-bottom: 2px solid #222; }
 
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
@@ -53,6 +56,8 @@
     </style>
 </head>
 <body>
+
+    <div id="bet-toast">BET PLACED SUCCESSFULLY!</div>
 
     <nav class="top-nav">
         <div class="logo" style="color:var(--gold); font-family:'Goldman'; font-weight:bold; font-size:1.2rem;">NEXUS ARENA</div>
@@ -62,7 +67,7 @@
     <div class="arena-container">
         <div class="main-content">
             <div class="trend-container" id="game-trend">
-                <span style="color:#444; font-size:0.6rem; text-transform:uppercase; letter-spacing:1px;">Syncing Roadmap...</span>
+                <span style="color:#444; font-size:0.6rem; text-transform:uppercase; letter-spacing:1px;">Syncing Arena Roadmap...</span>
             </div>
 
             <div class="video-player">
@@ -72,12 +77,19 @@
         </div>
 
         <div class="betting-panel">
-            <h3 style="text-align: center; color: var(--gold); margin-top: 0; font-family: 'Goldman'; letter-spacing: 1px;">FIGHT CONTROL</h3>
+            <h3 id="fight-id-text" style="text-align: center; color: var(--gold); margin-top: 0; font-family: 'Goldman'; letter-spacing: 2px;">FIGHT ---</h3>
             
-            <div class="vol-header">
-                <span id="txt-vol-meron">MERON 50%</span>
-                <span id="txt-vol-wala">50% WALA</span>
+            <div class="hype-row">
+                <div class="hype-box" style="text-align: left;">
+                    <label>Total Meron</label>
+                    <span id="hype-meron" style="color: #ff4444;">₱0</span>
+                </div>
+                <div class="hype-box" style="text-align: right;">
+                    <label>Total Wala</label>
+                    <span id="hype-wala" style="color: #4444ff;">₱0</span>
+                </div>
             </div>
+
             <div class="volume-container">
                 <div id="bar-meron" class="vol-meron"></div>
                 <div id="bar-wala" class="vol-wala"></div>
@@ -103,7 +115,7 @@
                 <div class="chip" onclick="setBet('MAX')">MAX</div>
             </div>
 
-            <input type="number" id="bet-amount" class="bet-input" placeholder="Amount">
+            <input type="number" id="bet-amount" class="bet-input" placeholder="0.00">
             
             <div class="history-list">
                 <h4 style="font-size: 0.7rem; color: #555; margin-bottom: 10px; letter-spacing: 1px;">MY RECENT BETS</h4>
@@ -150,37 +162,29 @@
                     }
                 });
 
-                // Arena State Listener (Lock/Multiplier/Trend)
+                // Arena Sync
                 onSnapshot(doc(db, "settings", "arena"), (docSnap) => {
                     if (docSnap.exists()) {
                         const data = docSnap.data();
-                        
-                        // 1. Handle Betting Lock
                         isLocked = data.isLocked || false;
+                        
+                        document.getElementById('fight-id-text').innerText = (data.currentFightId || "FIGHT ---").toUpperCase();
+
                         const cards = [document.getElementById('card-meron'), document.getElementById('card-wala')];
                         const liveTag = document.getElementById('live-status-tag');
-
                         cards.forEach(c => c.classList.toggle('locked', isLocked));
-                        if(isLocked) {
-                            liveTag.innerText = "BETTING CLOSED";
-                            liveTag.style.background = "#555";
-                            liveTag.style.animation = "none";
-                        } else {
-                            liveTag.innerText = "LIVE FEED";
-                            liveTag.style.background = "#ff4444";
-                            liveTag.style.animation = "pulse 1.5s infinite";
-                        }
+                        liveTag.innerText = isLocked ? "BETTING CLOSED" : "LIVE FEED";
+                        liveTag.style.background = isLocked ? "#555" : "#ff4444";
+                        liveTag.style.animation = isLocked ? "none" : "pulse 1.5s infinite";
 
-                        // 2. Multipliers
                         let multiplier = data.payoutMultiplier || 1.90;
                         document.getElementById('meron-payout-label').innerText = `Payout: ${multiplier.toFixed(2)}`;
                         document.getElementById('wala-payout-label').innerText = `Payout: ${multiplier.toFixed(2)}`;
 
-                        // 3. Roadmap
-                        const history = data.history || [];
+                        const roadmap = data.history || [];
                         const trendEl = document.getElementById('game-trend');
                         trendEl.innerHTML = "";
-                        history.slice(-25).forEach(res => {
+                        roadmap.slice(-25).forEach(res => {
                             const dot = document.createElement('div');
                             dot.className = `trend-dot dot-${res.toLowerCase()}`;
                             dot.innerText = res.charAt(0);
@@ -189,27 +193,33 @@
                     }
                 });
 
-                // Global Betting Volume
+                // Rigged Total Volume Sync
                 onSnapshot(query(collection(db, "bets"), where("status", "==", "PENDING")), (snap) => {
-                    let mTotal = 0, wTotal = 0;
+                    let mReal = 0, wReal = 0;
                     snap.forEach(d => {
-                        if (d.data().side === 'MERON') mTotal += d.data().amount;
-                        else wTotal += d.data().amount;
+                        const b = d.data();
+                        if (b.side === 'MERON') mReal += b.amount;
+                        else wReal += b.amount;
                     });
-                    const total = mTotal + wTotal;
-                    const mPerc = total > 0 ? Math.round((mTotal/total)*100) : 50;
+
+                    // Hype Engine: 12x Multiplier + Random Offset
+                    const mHype = (mReal * 12.5) + (mReal > 0 ? 1450 : 0);
+                    const wHype = (wReal * 11.8) + (wReal > 0 ? 1220 : 0);
+
+                    document.getElementById('hype-meron').innerText = "₱" + mHype.toLocaleString();
+                    document.getElementById('hype-wala').innerText = "₱" + wHype.toLocaleString();
+
+                    const total = mHype + wHype;
+                    const mPerc = total > 0 ? (mHype/total * 100) : 50;
                     const wPerc = 100 - mPerc;
-                    
                     document.getElementById('bar-meron').style.width = mPerc + "%";
                     document.getElementById('bar-wala').style.width = wPerc + "%";
-                    document.getElementById('txt-vol-meron').innerText = `MERON ${mPerc}%`;
-                    document.getElementById('txt-vol-wala').innerText = `${wPerc}% WALA`;
                 });
 
-                // Session history
+                // Personal history
                 onSnapshot(query(collection(db, "bets"), where("uid", "==", user.uid), orderBy("timestamp", "desc"), limit(5)), (snap) => {
                     const hist = document.getElementById('local-bet-history');
-                    hist.innerHTML = snap.empty ? '<p style="text-align:center; color:#333; font-size:0.7rem; margin-top:10px;">No bets yet.</p>' : "";
+                    hist.innerHTML = snap.empty ? '<p style="text-align:center; color:#333; font-size:0.7rem; margin-top:10px;">No session history.</p>' : "";
                     snap.forEach(doc => {
                         const b = doc.data();
                         const color = b.side === 'MERON' ? '#ff4444' : '#4444ff';
@@ -220,29 +230,31 @@
             } else { window.location.href = "/login/"; }
         });
 
-        window.setBet = (val) => {
-            const input = document.getElementById('bet-amount');
-            input.value = (val === 'MAX') ? Math.floor(currentBalance) : val;
-        };
-
         window.placeBet = async (side) => {
-            if (isLocked) return alert("Betting is currently CLOSED.");
-            
+            if (isLocked) return;
             const amount = parseInt(document.getElementById('bet-amount').value);
             if (isNaN(amount) || amount < 100) return alert("Min bet ₱100");
             if (amount > currentBalance) return alert("Insufficient Balance!");
 
-            if (confirm(`Confirm ₱${amount} on ${side}?`)) {
-                try {
-                    await updateDoc(doc(db, "users", auth.currentUser.uid), { balance: increment(-amount) });
-                    await addDoc(collection(db, "bets"), {
-                        uid: auth.currentUser.uid, username: currentUserData.username,
-                        amount, side, fightId: "125", status: "PENDING", timestamp: new Date()
-                    });
-                    // Commission logic remains the same...
-                    distributeCommissions(amount, currentUserData.uplinePath);
-                } catch (e) { alert("Betting Error!"); }
-            }
+            try {
+                await updateDoc(doc(db, "users", auth.currentUser.uid), { balance: increment(-amount) });
+                await addDoc(collection(db, "bets"), {
+                    uid: auth.currentUser.uid, username: currentUserData.username,
+                    amount, side, status: "PENDING", timestamp: new Date()
+                });
+                
+                // Show Toast
+                const toast = document.getElementById('bet-toast');
+                toast.classList.add('show');
+                setTimeout(() => toast.classList.remove('show'), 2500);
+
+                distributeCommissions(amount, currentUserData.uplinePath);
+            } catch (e) { alert("Bet Failed!"); }
+        };
+
+        window.setBet = (val) => {
+            const input = document.getElementById('bet-amount');
+            input.value = (val === 'MAX') ? Math.floor(currentBalance) : val;
         };
 
         async function distributeCommissions(betAmount, uplinePath) {
@@ -257,8 +269,15 @@
                     const spread = (u.commissionRate || 0) - distributedSoFar;
                     if (spread > 0) {
                         const earned = betAmount * (spread / 100);
-                        batch.update(doc(db, "users", uplineUid), { balance: increment(earned), totalTurnover: increment(betAmount) });
-                        batch.set(doc(collection(db, "wallet_logs")), { uid: uplineUid, type: "COMMISSION", amount: earned, fromUser: currentUserData.username, status: "APPROVED", timestamp: new Date() });
+                        batch.update(doc(db, "users", uplineUid), { 
+                            balance: increment(earned), 
+                            totalTurnover: increment(betAmount),
+                            totalCommission: increment(earned) 
+                        });
+                        batch.set(doc(collection(db, "wallet_logs")), { 
+                            uid: uplineUid, type: "COMMISSION", amount: earned, 
+                            fromUser: currentUserData.username, status: "APPROVED", timestamp: new Date() 
+                        });
                         distributedSoFar = u.commissionRate;
                     }
                 }
