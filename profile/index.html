@@ -4,57 +4,98 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Profile | NEXUS</title>
-    <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="/style.css">
+    <link rel="stylesheet" href="/menu.css">
+    <link href="https://fonts.googleapis.com/css2?family=Goldman:wght@400;700&display=swap" rel="stylesheet">
     <style>
+        .profile-container { max-width: 450px; margin: 40px auto; padding: 20px; }
         .profile-header { text-align: center; padding: 30px 0; border-bottom: 1px solid #222; margin-bottom: 25px; }
-        .avatar-circle { width: 80px; height: 80px; background: var(--gold); color: black; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: bold; margin: 0 auto 15px; }
         
-        .stat-row { display: flex; justify-content: space-between; background: #111; padding: 15px; border-radius: 10px; margin-bottom: 10px; border: 1px solid #222; }
-        .stat-label { color: #888; font-size: 0.9rem; }
-        .stat-value { color: var(--gold); font-weight: bold; }
+        .avatar-circle { 
+            width: 80px; height: 80px; background: var(--gold); color: black; 
+            border-radius: 50%; display: flex; align-items: center; justify-content: center; 
+            font-size: 2rem; font-weight: bold; margin: 0 auto 15px; 
+            box-shadow: 0 0 20px rgba(212, 175, 55, 0.3);
+        }
+        
+        .stat-row { 
+            display: flex; justify-content: space-between; background: #111; 
+            padding: 15px; border-radius: 12px; margin-bottom: 10px; border: 1px solid #222; 
+        }
+        .stat-label { color: #888; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; }
+        .stat-value { color: var(--gold); font-weight: bold; font-family: 'Goldman', sans-serif; }
 
-        .menu-list { margin-top: 30px; }
-        .menu-item { display: flex; align-items: center; justify-content: space-between; padding: 18px; background: #161616; border-radius: 10px; margin-bottom: 10px; text-decoration: none; color: white; transition: 0.2s; border: 1px solid transparent; }
-        .menu-item:hover { border-color: var(--gold); background: #1a1a1a; }
+        .menu-list { margin-top: 20px; }
+        .menu-item { 
+            display: flex; align-items: center; justify-content: space-between; 
+            padding: 18px; background: #161616; border-radius: 12px; margin-bottom: 10px; 
+            text-decoration: none; color: white; transition: 0.2s; border: 1px solid #222; 
+        }
+        .menu-item:hover { border-color: var(--gold); background: #1a1a1a; padding-left: 22px; }
         
-        .logout-btn { width: 100%; padding: 15px; background: transparent; border: 1px solid #ff4444; color: #ff4444; border-radius: 10px; cursor: pointer; font-weight: bold; margin-top: 20px; }
+        .badge-role {
+            font-size: 0.6rem; background: #222; color: var(--gold); 
+            padding: 4px 10px; border-radius: 20px; border: 1px solid var(--gold);
+            display: inline-block; margin-top: 5px;
+        }
+
+        /* Top Nav Fix */
+        .top-nav {
+            position: relative;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 20px 12px 75px; 
+            background: #000;
+            border-bottom: 2px solid #222;
+        }
     </style>
 </head>
 <body>
 
     <nav class="top-nav">
-        <a href="/" style="color: var(--gold); text-decoration: none;">← ARENA</a>
-        <div class="balance-box">₱<span id="display-balance">0.00</span></div>
+        <div class="logo" style="color:var(--gold); font-family:'Goldman'; font-weight:bold; font-size:1.2rem;">NEXUS</div>
+        <div style="color: #00ff88; font-weight: bold;">₱<span id="display-balance">0.00</span></div>
     </nav>
 
-    <div style="max-width: 450px; margin: auto; padding: 20px;">
+    <div class="profile-container">
         
         <div class="profile-header">
             <div class="avatar-circle" id="user-initial">-</div>
-            <h2 id="display-username" style="margin: 0; letter-spacing: 2px;">LOADING...</h2>
-            <p class="text-muted" id="user-email" style="font-size: 0.7rem;"></p>
+            <h2 id="display-username" style="margin: 0; letter-spacing: 2px; font-family: 'Goldman';">LOADING...</h2>
+            <div id="role-badge-container"></div>
         </div>
 
         <div class="stat-row">
-            <span class="stat-label">Account Status</span>
-            <span class="stat-value" style="color: #00ff88;">VERIFIED</span>
+            <span class="stat-label">Member Since</span>
+            <span class="stat-value" id="join-date" style="font-size: 0.8rem; color: #666;">--/--/--</span>
         </div>
 
         <div class="stat-row">
-            <span class="stat-label">Currency</span>
-            <span class="stat-value">PHP (₱)</span>
+            <span class="stat-label">Account Level</span>
+            <span class="stat-value" id="level-display">Tier 7</span>
         </div>
 
         <div class="menu-list">
+            <div style="margin: 10px 0; color:#444; font-size:0.7rem; font-weight:bold; letter-spacing:1px;">WALLET</div>
             <a href="/wallet/" class="menu-item">
-                <span>💰 Deposit & Withdraw</span>
-                <span>→</span>
+                <span>Deposit & Withdraw</span>
+                <span style="color:var(--gold)">→</span>
             </a>
-            <a href="/games/" class="menu-item">
-                <span>🐓 Enter Live Arena</span>
-                <span>→</span>
+            <a href="/history/wallet.html" class="menu-item">
+                <span>Transaction Logs</span>
+                <span style="color:var(--gold)">→</span>
             </a>
-            <button class="logout-btn" id="btn-logout">LOGOUT ACCOUNT</button>
+
+            <div id="agent-section" style="display:none;">
+                <div style="margin: 20px 0 10px; color:#444; font-size:0.7rem; font-weight:bold; letter-spacing:1px;">PARTNER TOOLS</div>
+                <a href="/admin/agents.html" class="menu-item" style="border-color: #00ff88;">
+                    <span>Agent Manager</span>
+                    <span style="color:#00ff88">→</span>
+                </a>
+            </div>
+
+            <button class="logout-btn" id="btn-logout" style="width: 100%; margin-top: 30px; background: #111; color: #ff4444; border: 1px solid #333; padding: 15px; border-radius: 12px; font-weight: bold; cursor: pointer; text-transform: uppercase; letter-spacing: 1px;">Logout Session</button>
         </div>
 
     </div>
@@ -63,6 +104,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
         import { getFirestore, doc, onSnapshot, getDoc } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+        import { injectMenu } from "/menu.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCBvOw8HrMhZD0aYSHqFdE196ZITdYBU3Q",
@@ -70,27 +112,44 @@
             projectId: "nexus-sabong",
             storageBucket: "nexus-sabong.firebasestorage.app",
             messagingSenderId: "421723311",
-            appId: "1:421723311:web:1780f179e7c2a7cc0e285a",
-            measurementId: "G-W2B0R09D8L"
+            appId: "1:421723311:web:1780f179e7c2a7cc0e285a"
         };
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
 
+        // Handover for menu.js
+        window.firebaseAuth = auth;
+        window.firebaseDb = db;
+        injectMenu();
+
         onAuthStateChanged(auth, async (user) => {
             if (user) {
-                // Fetch Profile Data
                 const userRef = doc(db, "users", user.uid);
-                const userSnap = await getDoc(userRef);
                 
+                // Fetch Profile Data
+                const userSnap = await getDoc(userRef);
                 if (userSnap.exists()) {
                     const data = userSnap.data();
                     const username = data.username || "Player";
-                    
+                    const level = data.level || 7;
+                    const role = data.role || "PLAYER";
+
                     document.getElementById('display-username').innerText = username.toUpperCase();
                     document.getElementById('user-initial').innerText = username.charAt(0).toUpperCase();
-                    document.getElementById('user-email').innerText = user.email; // The hidden @nexus-sabong.com email
+                    document.getElementById('level-display').innerText = `Tier ${level}`;
+                    document.getElementById('role-badge-container').innerHTML = `<span class="badge-role">${role.replace('_', ' ')}</span>`;
+                    
+                    if (data.createdAt) {
+                        const date = data.createdAt.toDate();
+                        document.getElementById('join-date').innerText = date.toLocaleDateString();
+                    }
+
+                    // Show Agent Tools if Level 1-6
+                    if (level <= 6) {
+                        document.getElementById('agent-section').style.display = "block";
+                    }
                 }
 
                 // Live Balance Listener
@@ -105,11 +164,9 @@
             }
         });
 
-        // Logout Logic
-        document.getElementById('btn-logout').onclick = async () => {
-            if(confirm("Are you sure you want to logout?")) {
-                await signOut(auth);
-                window.location.href = "/login/";
+        document.getElementById('btn-logout').onclick = () => {
+            if(confirm("Sign out of NEXUS Arena?")) {
+                signOut(auth).then(() => window.location.href = "/login/");
             }
         };
     </script>
