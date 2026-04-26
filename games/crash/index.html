@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexus Crash | PRO</title>
+    <link rel="stylesheet" href="/style.css">
+    <link rel="stylesheet" href="/menu.css">
+    <link href="https://fonts.googleapis.com/css2?family=Goldman:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --gold: #D4AF37; --green: #00ff88; --red: #ff4444; --panel-bg: #0f0f0f; }
+        
+        .top-nav { 
+            position: sticky; top: 0; z-index: 1000;
+            display: flex; justify-content: space-between; align-items: center; 
+            padding: 12px 20px 12px 75px;
+            background: #000; border-bottom: 2px solid #222; 
+        }
+
+        .crash-wrapper { max-width: 1000px; margin: 20px auto; display: grid; grid-template-columns: 320px 1fr; gap: 20px; padding: 0 15px; }
+
+        /* MULTIPLIER DISPLAY */
+        .display-area { 
+            background: #080808; border-radius: 24px; border: 1px solid #222; 
+            height: 400px; display: flex; flex-direction: column; align-items: center; 
+            justify-content: center; position: relative; overflow: hidden;
+            box-shadow: inset 0 0 50px rgba(0,0,0,1);
+        }
+        #main-mult { font-family: 'Goldman'; font-size: 5rem; color: white; transition: 0.1s; z-index: 2; }
+        #main-mult.crashed { color: var(--red); }
+        
+        .canvas-bg { position: absolute; bottom: 0; left: 0; width: 100%; height: 100%; z-index: 1; opacity: 0.3; }
+
+        /* CONTROLS */
+        .control-panel { background: var(--panel-bg); padding: 25px; border-radius: 20px; border: 1px solid #222; display: flex; flex-direction: column; gap: 15px; }
+        
+        .input-group label { display: block; font-size: 0.6rem; color: #555; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px; }
+        input { width: 100%; padding: 14px; background: #000; border: 1px solid #333; color: white; border-radius: 10px; outline: none; font-family: 'Goldman'; }
+
+        .btn-action { width: 100%; padding: 18px; border-radius: 12px; border: none; font-weight: bold; font-family: 'Goldman'; cursor: pointer; text-transform: uppercase; transition: 0.3s; }
+        .btn-bet { background: var(--gold); color: black; }
+        .btn-cashout { background: var(--green); color: black; display: none; }
+        .btn-waiting { background: #222; color: #555; cursor: not-allowed; display: none; }
+
+        /* HISTORY BAR */
+        .history-bar { display: flex; gap: 8px; overflow-x: auto; padding: 15px; background: #000; border-radius: 12px; border: 1px solid #1a1a1a; margin-top: 15px; }
+        .hist-item { padding: 4px 10px; border-radius: 6px; font-size: 0.7rem; font-family: 'Goldman'; font-weight: bold; background: #111; }
+        .hist-green { color: var(--green); }
+        .hist-red { color: var(--red); }
+
+        @media (max-width: 800px) { .crash-wrapper { grid-template-columns: 1fr; } .display-area { height: 250px; } }
+    </style>
+</head>
+<body>
+
+    <nav class="top-nav">
+        <div class="logo" style="color:var(--gold); font-family:'Goldman'; font-weight:bold; font-size:1.2rem;">NEXUS CRASH</div>
+        <div style="color: var(--green); font-weight: bold; font-family: 'Goldman';" id="display-balance">₱0.00</div>
+    </nav>
+
+    <div class="crash-wrapper">
+        <div class="control-panel">
+            <div class="input-group">
+                <label>Bet Amount</label>
+                <input type="number" id="bet-amount" value="100" min="10">
+            </div>
+
+            <div class="input-group">
+                <label>Auto Cashout (Optional)</label>
+                <input type="number" id="auto-cashout" placeholder="2.00" step="0.1">
+            </div>
+
+            <button id="btn-bet" class="btn-action btn-bet" onclick="placeBet()">Place Bet</button>
+            <button id="btn-cashout" class="btn-action btn-cashout" onclick="cashout()">Cashout</button>
+            <button id="btn-waiting" class="btn-action btn-waiting">Waiting for Round...</button>
+
+            <div class="history-bar" id="history">
+                </div>
+        </div>
+
+        <div class="display-area">
+            <div id="status-text" style="color: #444; font-size: 0.7rem; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 2px;">Next Round in 5s</div>
+            <div id="main-mult">1.00x</div>
+            <canvas id="crash-chart" class="canvas-bg"></canvas>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
+        import { getFirestore, doc, onSnapshot, updateDoc, increment, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+        import { injectMenu } from "/menu.js";
+
+        const firebaseConfig = { /* Your Config */ };
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        injectMenu();
+
+        let balance = 0;
+        let currentMult = 1.00;
+        let gameStatus = "WAITING"; // WAITING, RUNNING, CRASHED
+        let hasBet = false;
+        let betPlacedForNext = false;
+        let myBetAmt = 0;
+        let crashPoint = 0;
+        let startTime = 0;
+
+        onAuthStateChanged(auth, user => {
+            if (user) {
+                onSnapshot(doc(db, "users", user.uid), snap => {
+                    balance = snap.data().balance;
+                    document.getElementById('display-balance').innerText = `₱${balance.toLocaleString()}`;
+                });
+            }
+        });
+
+        // SIMULATED ENGINE
+        function initEngine() {
+            gameStatus = "WAITING";
+            let countdown = 5;
+            const timer = setInterval(() => {
+                countdown -= 0.1;
+                document.getElementById('status-text').innerText = `Next Round in ${countdown.toFixed(1)}s`;
+                if (countdown <= 0) {
+                    clearInterval(timer);
+                    runRound();
+                }
+            }, 100);
+        }
+
+        function runRound() {
+            gameStatus = "RUNNING";
+            document.getElementById('status-text').innerText = "LIVE";
+            
+            // Logic for crash point (House Edge 3%)
+            if (Math.random() < 0.03) crashPoint = 1.00;
+            else crashPoint = (Math.max(1.01, 0.99 / (1 - Math.random()))).toFixed(2);
+
+            if (betPlacedForNext) {
+                hasBet = true;
+                betPlacedForNext = false;
+                updateButtons();
+            }
+
+            startTime = Date.now();
+            const tick = setInterval(() => {
+                let elapsed = (Date.now() - startTime) / 1000;
+                currentMult = Math.pow(1.06, elapsed); // Growth speed
+                
+                document.getElementById('main-mult').innerText = currentMult.toFixed(2) + "x";
+
+                // Auto Cashout
+                const auto = parseFloat(document.getElementById('auto-cashout').value);
+                if (hasBet && !isNaN(auto) && currentMult >= auto) cashout();
+
+                if (currentMult >= crashPoint) {
+                    clearInterval(tick);
+                    doCrash();
+                }
+            }, 50);
+        }
+
+        function doCrash() {
+            gameStatus = "CRASHED";
+            hasBet = false;
+            document.getElementById('main-mult').classList.add('crashed');
+            document.getElementById('status-text').innerText = "CRASHED";
+            
+            addHistory(crashPoint);
+            updateButtons();
+
+            setTimeout(() => {
+                document.getElementById('main-mult').classList.remove('crashed');
+                document.getElementById('main-mult').innerText = "1.00x";
+                initEngine();
+            }, 3000);
+        }
+
+        window.placeBet = async () => {
+            const amt = parseInt(document.getElementById('bet-amount').value);
+            if (amt > balance || amt < 10) return alert("Invalid Bet");
+
+            await updateDoc(doc(db, "users", auth.currentUser.uid), { balance: increment(-amt) });
+            myBetAmt = amt;
+
+            if (gameStatus === "WAITING") {
+                hasBet = true;
+            } else {
+                betPlacedForNext = true;
+            }
+            updateButtons();
+        };
+
+        window.cashout = async () => {
+            if (!hasBet || gameStatus !== "RUNNING") return;
+            const win = Math.floor(myBetAmt * currentMult);
+            hasBet = false;
+            
+            await updateDoc(doc(db, "users", auth.currentUser.uid), { balance: increment(win) });
+            await addDoc(collection(db, "wallet_logs"), {
+                uid: auth.currentUser.uid, type: "CRASH_WIN", amount: win, timestamp: new Date()
+            });
+            
+            updateButtons();
+            alert(`Cashed out ₱${win.toLocaleString()}!`);
+        };
+
+        function updateButtons() {
+            const bBet = document.getElementById('btn-bet');
+            const bCash = document.getElementById('btn-cashout');
+            const bWait = document.getElementById('btn-waiting');
+
+            bBet.style.display = "none";
+            bCash.style.display = "none";
+            bWait.style.display = "none";
+
+            if (hasBet && gameStatus === "RUNNING") {
+                bCash.style.display = "block";
+                bCash.innerText = `Cashout ₱${Math.floor(myBetAmt * currentMult)}`;
+            } else if (betPlacedForNext || (hasBet && gameStatus === "WAITING")) {
+                bWait.style.display = "block";
+                bWait.innerText = "BET PLACED...";
+            } else {
+                bBet.style.display = "block";
+            }
+        }
+
+        function addHistory(val) {
+            const bar = document.getElementById('history');
+            const item = document.createElement('div');
+            item.className = `hist-item ${val >= 2 ? 'hist-green' : 'hist-red'}`;
+            item.innerText = val + "x";
+            bar.prepend(item);
+            if (bar.children.length > 8) bar.lastChild.remove();
+        }
+
+        initEngine();
+    </script>
+</body>
+</html>
