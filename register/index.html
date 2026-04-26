@@ -36,28 +36,30 @@
             width: 100%; padding: 14px; background: #000; border: 1px solid #333; 
             color: white; border-radius: 8px; box-sizing: border-box; transition: 0.3s;
         }
-        input:focus { border-color: var(--gold); outline: none; }
+        input:focus { border-color: var(--gold); outline: none; box-shadow: 0 0 10px rgba(212, 175, 55, 0.1); }
 
         .tier-badge {
             background: rgba(212, 175, 55, 0.1);
             border: 1px solid var(--gold);
             color: var(--gold);
             font-size: 0.7rem;
-            padding: 10px;
+            padding: 12px;
             border-radius: 8px;
             margin-bottom: 20px;
             display: none;
             font-family: 'Goldman', sans-serif;
+            letter-spacing: 1px;
         }
         
-        .strength-meter { height: 4px; background: #222; margin-top: 5px; border-radius: 2px; overflow: hidden; }
+        .strength-meter { height: 4px; background: #222; margin-top: 8px; border-radius: 2px; overflow: hidden; }
         .strength-bar { height: 100%; width: 0%; transition: 0.5s; }
 
         .btn-action.gold { 
             width: 100%; padding: 16px; font-weight: bold; font-size: 0.9rem;
             background: var(--gold); color: black; border: none; border-radius: 8px;
             font-family: 'Goldman', sans-serif; cursor: pointer; transition: 0.3s;
-            margin-top: 10px;
+            margin-top: 15px;
+            text-transform: uppercase;
         }
         .btn-action.gold:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(212, 175, 55, 0.3); }
         .btn-action.gold:disabled { opacity: 0.5; cursor: not-allowed; }
@@ -66,29 +68,29 @@
 <body class="auth-page">
     <div class="auth-card">
         <div class="logo">NEXUS</div>
-        <h2 style="font-size: 0.8rem; letter-spacing: 3px; color: #444; margin-bottom: 25px; text-transform: uppercase;">Recruitment Center</h2>
+        <h2 style="font-size: 0.7rem; letter-spacing: 3px; color: #444; margin-bottom: 25px; text-transform: uppercase;">Recruitment Center</h2>
         
         <div id="tier-preview" class="tier-badge">
             JOINING AS: <span id="assigned-role-text">PLAYER</span>
         </div>
 
-        <p id="ref-status" style="font-size: 0.75rem; color: #666; margin-bottom: 20px;">Choose a unique username to serve as your Arena ID.</p>
+        <p id="ref-status" style="font-size: 0.75rem; color: #666; margin-bottom: 20px;">Register a unique username to serve as your Arena ID.</p>
         
         <div class="input-group">
             <label>Username (ID)</label>
-            <input type="text" id="reg-username" placeholder="e.g. MasterRider">
+            <input type="text" id="reg-username" placeholder="e.g. NexusWarrior">
         </div>
 
         <div class="input-group">
             <label>Create Password</label>
-            <input type="password" id="reg-pass" placeholder="Minimum 6 characters" oninput="checkStrength(this.value)">
+            <input type="password" id="reg-pass" placeholder="Min. 6 characters" oninput="checkStrength(this.value)">
             <div class="strength-meter"><div id="strength-bar" class="strength-bar"></div></div>
         </div>
         
         <button class="btn-action gold" id="btn-register">REGISTER & ENTER</button>
         
         <p class="auth-footer" style="margin-top: 25px; font-size: 0.8rem; color: #555;">
-            Already a member? <a href="/login/" style="color: var(--gold); text-decoration: none; font-weight: bold;">Sign In</a>
+            Already have an ID? <a href="/login/" style="color: var(--gold); text-decoration: none; font-weight: bold;">Sign In</a>
         </p>
     </div>
 
@@ -129,6 +131,8 @@
                     const refSnap = await getDoc(doc(db, "users", referrerUid));
                     if (refSnap.exists()) {
                         const refData = refSnap.data();
+                        
+                        // Logic: Find current index in TIERS and move down by 1
                         const currentTierIndex = TIERS.findIndex(t => t.role === refData.role);
                         const nextTier = TIERS[currentTierIndex + 1] || TIERS[6];
 
@@ -136,7 +140,7 @@
                         document.getElementById('tier-preview').style.display = "block";
                         document.getElementById('assigned-role-text').innerText = nextTier.role.replace("_", " ");
                     }
-                } catch (e) { console.log("Referral invalid"); }
+                } catch (e) { console.error("Referral link verification failed."); }
             }
         }
         checkReferral();
@@ -156,11 +160,11 @@
             const pass = document.getElementById('reg-pass').value;
             const btn = document.getElementById('btn-register');
 
-            if(user.length < 4) return alert("Username too short!");
-            if(pass.length < 6) return alert("Password must be 6+ characters.");
+            if(user.length < 4) return alert("Username must be at least 4 characters.");
+            if(pass.length < 6) return alert("Password must be at least 6 characters.");
 
             btn.disabled = true;
-            btn.innerText = "CREATING IDENTITY...";
+            btn.innerText = "AUTHENTICATING...";
 
             try {
                 let uplineId = "SYSTEM";
@@ -173,7 +177,9 @@
                     if (refSnap.exists()) {
                         const refData = refSnap.data();
                         uplineId = referrerUid;
+                        // Path inheritance: All parents + the person who invited them
                         uplinePath = [...(refData.uplinePath || []), referrerUid];
+                        
                         const currentTierIndex = TIERS.findIndex(t => t.role === refData.role);
                         const nextTier = TIERS[currentTierIndex + 1] || TIERS[6];
                         assignedRole = nextTier.role;
@@ -188,14 +194,14 @@
                     uid: userCredential.user.uid,
                     username: user,
                     role: assignedRole,
-                    level: assignedLevel,
+                    level: assignedLevel, // CRITICAL: For menu and dash access
                     commissionRate: 0, 
                     uplineId: uplineId,
-                    uplinePath: uplinePath,
+                    uplinePath: uplinePath, // CRITICAL: For payout engine
                     balance: 0,
                     totalTurnover: 0,
                     totalCommission: 0,
-                    isAdmin: (assignedLevel === 1),
+                    isAdmin: (assignedLevel === 1), // Legacy support
                     createdAt: new Date()
                 });
 
