@@ -8,107 +8,127 @@
     <link rel="stylesheet" href="/menu.css">
     <link href="https://fonts.googleapis.com/css2?family=Goldman:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        .wallet-wrapper { max-width: 450px; margin: 40px auto; padding: 0 20px; }
-        .wallet-card { background: #111; padding: 25px; border-radius: 16px; border: 1px solid #222; margin-bottom: 25px; text-align: center; }
-        .gold-title { color: #D4AF37; text-transform: uppercase; letter-spacing: 2px; font-size: 0.9rem; font-family: 'Goldman'; margin-top: 0; margin-bottom: 15px; }
+        .wallet-wrapper { max-width: 480px; margin: 20px auto; padding: 0 20px; }
+        .wallet-card { background: #111; padding: 25px; border-radius: 16px; border: 1px solid #222; margin-bottom: 20px; position: relative; overflow: hidden; }
+        .gold-title { color: var(--gold); text-transform: uppercase; letter-spacing: 2px; font-size: 0.85rem; font-family: 'Goldman'; margin-top: 0; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
         
-        .id-box { background: #000; padding: 15px; border: 2px dashed #333; border-radius: 12px; margin: 15px 0; cursor: pointer; transition: 0.2s; }
-        .id-box:hover { border-color: var(--gold); background: #050505; }
-        .id-box code { font-size: 1.4rem; color: #D4AF37; font-family: 'Goldman', monospace; font-weight: bold; }
+        /* SECURITY FEATURES */
+        .balance-display { font-family: 'Goldman'; font-size: 1.8rem; color: #00ff88; cursor: pointer; transition: 0.3s; }
+        .balance-display.blurred { filter: blur(8px); }
 
-        /* SAVED ACCOUNTS CHIPS */
-        .saved-accounts { display: flex; gap: 8px; margin-bottom: 15px; overflow-x: auto; padding-bottom: 5px; justify-content: center; }
-        .acc-chip { background: rgba(212, 175, 55, 0.1); border: 1px solid #333; color: #888; padding: 6px 12px; border-radius: 20px; font-size: 0.65rem; cursor: pointer; white-space: nowrap; }
-        .acc-chip.active { border-color: var(--gold); color: var(--gold); }
+        /* TABS */
+        .wallet-tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid #222; padding-bottom: 10px; }
+        .w-tab { color: #555; font-size: 0.7rem; font-weight: bold; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; padding: 5px 0; border-bottom: 2px solid transparent; transition: 0.2s; }
+        .w-tab.active { color: var(--gold); border-color: var(--gold); }
 
+        /* VAULT CARDS */
+        .vault-grid { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 15px; }
+        .vault-card { background: #000; border: 1px solid #333; padding: 12px; border-radius: 10px; min-width: 140px; cursor: pointer; transition: 0.2s; text-align: left; }
+        .vault-card:hover, .vault-card.selected { border-color: var(--gold); background: #050505; }
+        .vault-card small { display: block; color: #555; font-size: 0.6rem; text-transform: uppercase; }
+        .vault-card span { display: block; color: #eee; font-size: 0.75rem; font-weight: bold; margin-top: 2px; }
+
+        /* TRACKING TIMELINE */
+        .timeline { margin-top: 15px; padding-left: 20px; border-left: 2px solid #222; }
+        .step { position: relative; margin-bottom: 15px; font-size: 0.7rem; color: #444; }
+        .step::before { content: ''; position: absolute; left: -26px; top: 2px; width: 10px; height: 10px; border-radius: 50%; background: #222; }
+        .step.active { color: #00ff88; }
+        .step.active::before { background: #00ff88; box-shadow: 0 0 10px #00ff88; }
+
+        /* REVENUE INSIGHTS */
+        .insight-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
+        .insight-box { background: rgba(212, 175, 55, 0.05); border: 1px solid rgba(212, 175, 55, 0.1); padding: 15px; border-radius: 10px; text-align: center; }
+        .insight-box label { display: block; font-size: 0.55rem; color: #666; text-transform: uppercase; margin-bottom: 5px; }
+        .insight-box span { font-family: 'Goldman'; color: var(--gold); font-size: 1rem; }
+
+        /* FORM */
         .form-group { text-align: left; margin-bottom: 15px; }
-        label { display: block; color: #555; font-size: 0.65rem; text-transform: uppercase; margin-bottom: 5px; letter-spacing: 1px; }
-        select, input { width: 100%; padding: 14px; background: #000; border: 1px solid #333; color: white; border-radius: 8px; box-sizing: border-box; outline: none; transition: 0.3s; }
-        select:focus, input:focus { border-color: #D4AF37; }
-        
-        .chip-row { display: flex; gap: 8px; margin-bottom: 15px; overflow-x: auto; padding-bottom: 5px; }
-        .chip { background: #222; border: 1px solid #333; color: #888; padding: 8px 12px; border-radius: 6px; font-size: 0.7rem; cursor: pointer; white-space: nowrap; }
-        .chip:hover { border-color: var(--gold); color: var(--gold); }
+        label { display: block; color: #555; font-size: 0.65rem; text-transform: uppercase; margin-bottom: 5px; }
+        input, select { width: 100%; padding: 14px; background: #000; border: 1px solid #333; color: white; border-radius: 8px; box-sizing: border-box; outline: none; transition: 0.3s; }
+        input:focus { border-color: var(--gold); }
 
-        .btn-withdraw { background: #D4AF37; color: black; width: 100%; padding: 16px; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; text-transform: uppercase; margin-top: 10px; transition: 0.3s; font-family: 'Goldman'; }
-        .pending-status { background: rgba(255, 170, 0, 0.1); border: 1px solid #ffaa00; padding: 15px; border-radius: 12px; margin-bottom: 20px; display: none; text-align: left; }
         .top-nav { position: relative; display: flex; justify-content: space-between; align-items: center; padding: 12px 20px 12px 75px; background: #000; border-bottom: 2px solid #222; }
-        #toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: #D4AF37; color: black; padding: 10px 25px; border-radius: 30px; display: none; z-index: 1000; font-weight: bold; font-size: 0.8rem; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .hidden { display: none; }
     </style>
 </head>
 <body>
 
     <nav class="top-nav">
         <div class="logo" style="color:var(--gold); font-family:'Goldman'; font-weight:bold; font-size:1.2rem;">NEXUS WALLET</div>
-        <div style="color: #00ff88; font-weight: bold; font-family: 'Goldman';">₱<span id="display-balance">0.00</span></div>
+        <div id="nav-bal" style="color: #00ff88; font-weight: bold; font-family: 'Goldman';">₱0.00</div>
     </nav>
 
     <div class="wallet-wrapper">
-        <div id="pending-container" class="pending-status">
-            <small style="color:#ffaa00; font-weight:bold; text-transform:uppercase; letter-spacing:1px;">Ticket Active</small>
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:5px;">
-                <span id="pending-amt" style="color:white; font-weight:bold; font-family:'Goldman';">₱0.00</span>
-                <span style="font-size:0.7rem; color:#888;" id="pending-bank">---</span>
-            </div>
-        </div>
         
         <div class="wallet-card">
-            <h3 class="gold-title">ARENA IDENTITY</h3>
-            <div class="id-box" onclick="copyUsername()">
-                <code id="user-id">---</code>
-            </div>
-            <p style="font-size: 0.6rem; color: #444; text-transform: uppercase;">Tap to copy your ID for Cash-In requests</p>
+            <div class="gold-title">AVAILABLE CREDITS <span onclick="toggleBlur()" style="cursor:pointer; color:#555;">👁️</span></div>
+            <div id="main-balance" class="balance-display" onclick="toggleBlur()">₱0.00</div>
+            <div id="user-id" style="font-size: 0.7rem; color: #444; margin-top: 10px; letter-spacing: 2px;">ID: ---</div>
         </div>
 
-        <div class="wallet-card">
-            <h3 class="gold-title">CASH-OUT REQUEST</h3>
-            
-            <div id="saved-profiles-container" class="saved-accounts">
+        <div class="wallet-tabs">
+            <div class="w-tab active" onclick="switchTab('transfer')">Withdraw</div>
+            <div id="tab-insights" class="w-tab hidden" onclick="switchTab('insights')">Revenue</div>
+            <div class="w-tab" onclick="switchTab('vault')">My Bank Vault</div>
+        </div>
+
+        <div id="panel-transfer" class="tab-panel">
+            <div id="pending-tracker" class="wallet-card" style="border-color: #ffaa00; display: none;">
+                <div class="gold-title" style="color:#ffaa00;">LIVE TRACKING</div>
+                <div class="timeline">
+                    <div class="step active" id="s1">Request Submitted</div>
+                    <div class="step" id="s2">Admin Verification</div>
+                    <div class="step" id="s3">Processing Payout</div>
+                    <div class="step" id="s4">Completed</div>
                 </div>
-
-            <div class="form-group">
-                <label>Channel</label>
-                <select id="w-bank">
-                    <option value="GCASH">GCASH</option>
-                    <option value="MAYA">MAYA</option>
-                    <option value="BDO">BDO</option>
-                    <option value="GOTYME">GOTYME</option>
-                </select>
             </div>
 
-            <div class="form-group">
-                <label>Account Holder Name</label>
-                <input type="text" id="w-name" placeholder="Full Name">
-            </div>
-
-            <div class="form-group">
-                <label>Account Number</label>
-                <input type="text" id="w-number" placeholder="09XX or Card #">
-            </div>
-
-            <div class="form-group">
-                <label>Amount</label>
-                <div class="chip-row">
-                    <div class="chip" onclick="setAmt(500)">₱500</div>
-                    <div class="chip" onclick="setAmt(1000)">₱1K</div>
-                    <div class="chip" onclick="setAmt(5000)">₱5K</div>
-                    <div class="chip" onclick="setAmt('MAX')">ALL</div>
+            <div class="wallet-card">
+                <h3 class="gold-title">OUTBOUND TRANSFER</h3>
+                <div class="form-group">
+                    <label>Quick Select Saved Method</label>
+                    <div class="vault-grid" id="quick-vault-list">
+                        </div>
                 </div>
-                <input type="number" id="w-amount" placeholder="Min: ₱100">
+                <div class="form-group">
+                    <label>Target Bank / Wallet</label>
+                    <select id="w-bank">
+                        <option value="GCASH">GCASH</option>
+                        <option value="MAYA">MAYA</option>
+                        <option value="BDO">BDO</option>
+                        <option value="GOTYME">GOTYME</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Transfer Amount</label>
+                    <input type="number" id="w-amount" placeholder="Min ₱100">
+                </div>
+                <button class="btn-withdraw" id="btn-submit-w" style="width:100%">SUBMIT WITHDRAWAL</button>
             </div>
-
-            <button class="btn-withdraw" id="btn-submit-w">SUBMIT WITHDRAWAL</button>
-            <p style="font-size: 0.6rem; color: #444; margin-top: 10px;">Submitting will save this account to your profiles.</p>
         </div>
 
-        <div class="wallet-card" style="border-color: #0084FF;">
-            <h3 class="gold-title" style="color:#0084FF;">GET CREDITS</h3>
-            <div class="form-group">
-                <label style="text-align:center;">I want to Cash-In:</label>
-                <input type="number" id="cashin-amt" placeholder="Enter desired amount" style="border-color: #0084FF33; text-align:center;">
+        <div id="panel-insights" class="tab-panel hidden">
+            <div class="wallet-card">
+                <h3 class="gold-title">EARNINGS SNAPSHOT</h3>
+                <div class="insight-row">
+                    <div class="insight-box"><label>Total Comm</label><span id="total-comm">₱0</span></div>
+                    <div class="insight-box"><label>Current Rate</label><span id="current-rate">0%</span></div>
+                </div>
+                <p style="font-size:0.6rem; color:#444; line-height:1.4;">Commissions are credited instantly to your main balance upon every downline bet.</p>
             </div>
-            <button onclick="requestCashIn()" style="background:#0084FF; color:white; width:100%; padding:15px; border-radius:10px; font-weight:bold; border:none; cursor:pointer; font-family:'Goldman';">REQUEST VIA FB</button>
         </div>
+
+        <div id="panel-vault" class="tab-panel hidden">
+            <div class="wallet-card">
+                <h3 class="gold-title">SAVE NEW METHOD</h3>
+                <input type="text" id="v-name" placeholder="Account Name" style="margin-bottom:10px;">
+                <input type="text" id="v-number" placeholder="Account Number" style="margin-bottom:10px;">
+                <button class="btn-withdraw" onclick="saveToVault()" style="background:#222; color:var(--gold); border:1px solid var(--gold);">SAVE TO VAULT</button>
+            </div>
+            <div id="vault-list-container">
+                </div>
+        </div>
+
     </div>
 
     <div id="toast">ACTION SUCCESSFUL</div>
@@ -116,7 +136,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
-        import { getFirestore, doc, onSnapshot, addDoc, collection, query, where, updateDoc, increment } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+        import { getFirestore, doc, onSnapshot, getDoc, addDoc, collection, query, where, updateDoc, increment } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
         import { injectMenu } from "/menu.js";
 
         const firebaseConfig = {
@@ -137,95 +157,114 @@
         injectMenu();
 
         let currentBal = 0;
-        let myUser = "";
+        let myData = null;
 
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 onSnapshot(doc(db, "users", user.uid), (snap) => {
-                    const d = snap.data();
-                    myUser = d.username;
-                    currentBal = d.balance || 0;
-                    document.getElementById('user-id').innerText = myUser.toUpperCase();
-                    document.getElementById('display-balance').innerText = currentBal.toLocaleString(undefined, {minimumFractionDigits: 2});
-                    loadSavedProfiles();
+                    myData = snap.data();
+                    currentBal = myData.balance || 0;
+                    document.getElementById('main-balance').innerText = `₱${currentBal.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
+                    document.getElementById('nav-bal').innerText = `₱${currentBal.toLocaleString()}`;
+                    document.getElementById('user-id').innerText = `ID: ${myData.username.toUpperCase()}`;
+                    
+                    // Show Insights if Agent
+                    if(myData.level <= 6) {
+                        document.getElementById('tab-insights').classList.remove('hidden');
+                        document.getElementById('total-comm').innerText = `₱${(myData.totalCommission || 0).toLocaleString()}`;
+                        document.getElementById('current-rate').innerText = `${myData.commissionRate}%`;
+                    }
                 });
 
+                // Live Tracking
                 onSnapshot(query(collection(db, "withdrawals"), where("uid", "==", user.uid), where("status", "==", "PENDING")), (snap) => {
-                    const container = document.getElementById('pending-container');
-                    if (!snap.empty) {
-                        const d = snap.docs[0].data();
-                        container.style.display = "block";
-                        document.getElementById('pending-amt').innerText = `₱${d.amount.toLocaleString()}`;
-                        document.getElementById('pending-bank').innerText = d.bank;
-                    } else { container.style.display = "none"; }
+                    const tracker = document.getElementById('pending-tracker');
+                    if(!snap.empty) {
+                        tracker.style.display = "block";
+                        // Simple logic: if it exists and is pending, it's at stage 2
+                        document.getElementById('s2').classList.add('active');
+                    } else { tracker.style.display = "none"; }
                 });
+
+                loadVault();
             } else { window.location.href = "/login/"; }
         });
 
-        // SAVED PROFILES LOGIC
-        function loadSavedProfiles() {
-            const profiles = JSON.parse(localStorage.getItem(`nexus_profiles_${myUser}`)) || [];
-            const container = document.getElementById('saved-profiles-container');
-            container.innerHTML = profiles.length ? "" : "<small style='color:#333'>No saved accounts</small>";
-            profiles.forEach((p, index) => {
-                const chip = document.createElement('div');
-                chip.className = 'acc-chip';
-                chip.innerText = `${p.bank}: ${p.number.slice(-4)}`;
-                chip.onclick = () => {
-                    document.getElementById('w-bank').value = p.bank;
-                    document.getElementById('w-name').value = p.name;
-                    document.getElementById('w-number').value = p.number;
-                    showToast("Account Loaded");
-                };
-                container.appendChild(chip);
+        // TABS LOGIC
+        window.switchTab = (tab) => {
+            document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
+            document.querySelectorAll('.w-tab').forEach(t => t.classList.remove('active'));
+            document.getElementById(`panel-${tab}`).classList.remove('hidden');
+            event.currentTarget.classList.add('active');
+        };
+
+        // SECURITY: BLUR
+        window.toggleBlur = () => {
+            document.getElementById('main-balance').classList.toggle('blurred');
+        };
+
+        // VAULT LOGIC
+        async function loadVault() {
+            const snap = await getDoc(doc(db, "users", auth.currentUser.uid));
+            const vault = snap.data().vault || [];
+            const quickList = document.getElementById('quick-vault-list');
+            const mainList = document.getElementById('vault-list-container');
+            quickList.innerHTML = ""; mainList.innerHTML = "";
+
+            vault.forEach((item, index) => {
+                const cardHtml = `
+                    <div class="vault-card" onclick="selectVaultItem('${item.bank}', '${item.name}', '${item.number}')">
+                        <small>${item.bank}</small>
+                        <span>${item.name}</span>
+                    </div>`;
+                quickList.innerHTML += cardHtml;
+                mainList.innerHTML += `
+                    <div class="wallet-card" style="margin-bottom:10px; padding:15px; text-align:left;">
+                        <div style="font-size:0.7rem; color:var(--gold); font-family:'Goldman';">${item.bank}</div>
+                        <div style="font-size:0.8rem; color:white;">${item.name} - ${item.number}</div>
+                    </div>`;
             });
         }
 
-        function saveProfile(bank, name, number) {
-            let profiles = JSON.parse(localStorage.getItem(`nexus_profiles_${myUser}`)) || [];
-            const exists = profiles.find(p => p.number === number);
-            if (!exists) {
-                profiles.push({ bank, name, number });
-                localStorage.setItem(`nexus_profiles_${myUser}`, JSON.stringify(profiles.slice(-3)));
-                loadSavedProfiles();
-            }
-        }
+        window.saveToVault = async () => {
+            const name = document.getElementById('v-name').value;
+            const num = document.getElementById('v-number').value;
+            const bank = document.getElementById('w-bank').value;
+            if(!name || !num) return alert("Fill all fields");
 
-        window.setAmt = (val) => {
-            document.getElementById('w-amount').value = (val === 'MAX') ? Math.floor(currentBal) : val;
+            const userRef = doc(db, "users", auth.currentUser.uid);
+            const snap = await getDoc(userRef);
+            const vault = snap.data().vault || [];
+            vault.push({ name, number: num, bank });
+            
+            await updateDoc(userRef, { vault });
+            showToast("VAULT UPDATED");
+            loadVault();
         };
 
-        window.requestCashIn = () => {
-            const amt = document.getElementById('cashin-amt').value || "0";
-            const msg = `Hi Agent! My Arena ID is ${myUser.toUpperCase()}. I want to Cash-In ₱${amt}. Please send instructions.`;
-            window.open(`https://m.me/YOUR_PAGE?text=${encodeURIComponent(msg)}`, '_blank');
+        window.selectVaultItem = (bank, name, num) => {
+            document.getElementById('w-bank').value = bank;
+            // Pre-filling invisible storage or just showing feedback
+            alert(`Selected ${name} (${bank}). Ready for withdrawal.`);
+            window.selectedAccount = { name, num, bank };
         };
 
         document.getElementById('btn-submit-w').onclick = async () => {
-            const bank = document.getElementById('w-bank').value;
-            const name = document.getElementById('w-name').value.trim();
-            const num = document.getElementById('w-number').value.trim();
             const amt = parseInt(document.getElementById('w-amount').value);
+            const acc = window.selectedAccount;
 
-            if (!name || !num || isNaN(amt) || amt < 100) return alert("Fill all fields correctly.");
-            if (amt > currentBal) return alert("Insufficient balance!");
+            if(!acc) return alert("Please select a saved method or add one in Vault.");
+            if(amt > currentBal || amt < 100) return alert("Invalid amount.");
 
-            if(confirm(`Confirm ₱${amt} Withdrawal? Credits will be locked.`)) {
-                try {
-                    await updateDoc(doc(db, "users", auth.currentUser.uid), { balance: increment(-amt) });
-                    await addDoc(collection(db, "withdrawals"), {
-                        uid: auth.currentUser.uid, username: myUser, bank, accountName: name, accountNumber: num, amount: amt, status: "PENDING", timestamp: new Date()
-                    });
-                    saveProfile(bank, name, num);
-                    showToast("Withdrawal Submitted!");
-                    setTimeout(() => location.reload(), 1500);
-                } catch (e) { alert("Submission error."); }
-            }
-        };
-
-        window.copyUsername = () => {
-            navigator.clipboard.writeText(myUser.toUpperCase());
-            showToast("ID Copied");
+            try {
+                await updateDoc(doc(db, "users", auth.currentUser.uid), { balance: increment(-amt) });
+                await addDoc(collection(db, "withdrawals"), {
+                    uid: auth.currentUser.uid, username: myData.username,
+                    bank: acc.bank, accountName: acc.name, accountNumber: acc.num,
+                    amount: amt, status: "PENDING", timestamp: new Date()
+                });
+                location.reload();
+            } catch (e) { console.error(e); }
         };
 
         function showToast(msg) {
