@@ -10,9 +10,8 @@
     <style>
         :root { --gold: #D4AF37; --green: #00ff88; --red: #ff4444; --panel-bg: #0f0f0f; }
         
-        body { background: #000; overflow-x: hidden; margin: 0; color: white; }
+        body { background: #000; overflow-x: hidden; margin: 0; color: white; -webkit-font-smoothing: antialiased; }
 
-        /* COMMAND NAV */
         .top-nav { 
             position: sticky; top: 0; z-index: 1000;
             display: flex; justify-content: space-between; align-items: center; 
@@ -27,103 +26,132 @@
             gap: 25px; padding: 0 15px; 
         }
 
-        /* ARENA VISUALS */
+        /* PREMIUM DISPLAY AREA */
         .display-area { 
             background: #050505; 
-            border-radius: 24px; border: 1px solid #222; 
+            border-radius: 28px; border: 1px solid #222; 
             height: 550px; display: flex; flex-direction: column; align-items: center; 
             justify-content: center; position: relative; overflow: hidden;
-            box-shadow: inset 0 0 100px rgba(0,0,0,1);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.8), inset 0 0 100px rgba(0,0,0,1);
+        }
+
+        /* Cyber Grid Background */
+        .grid-bg {
+            position: absolute; width: 200%; height: 200%;
+            background-image: 
+                linear-gradient(rgba(212, 175, 55, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(212, 175, 55, 0.05) 1px, transparent 1px);
+            background-size: 60px 60px;
+            transform: perspective(1000px) rotateX(60deg) translateY(-100px);
+            opacity: 0.5; z-index: 1; pointer-events: none;
         }
 
         #main-mult { 
-            font-family: 'Goldman'; font-size: 6rem; color: white; 
-            z-index: 10; text-shadow: 0 0 30px rgba(255,255,255,0.2); 
-            pointer-events: none; transform: translateY(-20px);
+            font-family: 'Goldman'; font-size: 7rem; color: white; 
+            z-index: 10; text-shadow: 0 0 40px rgba(255,255,255,0.15); 
+            pointer-events: none; transform: translateY(-30px);
+            transition: color 0.3s, transform 0.1s;
         }
-        #main-mult.crashed { color: var(--red); animation: shake 0.4s ease-in-out; }
+        #main-mult.crashed { color: var(--red); text-shadow: 0 0 50px rgba(255, 68, 68, 0.6); animation: glitch 0.2s infinite; }
         
         canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 5; }
 
-        /* GLASS CONTROL PANEL */
+        /* HUD ELEMENTS */
+        .hud-overlay { position: absolute; width: 100%; height: 100%; z-index: 6; pointer-events: none; padding: 30px; box-sizing: border-box; }
+        .hud-corner { position: absolute; width: 20px; height: 20px; border: 2px solid var(--gold); opacity: 0.3; }
+        .tl { top: 30px; left: 30px; border-right: 0; border-bottom: 0; }
+        .tr { top: 30px; right: 30px; border-left: 0; border-bottom: 0; }
+        .bl { bottom: 30px; left: 30px; border-right: 0; border-top: 0; }
+        .br { bottom: 30px; right: 30px; border-left: 0; border-top: 0; }
+
+        /* CONTROL PANEL */
         .control-panel { 
-            background: rgba(15, 15, 15, 0.8); padding: 30px; border-radius: 24px; 
-            border: 1px solid #333; display: flex; flex-direction: column; gap: 20px; 
-            backdrop-filter: blur(10px);
+            background: linear-gradient(145deg, #111, #080808); padding: 30px; border-radius: 28px; 
+            border: 1px solid #252525; display: flex; flex-direction: column; gap: 20px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
         
-        .input-group label { display: block; font-size: 0.65rem; color: #666; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 10px; font-weight: bold; }
+        .input-group label { display: block; font-size: 0.6rem; color: #555; text-transform: uppercase; letter-spacing: 2.5px; margin-bottom: 12px; font-weight: bold; }
         input { 
-            width: 100%; padding: 16px; background: #000; border: 1px solid #222; 
-            color: var(--gold); border-radius: 12px; outline: none; font-family: 'Goldman'; 
-            transition: 0.3s; box-sizing: border-box; font-size: 1.1rem;
+            width: 100%; padding: 18px; background: #000; border: 1px solid #333; 
+            color: var(--gold); border-radius: 14px; outline: none; font-family: 'Goldman'; 
+            transition: 0.3s; box-sizing: border-box; font-size: 1.2rem;
         }
-        input:focus { border-color: var(--gold); background: #050505; }
+        input:focus { border-color: var(--gold); box-shadow: 0 0 20px rgba(212, 175, 55, 0.15); }
 
         .btn-action { 
             width: 100%; padding: 22px; border-radius: 16px; border: none; 
             font-weight: bold; font-family: 'Goldman'; cursor: pointer; 
             text-transform: uppercase; transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
-            letter-spacing: 1.5px; font-size: 1rem;
+            letter-spacing: 2px; font-size: 1.1rem;
         }
         
-        .btn-bet { background: var(--gold); color: black; }
-        .btn-cashout { background: var(--green); color: black; display: none; }
-        .btn-waiting { background: #1a1a1a; color: #555; cursor: not-allowed; display: none; border: 1px solid #222; }
-        .btn-cashout span { display: block; font-size: 0.7rem; opacity: 0.9; margin-top: 5px; font-family: sans-serif; letter-spacing: 0; }
+        .btn-bet { background: var(--gold); color: black; box-shadow: 0 8px 0 #917725; }
+        .btn-bet:active { transform: translateY(4px); box-shadow: 0 4px 0 #917725; }
+        
+        .btn-cashout { background: var(--green); color: black; display: none; box-shadow: 0 8px 0 #008f4c; }
+        .btn-cashout:active { transform: translateY(4px); box-shadow: 0 4px 0 #008f4c; }
+        .btn-cashout span { display: block; font-size: 0.75rem; font-weight: bold; margin-top: 4px; color: rgba(0,0,0,0.6); }
+
+        .btn-waiting { background: #1a1a1a; color: #444; cursor: not-allowed; display: none; border: 1px solid #222; }
 
         .history-bar { 
-            display: flex; gap: 8px; overflow-x: auto; padding: 15px; 
-            background: rgba(0,0,0,0.5); border-radius: 12px; border: 1px solid #1a1a1a; 
+            display: flex; gap: 10px; overflow-x: auto; padding: 15px; 
+            background: rgba(0,0,0,0.4); border-radius: 16px; border: 1px solid #1a1a1a; 
             scrollbar-width: none; margin-top: 10px;
         }
-        .hist-item { padding: 6px 12px; border-radius: 6px; font-size: 0.75rem; font-family: 'Goldman'; font-weight: bold; background: #111; flex-shrink: 0; border: 1px solid #222; }
-        .hist-green { color: var(--green); border-color: rgba(0,255,136,0.1); }
-        .hist-red { color: var(--red); border-color: rgba(255,68,68,0.1); }
+        .hist-item { padding: 8px 14px; border-radius: 10px; font-size: 0.8rem; font-family: 'Goldman'; font-weight: bold; background: #111; flex-shrink: 0; border: 1px solid #222; transition: 0.3s; }
+        .hist-green { color: var(--green); border-color: rgba(0, 255, 136, 0.2); }
+        .hist-red { color: var(--red); border-color: rgba(255, 68, 68, 0.2); }
 
-        @keyframes shake {
-            0%, 100% { transform: translate(0, -20px); }
-            25% { transform: translate(-8px, -15px); }
-            50% { transform: translate(8px, -25px); }
-            75% { transform: translate(-8px, -20px); }
+        @keyframes glitch {
+            0% { transform: translate(-32px, -30px); }
+            50% { transform: translate(-28px, -28px); }
+            100% { transform: translate(-30px, -32px); }
         }
 
         @media (max-width: 900px) { 
             .crash-layout { grid-template-columns: 1fr; } 
-            .display-area { height: 400px; }
+            .display-area { height: 420px; }
+            #main-mult { font-size: 4.5rem; }
         }
     </style>
 </head>
 <body>
 
     <nav class="top-nav">
-        <div class="logo" style="color:var(--gold); font-family:'Goldman'; font-weight:bold; font-size:1.4rem; letter-spacing:2px;">NEXUS</div>
-        <div style="color: var(--green); font-weight: bold; font-family: 'Goldman'; font-size: 1.1rem;" id="display-balance">₱0.00</div>
+        <div class="logo" style="color:var(--gold); font-family:'Goldman'; font-weight:bold; font-size:1.4rem; letter-spacing:3px;">NEXUS</div>
+        <div style="color: var(--green); font-weight: bold; font-family: 'Goldman'; font-size: 1.2rem;" id="display-balance">₱0.00</div>
     </nav>
 
     <div class="crash-layout">
         <div class="control-panel">
             <div class="input-group">
-                <label>Bet Amount</label>
+                <label>Investment Value</label>
                 <input type="number" id="bet-amount" value="100" min="10" step="10">
             </div>
             <div class="input-group">
-                <label>Auto Cashout</label>
+                <label>Automatic Extraction</label>
                 <input type="number" id="auto-cashout" value="2.00" step="0.1" min="1.1">
             </div>
 
-            <button id="btn-bet" class="btn-action btn-bet" onclick="placeBet()">Place Bet</button>
+            <button id="btn-bet" class="btn-action btn-bet" onclick="placeBet()">Initiate Round</button>
             <button id="btn-cashout" class="btn-action btn-cashout" onclick="cashout()">
-                CASHOUT
-                <span id="cashout-preview">SECURE ₱0.00</span>
+                EXTRACT
+                <span id="cashout-preview">₱0.00</span>
             </button>
-            <button id="btn-waiting" class="btn-action btn-waiting">Awaiting Round...</button>
+            <button id="btn-waiting" class="btn-action btn-waiting">Syncing Network...</button>
 
             <div class="history-bar" id="history"></div>
         </div>
 
         <div class="display-area">
-            <div id="status-text" style="color: var(--gold); font-size: 0.65rem; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 4px; position: absolute; top: 30px; font-weight: bold; z-index: 10; opacity: 0.6;">SYSTEM READY</div>
+            <div class="grid-bg"></div>
+            <div class="hud-overlay">
+                <div class="hud-corner tl"></div><div class="hud-corner tr"></div>
+                <div class="hud-corner bl"></div><div class="hud-corner br"></div>
+            </div>
+            <div id="status-text" style="color: var(--gold); font-size: 0.6rem; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 5px; position: absolute; top: 35px; font-weight: bold; z-index: 10; opacity: 0.5;">HUB CONNECTED</div>
             <div id="main-mult">1.00x</div>
             <canvas id="crash-canvas"></canvas>
         </div>
@@ -176,7 +204,7 @@
             updateButtons();
             const timer = setInterval(() => {
                 countdown -= 0.1;
-                document.getElementById('status-text').innerText = `NEXT ROUND IN ${countdown.toFixed(1)}S`;
+                document.getElementById('status-text').innerText = `SYNCING NEXT IN ${countdown.toFixed(1)}S`;
                 ctx.clearRect(0,0, canvas.width, canvas.height);
                 if (countdown <= 0) { clearInterval(timer); runRound(); }
             }, 100);
@@ -184,11 +212,9 @@
 
         function runRound() {
             gameStatus = "RUNNING";
-            document.getElementById('status-text').innerText = "LIVE CLIMB";
-            
-            // House Edge Management: 7% Instant Crash
-            if (Math.random() < 0.07) crashPoint = 1.00;
-            else crashPoint = parseFloat((Math.max(1.01, 0.94 / (1 - Math.random()))).toFixed(2));
+            document.getElementById('status-text').innerText = "CLIMBING...";
+            if (Math.random() < 0.08) crashPoint = 1.00;
+            else crashPoint = parseFloat((Math.max(1.01, 0.93 / (1 - Math.random()))).toFixed(2));
 
             if (betPlacedForNext) { hasBet = true; betPlacedForNext = false; }
             updateButtons();
@@ -199,48 +225,45 @@
                 currentMult = Math.pow(1.08, elapsed); 
                 document.getElementById('main-mult').innerText = currentMult.toFixed(2) + "x";
                 
-                if(hasBet) document.getElementById('cashout-preview').innerText = `SECURE ₱${Math.floor(myBetAmt * currentMult).toLocaleString()}`;
+                if(hasBet) document.getElementById('cashout-preview').innerText = `PAYOUT: ₱${Math.floor(myBetAmt * currentMult).toLocaleString()}`;
 
-                // --- LINE DRAWING LOGIC ---
                 ctx.clearRect(0,0, canvas.width, canvas.height);
                 
-                const padding = 60;
+                const padding = 80;
                 const maxW = canvas.width - padding * 2;
                 const maxH = canvas.height - padding * 2;
                 
-                // Drawing the Progress Line
+                // LINE LOGIC
                 ctx.beginPath();
                 ctx.lineWidth = 6;
                 ctx.strokeStyle = '#D4AF37';
                 ctx.lineCap = 'round';
-                ctx.lineJoin = 'round';
-                ctx.shadowBlur = 15;
-                ctx.shadowColor = 'rgba(212,175,55,0.5)';
+                ctx.shadowBlur = 25;
+                ctx.shadowColor = 'rgba(212, 175, 55, 0.6)';
                 
                 ctx.moveTo(padding, canvas.height - padding);
                 
-                for(let i=0; i <= elapsed; i+=0.1) {
-                    const scaleX = Math.min(i / 10, 1);
-                    const scaleY = (Math.pow(1.08, i) - 1) / (Math.pow(1.08, elapsed) + 1);
+                for(let i=0; i <= elapsed; i+=0.05) {
+                    const scaleX = Math.min(i / 12, 1);
+                    const scaleY = (Math.pow(1.08, i) - 1) / (Math.pow(1.08, elapsed) + 1.5);
                     const lx = padding + (maxW * scaleX);
                     const ly = (canvas.height - padding) - (maxH * scaleY);
                     ctx.lineTo(lx, ly);
                 }
                 ctx.stroke();
 
-                // Draw end point dot
-                const currentX = padding + (maxW * Math.min(elapsed / 10, 1));
-                const currentY = (canvas.height - padding) - (maxH * ((currentMult - 1) / (currentMult + 1)));
-                ctx.beginPath();
+                // Dynamic Terminal Dot
+                const currentX = padding + (maxW * Math.min(elapsed / 12, 1));
+                const currentY = (canvas.height - padding) - (maxH * ((currentMult - 1) / (currentMult + 1.5)));
+                ctx.shadowBlur = 40;
                 ctx.fillStyle = "#fff";
-                ctx.arc(currentX, currentY, 5, 0, Math.PI * 2);
-                ctx.fill();
+                ctx.beginPath(); ctx.arc(currentX, currentY, 7, 0, Math.PI * 2); ctx.fill();
 
                 const auto = parseFloat(document.getElementById('auto-cashout').value);
                 if (hasBet && !isNaN(auto) && auto > 1 && currentMult >= auto) cashout();
 
                 if (currentMult >= crashPoint) { clearInterval(tick); doCrash(); }
-            }, 40);
+            }, 30);
         }
 
         function doCrash() {
@@ -248,7 +271,7 @@
             hasBet = false;
             document.getElementById('main-mult').classList.add('crashed');
             document.getElementById('main-mult').innerText = crashPoint.toFixed(2) + "x";
-            document.getElementById('status-text').innerText = "CRASHED";
+            document.getElementById('status-text').innerText = "NETWORK CRASHED";
             
             addHistory(crashPoint);
             updateButtons();
@@ -262,7 +285,7 @@
 
         window.placeBet = async () => {
             const amt = parseInt(document.getElementById('bet-amount').value);
-            if (amt > balance || amt < 10) return alert("Insufficient balance");
+            if (amt > balance || amt < 10) return alert("Verify Balance");
             await updateDoc(doc(db, "users", auth.currentUser.uid), { balance: increment(-amt) });
             myBetAmt = amt;
             if (gameStatus === "WAITING") hasBet = true;
