@@ -37,13 +37,21 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        const TIERS = ["ADMIN", "OPERATOR", "SUB_OPERATOR", "INCO", "MASTER_AGENT", "SUB_AGENT", "PLAYER"];
+        // Defined Hierarchy with corresponding Levels
+        const TIERS = [
+            { role: "ADMIN", level: 1 },
+            { role: "OPERATOR", level: 2 },
+            { role: "SUB_OPERATOR", level: 3 },
+            { role: "INCO", level: 4 },
+            { role: "MASTER_AGENT", level: 5 },
+            { role: "SUB_AGENT", level: 6 },
+            { role: "PLAYER", level: 7 }
+        ];
 
         // 1. URL REFERRAL DETECTION
         const urlParams = new URLSearchParams(window.location.search);
         const referrerUid = urlParams.get('ref');
 
-        // Check if there is a referral and show status
         async function checkReferral() {
             if (referrerUid) {
                 try {
@@ -66,47 +74,52 @@
             if(pass.length < 6) return alert("Password must be at least 6 characters.");
 
             try {
-                // Determine Upline and Role Logic
+                // Determine Upline, Role, and Level
                 let uplineId = "SYSTEM";
                 let uplinePath = [];
                 let assignedRole = "PLAYER";
+                let assignedLevel = 7;
 
                 if (referrerUid) {
                     const refSnap = await getDoc(doc(db, "users", referrerUid));
                     if (refSnap.exists()) {
                         const refData = refSnap.data();
                         uplineId = referrerUid;
-                        // Inherit path and append the current referrer
+                        
+                        // Path inheritance: All parents + the person who invited them
                         uplinePath = [...(refData.uplinePath || []), referrerUid];
                         
-                        // Set role to one level below referrer
-                        const refLevel = TIERS.indexOf(refData.role);
-                        assignedRole = TIERS[refLevel + 1] || "PLAYER";
+                        // Logic: Find current index in TIERS and move down by 1
+                        const currentTierIndex = TIERS.findIndex(t => t.role === refData.role);
+                        const nextTier = TIERS[currentTierIndex + 1] || TIERS[TIERS.length - 1];
+                        
+                        assignedRole = nextTier.role;
+                        assignedLevel = nextTier.level;
                     }
                 }
 
-                // Convert username to a fake email for Firebase Auth compatibility
                 const fakeEmail = `${user}@nexus-sabong.com`;
                 const userCredential = await createUserWithEmailAndPassword(auth, fakeEmail, pass);
                 
-                // Save profile with full hierarchy data
+                // FINAL DATABASE SCHEMA
                 await setDoc(doc(db, "users", userCredential.user.uid), {
                     uid: userCredential.user.uid,
                     username: user,
                     role: assignedRole,
-                    commissionRate: 0, // Upline will set this later
+                    level: assignedLevel, // CRITICAL: Used by menu.js for admin visibility
+                    commissionRate: 0, 
                     uplineId: uplineId,
-                    uplinePath: uplinePath,
+                    uplinePath: uplinePath, // CRITICAL: Used by payout engine for spreads
                     balance: 0,
                     totalTurnover: 0,
-                    isAdmin: false,
+                    isAdmin: (assignedLevel === 1), // Legacy support
                     createdAt: new Date()
                 });
 
                 window.location.href = "/";
             } catch (error) { 
                 console.error(error);
-                alert("Username already taken or registration error."); 
+                alert("Username taken or error during registration."); 
             }
         };
     </script>
