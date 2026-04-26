@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Management Suite | NEXUS</title>
     <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="/menu.css">
     <style>
         .admin-grid { display: grid; grid-template-columns: 1fr 350px; gap: 20px; max-width: 1200px; margin: 20px auto; padding: 0 20px; }
         .insight-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
@@ -15,9 +16,7 @@
         .panel { background: #111; border-radius: 15px; border: 1px solid #333; padding: 20px; margin-bottom: 20px; }
         .panel-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #222; margin-bottom: 15px; padding-bottom: 10px; }
         
-        /* WITHDRAWAL TICKETS */
         .w-request { background: #000; padding: 15px; border-radius: 10px; border-left: 4px solid var(--gold); margin-bottom: 12px; }
-        .w-details { font-size: 0.8rem; color: #ccc; margin-top: 5px; line-height: 1.4; }
         .w-actions { display: flex; gap: 10px; margin-top: 12px; }
         .btn-sm { padding: 8px 12px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 0.7rem; }
         .btn-approve { background: #00ff88; color: black; }
@@ -37,68 +36,58 @@
 <body>
 
     <nav class="top-nav">
-        <div class="logo" style="color:var(--gold); font-family:'Goldman';">NEXUS ADMIN</div>
-        <div style="color: #00ff88; font-size: 0.8rem;">● SYSTEM ONLINE</div>
+        <div class="logo" style="color:var(--gold); font-family:'Goldman';">NEXUS MANAGEMENT</div>
+        <div id="session-status" style="color: #00ff88; font-size: 0.8rem;">● TIER VERIFIED</div>
     </nav>
 
     <div class="admin-grid">
         <div class="main-admin">
             
             <div class="insight-row">
-                <div class="insight-card"><h4>House Bank</h4><span class="val" id="stat-total-bank">₱0</span></div>
-                <div class="insight-card"><h4>Active Players</h4><span class="val" id="stat-players">0</span></div>
-                <div class="insight-card"><h4>Pending W.</h4><span class="val" id="stat-pending-w" style="color:#ffaa00;">₱0</span></div>
+                <div class="insight-card"><h4>System Float</h4><span class="val" id="stat-total-bank">₱0</span></div>
+                <div class="insight-card"><h4>Your Downlines</h4><span class="val" id="stat-players">0</span></div>
+                <div class="insight-card"><h4>Pending Cash-Out</h4><span class="val" id="stat-pending-w" style="color:#ffaa00;">₱0</span></div>
             </div>
 
-            <div class="panel">
+            <div class="panel" id="withdrawal-panel">
                 <div class="panel-header">
-                    <h3 style="margin:0; color: var(--gold);">WITHDRAWAL REQUESTS</h3>
-                    <span class="text-muted" id="w-count">0 PENDING</span>
+                    <h3 style="margin:0; color: var(--gold);">WITHDRAWAL TICKETS</h3>
+                    <span id="w-count" style="color:#888;">0 PENDING</span>
                 </div>
                 <div id="withdrawal-list">
-                    <p style="text-align:center; color:#444; padding:20px;">No pending withdrawals.</p>
+                    <p style="text-align:center; color:#444; padding:20px;">Restricted to System Admin.</p>
                 </div>
             </div>
 
             <div class="panel">
-                <div class="panel-header">
-                    <h3 style="margin:0; color: var(--gold);">MASTER TRANSACTION LOG</h3>
-                </div>
+                <div class="panel-header"><h3 style="margin:0; color: var(--gold);">RECENT TRANSACTIONS</h3></div>
                 <table class="log-table">
-                    <thead><tr><th>Time</th><th>User</th><th>Type</th><th>Amount</th></tr></thead>
+                    <thead><tr><th>Time</th><th>Target</th><th>Type</th><th>Amount</th></tr></thead>
                     <tbody id="master-log-list"></tbody>
-                </table>
-            </div>
-
-            <div class="panel">
-                <div class="panel-header"><h3 style="margin:0; color: var(--gold);">LIVE BETS</h3></div>
-                <table class="log-table">
-                    <thead><tr><th>User</th><th>Side</th><th>Bet</th><th>Status</th><th>Profit</th></tr></thead>
-                    <tbody id="play-history-list"></tbody>
                 </table>
             </div>
         </div>
 
         <div class="sidebar-admin">
-            <div class="panel" style="border: 1px solid var(--gold);">
-                <h3 style="margin:0; color: var(--gold); margin-bottom:10px;">FIGHT CONTROL</h3>
+            <div class="panel" id="fight-control-panel" style="border: 1px solid var(--gold); display:none;">
+                <h3 style="margin:0; color: var(--gold); margin-bottom:10px;">GLOBAL SETTLEMENT</h3>
                 <div style="display: grid; grid-template-columns: 1fr; gap: 8px;">
-                    <button onclick="settleFight('MERON')" style="background:#ff4444; color:white; padding:12px; border:none; border-radius:5px; font-weight:bold; cursor:pointer;">MERON</button>
-                    <button onclick="settleFight('WALA')" style="background:#4444ff; color:white; padding:12px; border:none; border-radius:5px; font-weight:bold; cursor:pointer;">WALA</button>
-                    <button onclick="settleFight('DRAW')" style="background:#333; color:white; padding:12px; border:none; border-radius:5px; font-weight:bold; cursor:pointer;">DRAW</button>
+                    <button onclick="settleFight('MERON')" style="background:#ff4444; color:white; padding:12px; border:none; border-radius:5px; font-weight:bold; cursor:pointer;">MERON WINS</button>
+                    <button onclick="settleFight('WALA')" style="background:#4444ff; color:white; padding:12px; border:none; border-radius:5px; font-weight:bold; cursor:pointer;">WALA WINS</button>
+                    <button onclick="settleFight('DRAW')" style="background:#333; color:white; padding:12px; border:none; border-radius:5px; font-weight:bold; cursor:pointer;">CANCEL / DRAW</button>
                 </div>
             </div>
 
             <div class="panel search-box">
-                <h3 style="margin-top:0; font-size: 1rem; color: var(--gold);">CASH-IN TOOL</h3>
-                <input type="text" id="target-username" placeholder="Username">
-                <button class="btn-main btn-dark" id="btn-check" style="width:100%; margin-bottom:10px; background:#222; color:white; padding:10px; border:none; border-radius:5px; cursor:pointer;">SEARCH</button>
+                <h3 style="margin-top:0; font-size: 1rem; color: var(--gold);">CREDIT LOADER</h3>
+                <input type="text" id="target-username" placeholder="Downline Username">
+                <button onclick="checkUser()" style="width:100%; margin-bottom:10px; background:#222; color:white; padding:10px; border:none; border-radius:5px; cursor:pointer;">SEARCH USER</button>
                 <div id="player-preview" style="display:none; background:#0a0a0a; padding:10px; border-radius:5px; margin-bottom:15px; border-left:3px solid var(--gold);">
                     <span id="res-name" style="font-weight:bold; color:white;">---</span><br>
                     <span id="res-bal" style="color:#00ff88; font-weight:bold;">₱0</span>
                 </div>
-                <input type="number" id="load-amt" placeholder="Amount">
-                <button class="btn-main btn-gold" id="btn-confirm" style="width:100%; background:var(--gold); padding:15px; border:none; border-radius:5px; font-weight:bold; cursor:pointer;">SEND CREDITS</button>
+                <input type="number" id="load-amt" placeholder="Amount (₱)">
+                <button onclick="confirmLoad()" style="width:100%; background:var(--gold); padding:15px; border:none; border-radius:5px; font-weight:bold; cursor:pointer;">LOAD CREDITS</button>
             </div>
         </div>
     </div>
@@ -107,6 +96,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
         import { getFirestore, doc, getDoc, getDocs, updateDoc, increment, collection, query, where, orderBy, limit, onSnapshot, addDoc } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+        import { injectMenu } from "/menu.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCBvOw8HrMhZD0aYSHqFdE196ZITdYBU3Q",
@@ -121,30 +111,55 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
+        window.firebaseAuth = auth;
+        window.firebaseDb = db;
+        injectMenu();
+
+        let myTierData = null;
         let activePlayerId = null;
 
         onAuthStateChanged(auth, async (user) => {
             if (user) {
-                const adminSnap = await getDoc(doc(db, "users", user.uid));
-                if (adminSnap.exists() && adminSnap.data().isAdmin) {
-                    initDashboard();
+                const snap = await getDoc(doc(db, "users", user.uid));
+                if (snap.exists() && snap.data().level <= 6) {
+                    myTierData = snap.data();
+                    initManagement();
                 } else { window.location.href = "/"; }
             } else { window.location.href = "/login/"; }
         });
 
-        function initDashboard() {
-            // Stats
-            onSnapshot(collection(db, "users"), (snap) => {
+        function initManagement() {
+            // Stats based on hierarchy (Show only your direct downlines for Levels 2-6)
+            const downlineQuery = query(collection(db, "users"), where("uplineId", "==", auth.currentUser.uid));
+            onSnapshot(downlineQuery, (snap) => {
                 let total = 0;
                 document.getElementById('stat-players').innerText = snap.size;
                 snap.forEach(u => total += (u.data().balance || 0));
                 document.getElementById('stat-total-bank').innerText = "₱" + total.toLocaleString();
             });
 
-            // Withdrawal Listener (Simplified Query to avoid index issues)
+            // Global Controls for Admin (Level 1)
+            if (myTierData.level === 1) {
+                document.getElementById('fight-control-panel').style.display = "block";
+                loadWithdrawals();
+            }
+
+            // Transaction Logs (Only show logs involving the current Agent)
+            const logQ = query(collection(db, "wallet_logs"), where("uid", "==", auth.currentUser.uid), orderBy("timestamp", "desc"), limit(20));
+            onSnapshot(logQ, (snap) => {
+                const l = document.getElementById('master-log-list');
+                l.innerHTML = "";
+                snap.forEach(doc => {
+                    const d = doc.data();
+                    const time = d.timestamp?.toDate().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) || '--:--';
+                    l.innerHTML += `<tr><td>${time}</td><td>${d.fromUser || d.toUser || 'System'}</td><td class="type-cashin">${d.type}</td><td style="color:#00ff88;">₱${d.amount.toLocaleString()}</td></tr>`;
+                });
+            });
+        }
+
+        function loadWithdrawals() {
             onSnapshot(query(collection(db, "withdrawals"), where("status", "==", "PENDING")), (snap) => {
                 const list = document.getElementById('withdrawal-list');
-                const statPending = document.getElementById('stat-pending-w');
                 let totalP = 0;
                 list.innerHTML = snap.empty ? '<p style="text-align:center; color:#444; padding:20px;">No pending withdrawals.</p>' : '';
                 document.getElementById('w-count').innerText = snap.size + " PENDING";
@@ -156,101 +171,101 @@
                         <div class="w-request">
                             <strong style="color:var(--gold)">${d.username.toUpperCase()}</strong> 
                             <span style="float:right; font-weight:bold; color:#00ff88;">₱${d.amount.toLocaleString()}</span>
-                            <div class="w-details">
-                                BANK: ${d.bank} | NAME: ${d.accountName}<br>
-                                ACCT: ${d.accountNumber}
-                            </div>
                             <div class="w-actions">
-                                <button class="btn-sm btn-approve" onclick="handleWithdraw('${req.id}', 'APPROVED')">PAID</button>
+                                <button class="btn-sm btn-approve" onclick="handleWithdraw('${req.id}', 'APPROVED')">MARK PAID</button>
                                 <button class="btn-sm btn-reject" onclick="handleWithdraw('${req.id}', 'REJECTED', '${d.uid}', ${d.amount})">REJECT</button>
                             </div>
                         </div>`;
                 });
-                statPending.innerText = "₱" + totalP.toLocaleString();
-            });
-
-            // Master Logs Listener
-            onSnapshot(query(collection(db, "logs"), orderBy("timestamp", "desc"), limit(15)), (snap) => {
-                const l = document.getElementById('master-log-list');
-                l.innerHTML = "";
-                snap.forEach(doc => {
-                    const d = doc.data();
-                    const time = d.timestamp?.toDate().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) || '--:--';
-                    l.innerHTML += `<tr><td>${time}</td><td>${d.toUsername}</td><td class="type-cashin">CASH-IN</td><td style="color:#00ff88;">+₱${d.amount}</td></tr>`;
-                });
-            });
-
-            // Play History
-            onSnapshot(query(collection(db, "bets"), orderBy("timestamp", "desc"), limit(10)), (snap) => {
-                const h = document.getElementById('play-history-list');
-                h.innerHTML = "";
-                snap.forEach(b => {
-                    const d = b.data();
-                    const statusClass = d.status.toLowerCase();
-                    h.innerHTML += `<tr><td>${d.username}</td><td>${d.side}</td><td>₱${d.amount}</td><td class="${statusClass}">${d.status}</td><td>${d.status==='WIN' ? '+₱'+(d.payout-d.amount) : '---'}</td></tr>`;
-                });
+                document.getElementById('stat-pending-w').innerText = "₱" + totalP.toLocaleString();
             });
         }
 
-        window.handleWithdraw = async (id, status, pUid, amt) => {
-            if(!confirm(`Mark as ${status}?`)) return;
-            try {
-                if(status === 'REJECTED') {
-                    await updateDoc(doc(db, "users", pUid), { balance: increment(amt) });
-                }
-                await updateDoc(doc(db, "withdrawals", id), { status: status });
-                alert("Success");
-            } catch (e) { alert("Error"); }
-        };
-
         window.checkUser = async () => {
-            const user = document.getElementById('target-username').value.trim().toLowerCase();
-            const q = query(collection(db, "users"), where("username", "==", user));
+            const username = document.getElementById('target-username').value.trim().toLowerCase();
+            const q = query(collection(db, "users"), where("username", "==", username));
             const snap = await getDocs(q);
-            if(!snap.empty) {
+            if (!snap.empty) {
                 const p = snap.docs[0];
+                const pData = p.data();
+                
+                // Security check: Can only load credits to your direct downlines
+                if (pData.uplineId !== auth.currentUser.uid && myTierData.level !== 1) {
+                    return alert("You can only load credits to your direct downlines.");
+                }
+
                 activePlayerId = p.id;
-                document.getElementById('res-name').innerText = p.data().username.toUpperCase();
-                document.getElementById('res-bal').innerText = "₱" + (p.data().balance || 0).toLocaleString();
+                document.getElementById('res-name').innerText = pData.username.toUpperCase();
+                document.getElementById('res-bal').innerText = "₱" + (pData.balance || 0).toLocaleString();
                 document.getElementById('player-preview').style.display = "block";
             } else { alert("User not found."); }
         };
 
         window.confirmLoad = async () => {
             const amt = parseInt(document.getElementById('load-amt').value);
-            if(!activePlayerId || isNaN(amt)) return alert("Select user and amount.");
-            if(confirm(`Send ₱${amt}?`)) {
-                await updateDoc(doc(db, "users", activePlayerId), { balance: increment(amt) });
-                await addDoc(collection(db, "logs"), { 
-                    agent: auth.currentUser.uid, 
-                    toUsername: document.getElementById('res-name').innerText, 
-                    amount: amt, 
-                    timestamp: new Date() 
-                });
-                alert("Success");
-                document.getElementById('load-amt').value = "";
+            if (!activePlayerId || isNaN(amt)) return alert("Select user and amount.");
+            
+            // Check if Agent has enough balance to load (If Tier 2-6)
+            if (myTierData.level > 1 && myTierData.balance < amt) {
+                return alert("Insufficient commission balance to load credits.");
+            }
+
+            if (confirm(`Send ₱${amt} to ${document.getElementById('res-name').innerText}?`)) {
+                try {
+                    // Deduct from Agent, Add to Player
+                    if (myTierData.level > 1) {
+                        await updateDoc(doc(db, "users", auth.currentUser.uid), { balance: increment(-amt) });
+                    }
+                    await updateDoc(doc(db, "users", activePlayerId), { balance: increment(amt) });
+                    
+                    // Log the transaction
+                    await addDoc(collection(db, "wallet_logs"), { 
+                        uid: auth.currentUser.uid,
+                        type: "LOAD",
+                        toUser: document.getElementById('res-name').innerText, 
+                        amount: amt, 
+                        timestamp: new Date() 
+                    });
+                    
+                    alert("Credit Load Successful");
+                    location.reload();
+                } catch (e) { alert("Transfer failed."); }
             }
         };
 
         window.settleFight = async (winner) => {
-            const fightId = "125";
-            if(!confirm(`Declare ${winner} winner?`)) return;
-            const q = query(collection(db, "bets"), where("fightId", "==", fightId), where("status", "==", "PENDING"));
+            if (myTierData.level !== 1) return alert("Unauthorized.");
+            if (!confirm(`Settle fight as ${winner}?`)) return;
+            
+            const q = query(collection(db, "bets"), where("status", "==", "PENDING"));
             const snap = await getDocs(q);
+            
             for (const b of snap.docs) {
                 const bd = b.data();
-                if(bd.side === winner) {
+                const userRef = doc(db, "users", bd.uid);
+                if (bd.side === winner) {
                     const pay = Math.floor(bd.amount * 1.9);
-                    await updateDoc(doc(db, "users", bd.uid), { balance: increment(pay) });
+                    await updateDoc(userRef, { balance: increment(pay) });
                     await updateDoc(doc(db, "bets", b.id), { status: "WIN", payout: pay });
-                } else if(winner === "DRAW") {
-                    await updateDoc(doc(db, "users", bd.uid), { balance: increment(bd.amount) });
+                } else if (winner === "DRAW") {
+                    await updateDoc(userRef, { balance: increment(bd.amount) });
                     await updateDoc(doc(db, "bets", b.id), { status: "DRAW", payout: bd.amount });
                 } else {
                     await updateDoc(doc(db, "bets", b.id), { status: "LOSS", payout: 0 });
                 }
             }
-            alert("Fight Settled.");
+            alert("All bets settled successfully.");
+        };
+
+        window.handleWithdraw = async (id, status, pUid, amt) => {
+            if (!confirm(`Mark as ${status}?`)) return;
+            try {
+                if (status === 'REJECTED') {
+                    await updateDoc(doc(db, "users", pUid), { balance: increment(amt) });
+                }
+                await updateDoc(doc(db, "withdrawals", id), { status: status });
+                alert("Success");
+            } catch (e) { alert("Error"); }
         };
     </script>
 </body>
