@@ -10,73 +10,109 @@
     <style>
         :root { --gold: #D4AF37; --green: #00ff88; --red: #ff4444; --panel-bg: #0f0f0f; }
         
-        body { background: #000; overflow: hidden; margin: 0; }
+        body { background: #000; overflow-x: hidden; margin: 0; color: white; }
 
+        /* COMMAND NAV */
         .top-nav { 
             position: sticky; top: 0; z-index: 1000;
             display: flex; justify-content: space-between; align-items: center; 
             padding: 12px 20px 12px 75px;
-            background: rgba(0,0,0,0.9); border-bottom: 2px solid #222; 
-            backdrop-filter: blur(10px);
+            background: rgba(0,0,0,0.9); border-bottom: 1px solid #222; 
+            backdrop-filter: blur(15px);
         }
 
         .crash-layout { 
-            max-width: 1100px; margin: 20px auto; 
-            display: grid; grid-template-columns: 340px 1fr; 
-            gap: 20px; padding: 0 15px; 
+            max-width: 1200px; margin: 20px auto; 
+            display: grid; grid-template-columns: 360px 1fr; 
+            gap: 25px; padding: 0 15px; 
         }
 
-        /* DYNAMIC ARENA */
+        /* COMMAND CENTER VISUALS */
         .display-area { 
-            background: radial-gradient(circle at bottom right, #1a1a1a 0%, #050505 100%); 
-            border-radius: 30px; border: 1px solid #222; 
-            height: 500px; display: flex; flex-direction: column; align-items: center; 
+            background: radial-gradient(circle at center, #151515 0%, #000 100%); 
+            border-radius: 24px; border: 1px solid #222; 
+            height: 550px; display: flex; flex-direction: column; align-items: center; 
             justify-content: center; position: relative; overflow: hidden;
             box-shadow: inset 0 0 100px rgba(0,0,0,1);
         }
 
-        #main-mult { 
-            font-family: 'Goldman'; font-size: 5.5rem; color: white; 
-            z-index: 10; text-shadow: 0 0 30px rgba(0,0,0,0.5); 
-            pointer-events: none;
+        /* Perspective Grid */
+        .display-area::before {
+            content: ''; position: absolute; width: 200%; height: 200%;
+            background-image: linear-gradient(#1a1a1a 1px, transparent 1px), linear-gradient(90deg, #1a1a1a 1px, transparent 1px);
+            background-size: 50px 50px; transform: perspective(500px) rotateX(60deg);
+            bottom: -50%; opacity: 0.3; pointer-events: none;
         }
-        #main-mult.crashed { color: var(--red); animation: shake 0.3s ease-in-out; }
+
+        #main-mult { 
+            font-family: 'Goldman'; font-size: 6rem; color: white; 
+            z-index: 10; text-shadow: 0 0 30px rgba(255,255,255,0.2); 
+            pointer-events: none; transform: translateY(-20px);
+        }
+        #main-mult.crashed { color: var(--red); animation: shake 0.4s ease-in-out; }
         
         canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 5; }
 
-        /* CONTROLS */
-        .control-panel { background: var(--panel-bg); padding: 30px; border-radius: 24px; border: 1px solid #222; display: flex; flex-direction: column; gap: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        .input-group label { display: block; font-size: 0.6rem; color: #555; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 8px; font-weight: bold; }
-        input { width: 100%; padding: 16px; background: #000; border: 1px solid #333; color: white; border-radius: 12px; outline: none; font-family: 'Goldman'; transition: 0.3s; box-sizing: border-box; }
-        input:focus { border-color: var(--gold); background: #050505; }
+        /* GLASS CONTROL PANEL */
+        .control-panel { 
+            background: rgba(15, 15, 15, 0.8); padding: 30px; border-radius: 24px; 
+            border: 1px solid #333; display: flex; flex-direction: column; gap: 20px; 
+            backdrop-filter: blur(10px);
+        }
+        
+        .input-group label { display: block; font-size: 0.65rem; color: #666; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 10px; font-weight: bold; }
+        input { 
+            width: 100%; padding: 16px; background: #000; border: 1px solid #222; 
+            color: var(--gold); border-radius: 12px; outline: none; font-family: 'Goldman'; 
+            transition: 0.3s; box-sizing: border-box; font-size: 1.1rem;
+        }
+        input:focus { border-color: var(--gold); background: #050505; box-shadow: 0 0 15px rgba(212,175,55,0.1); }
 
-        .btn-action { width: 100%; padding: 22px; border-radius: 16px; border: none; font-weight: bold; font-family: 'Goldman'; cursor: pointer; text-transform: uppercase; transition: 0.3s; letter-spacing: 1px; }
-        .btn-bet { background: var(--gold); color: black; box-shadow: 0 5px 15px rgba(212, 175, 55, 0.2); }
-        .btn-cashout { background: var(--green); color: black; display: none; box-shadow: 0 5px 20px rgba(0, 255, 136, 0.3); }
-        .btn-waiting { background: #1a1a1a; color: #444; cursor: not-allowed; display: none; border: 1px solid #222; }
-        .btn-cashout span { display: block; font-size: 0.6rem; opacity: 0.8; margin-top: 4px; }
+        .btn-action { 
+            width: 100%; padding: 22px; border-radius: 16px; border: none; 
+            font-weight: bold; font-family: 'Goldman'; cursor: pointer; 
+            text-transform: uppercase; transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+            letter-spacing: 1.5px; font-size: 1rem;
+        }
+        
+        .btn-bet { background: var(--gold); color: black; }
+        .btn-bet:hover { transform: scale(1.02); box-shadow: 0 0 30px rgba(212,175,55,0.3); }
+        
+        .btn-cashout { background: var(--green); color: black; display: none; }
+        .btn-cashout:hover { background: #00e67a; box-shadow: 0 0 30px rgba(0,255,136,0.3); }
+        
+        .btn-waiting { background: #1a1a1a; color: #555; cursor: not-allowed; display: none; border: 1px solid #222; }
+        .btn-cashout span { display: block; font-size: 0.7rem; opacity: 0.9; margin-top: 5px; font-family: sans-serif; letter-spacing: 0; }
 
-        .history-bar { display: flex; gap: 8px; overflow-x: auto; padding: 15px; background: #000; border-radius: 12px; border: 1px solid #1a1a1a; scrollbar-width: none; }
-        .hist-item { padding: 6px 12px; border-radius: 8px; font-size: 0.75rem; font-family: 'Goldman'; font-weight: bold; background: #111; flex-shrink: 0; border: 1px solid #222; }
-        .hist-green { color: var(--green); border-color: rgba(0,255,136,0.2); }
-        .hist-red { color: var(--red); border-color: rgba(255,68,68,0.2); }
+        /* HISTORY ROADMAP */
+        .history-bar { 
+            display: flex; gap: 8px; overflow-x: auto; padding: 15px; 
+            background: rgba(0,0,0,0.5); border-radius: 12px; border: 1px solid #1a1a1a; 
+            scrollbar-width: none; margin-top: 10px;
+        }
+        .hist-item { padding: 6px 12px; border-radius: 6px; font-size: 0.75rem; font-family: 'Goldman'; font-weight: bold; background: #111; flex-shrink: 0; border: 1px solid #222; }
+        .hist-green { color: var(--green); border-color: rgba(0,255,136,0.1); }
+        .hist-red { color: var(--red); border-color: rgba(255,68,68,0.1); }
 
         @keyframes shake {
-            0%, 100% { transform: translate(0,0); }
-            20% { transform: translate(-10px, 5px); }
-            40% { transform: translate(10px, -5px); }
-            60% { transform: translate(-5px, 10px); }
-            80% { transform: translate(5px, -10px); }
+            0%, 100% { transform: translate(0, -20px); }
+            25% { transform: translate(-8px, -15px); }
+            50% { transform: translate(8px, -25px); }
+            75% { transform: translate(-8px, -20px); }
         }
 
-        @media (max-width: 900px) { .crash-layout { grid-template-columns: 1fr; } .display-area { height: 350px; } }
+        @media (max-width: 900px) { 
+            .crash-layout { grid-template-columns: 1fr; } 
+            .display-area { height: 350px; }
+            .top-nav { padding-left: 20px; }
+        }
     </style>
 </head>
 <body>
 
     <nav class="top-nav">
-        <div class="logo" style="color:var(--gold); font-family:'Goldman'; font-weight:bold; font-size:1.2rem; letter-spacing:2px;">NEXUS CRASH</div>
-        <div style="color: var(--green); font-weight: bold; font-family: 'Goldman';" id="display-balance">₱0.00</div>
+        <div class="logo" style="color:var(--gold); font-family:'Goldman'; font-weight:bold; font-size:1.4rem; letter-spacing:2px;">NEXUS</div>
+        <div style="color: var(--green); font-weight: bold; font-family: 'Goldman'; font-size: 1.1rem;" id="display-balance">₱0.00</div>
     </nav>
 
     <div class="crash-layout">
@@ -87,13 +123,13 @@
             </div>
             <div class="input-group">
                 <label>Auto Cashout</label>
-                <input type="number" id="auto-cashout" placeholder="2.00" step="0.1" min="1.1">
+                <input type="number" id="auto-cashout" value="2.00" step="0.1" min="1.1">
             </div>
 
             <button id="btn-bet" class="btn-action btn-bet" onclick="placeBet()">Initiate Launch</button>
             <button id="btn-cashout" class="btn-action btn-cashout" onclick="cashout()">
-                ABORT & CASHOUT
-                <span id="cashout-preview">₱0.00</span>
+                CASHOUT
+                <span id="cashout-preview">SECURE ₱0.00</span>
             </button>
             <button id="btn-waiting" class="btn-action btn-waiting">Awaiting Ignition...</button>
 
@@ -101,7 +137,7 @@
         </div>
 
         <div class="display-area">
-            <div id="status-text" style="color: #444; font-size: 0.6rem; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 3px; position: absolute; top: 25px; font-weight: bold; z-index: 10;">System Standby</div>
+            <div id="status-text" style="color: var(--gold); font-size: 0.65rem; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 4px; position: absolute; top: 30px; font-weight: bold; z-index: 10; opacity: 0.6;">SYSTEM READY</div>
             <div id="main-mult">1.00x</div>
             <canvas id="crash-canvas"></canvas>
         </div>
@@ -131,7 +167,6 @@
 
         let balance = 0, currentMult = 1.00, gameStatus = "WAITING", hasBet = false, betPlacedForNext = false, myBetAmt = 0, crashPoint = 0, startTime = 0;
         
-        // ANIMATION SYSTEM
         const canvas = document.getElementById('crash-canvas');
         const ctx = canvas.getContext('2d');
         let particles = [];
@@ -143,12 +178,12 @@
         class Particle {
             constructor(x, y, color, speed) {
                 this.x = x; this.y = y; this.color = color;
-                this.size = Math.random() * 4 + 2;
-                this.vx = (Math.random() - 0.5) * 2;
-                this.vy = Math.random() * speed + 2;
+                this.size = Math.random() * 3 + 1;
+                this.vx = (Math.random() - 0.5) * 4;
+                this.vy = (Math.random() * speed) + 1;
                 this.alpha = 1;
             }
-            update() { this.x += this.vx; this.y += this.vy; this.alpha -= 0.02; }
+            update() { this.x += this.vx; this.y += this.vy; this.alpha -= 0.015; }
             draw() {
                 ctx.globalAlpha = this.alpha;
                 ctx.fillStyle = this.color;
@@ -156,22 +191,21 @@
             }
         }
 
-        function drawRocket(x, y, angle, isExploding) {
-            if(isExploding) {
-                for(let i=0; i<5; i++) particles.push(new Particle(x, y, '#ff4444', 5));
-                return;
-            }
+        function drawRocket(x, y, angle) {
             ctx.save();
             ctx.translate(x, y);
             ctx.rotate(angle);
-            // Rocket Body
-            ctx.fillStyle = '#eee';
-            ctx.fillRect(-10, -25, 20, 40);
-            // Nose
-            ctx.beginPath(); ctx.fillStyle = '#ff4444';
-            ctx.moveTo(-10, -25); ctx.lineTo(0, -45); ctx.lineTo(10, -25); ctx.fill();
-            // Thruster Fire
-            particles.push(new Particle(0, 15, Math.random() > 0.5 ? '#ffaa00' : '#ff4444', 3));
+            
+            // Rocket Flame
+            particles.push(new Particle(0, 10, Math.random() > 0.5 ? '#FFD700' : '#FF4500', 5));
+            
+            // Rocket Emoji (Much cleaner than rectangles)
+            ctx.font = "40px serif";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.rotate(-Math.PI / 4); // Straighten emoji
+            ctx.fillText("🚀", 0, 0);
+            
             ctx.restore();
         }
 
@@ -192,19 +226,18 @@
             updateButtons();
             const timer = setInterval(() => {
                 countdown -= 0.1;
-                document.getElementById('status-text').innerText = `Ignition in ${countdown.toFixed(1)}s`;
+                document.getElementById('status-text').innerText = `LAUNCH IN ${countdown.toFixed(1)}S`;
                 ctx.clearRect(0,0, canvas.width, canvas.height);
-                // Draw rocket at bottom waiting
-                drawRocket(canvas.width * 0.2, canvas.height * 0.8, -0.5, false);
+                drawRocket(canvas.width * 0.1, canvas.height * 0.9, 0);
                 if (countdown <= 0) { clearInterval(timer); runRound(); }
             }, 100);
         }
 
         function runRound() {
             gameStatus = "RUNNING";
-            document.getElementById('status-text').innerText = "IN FLIGHT";
-            if (Math.random() < 0.08) crashPoint = 1.00;
-            else crashPoint = parseFloat((Math.max(1.01, 0.92 / (1 - Math.random()))).toFixed(2));
+            document.getElementById('status-text').innerText = "IN ORBIT";
+            if (Math.random() < 0.07) crashPoint = 1.00;
+            else crashPoint = parseFloat((Math.max(1.01, 0.94 / (1 - Math.random()))).toFixed(2));
 
             if (betPlacedForNext) { hasBet = true; betPlacedForNext = false; }
             updateButtons();
@@ -215,32 +248,33 @@
                 currentMult = Math.pow(1.08, elapsed); 
                 document.getElementById('main-mult').innerText = currentMult.toFixed(2) + "x";
                 
-                if(hasBet) document.getElementById('cashout-preview').innerText = `₱${Math.floor(myBetAmt * currentMult).toLocaleString()}`;
+                if(hasBet) document.getElementById('cashout-preview').innerText = `SECURE ₱${Math.floor(myBetAmt * currentMult).toLocaleString()}`;
 
-                // Animation Frame
                 ctx.clearRect(0,0, canvas.width, canvas.height);
-                rocketX = (elapsed / 12) * canvas.width + (canvas.width * 0.2);
-                rocketY = canvas.height * 0.8 - (Math.pow(1.08, elapsed) - 1) * 60;
-                rocketAngle = -0.5 + (elapsed * 0.05);
                 
+                // Flight Path
+                rocketX = (elapsed / 15) * canvas.width + (canvas.width * 0.1);
+                rocketY = (canvas.height * 0.9) - (Math.pow(1.08, elapsed) - 1) * 70;
+                rocketAngle = -Math.atan2((Math.pow(1.08, elapsed+0.1) - Math.pow(1.08, elapsed)), 0.1);
+
                 particles.forEach((p, i) => { p.update(); p.draw(); if(p.alpha <= 0) particles.splice(i, 1); });
-                drawRocket(rocketX, rocketY, rocketAngle, false);
+                drawRocket(rocketX, rocketY, rocketAngle);
 
                 const auto = parseFloat(document.getElementById('auto-cashout').value);
                 if (hasBet && !isNaN(auto) && auto > 1 && currentMult >= auto) cashout();
 
                 if (currentMult >= crashPoint) { clearInterval(tick); doCrash(); }
-            }, 50);
+            }, 40);
         }
 
         function doCrash() {
             gameStatus = "CRASHED";
             hasBet = false;
             document.getElementById('main-mult').classList.add('crashed');
-            document.getElementById('status-text').innerText = "EXPLODED";
+            document.getElementById('main-mult').innerText = crashPoint.toFixed(2) + "x";
+            document.getElementById('status-text').innerText = "COMMUNICATION LOST";
             
-            // Explosion Effect
-            for(let i=0; i<50; i++) particles.push(new Particle(rocketX, rocketY, '#ffaa00', 8));
+            for(let i=0; i<60; i++) particles.push(new Particle(rocketX, rocketY, '#ff4444', 10));
             
             addHistory(crashPoint);
             updateButtons();
@@ -255,7 +289,7 @@
 
         window.placeBet = async () => {
             const amt = parseInt(document.getElementById('bet-amount').value);
-            if (amt > balance || amt < 10) return alert("Low Balance");
+            if (amt > balance || amt < 10) return alert("Balance insufficient");
             await updateDoc(doc(db, "users", auth.currentUser.uid), { balance: increment(-amt) });
             myBetAmt = amt;
             if (gameStatus === "WAITING") hasBet = true;
