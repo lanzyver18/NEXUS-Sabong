@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Nexus Crash | REAL-TIME SYNC</title>
+    <title>Nexus Crash | CHRONOS SYNC</title>
     <link rel="stylesheet" href="/style.css">
     <link rel="stylesheet" href="/menu.css">
     <link href="https://fonts.googleapis.com/css2?family=Goldman:wght@400;700&display=swap" rel="stylesheet">
@@ -39,8 +39,10 @@
         .btn-cashout { background: var(--green); color: black; display: none; box-shadow: 0 8px 0 #008f4c; }
         .btn-waiting { background: #1a1a1a; color: #444; cursor: not-allowed; display: none; border: 1px solid #222; }
 
-        .history-bar { display: flex; gap: 10px; overflow-x: auto; padding: 15px; background: rgba(0,0,0,0.4); border-radius: 16px; border: 1px solid #1a1a1a; scrollbar-width: none; margin-top: 10px; }
-        .hist-item { padding: 8px 14px; border-radius: 10px; font-size: 0.8rem; font-family: 'Goldman'; font-weight: bold; background: #111; flex-shrink: 0; border: 1px solid #222; }
+        .history-bar { display: flex; gap: 10px; overflow-x: auto; padding: 15px; background: rgba(0,0,0,0.4); border-radius: 16px; border: 1px solid #1a1a1a; scrollbar-width: none; margin-top: 10px; min-height: 45px; align-items: center; }
+        .hist-item { padding: 6px 12px; border-radius: 8px; font-size: 0.75rem; font-family: 'Goldman'; font-weight: bold; background: #111; flex-shrink: 0; border: 1px solid #222; }
+        .hist-green { color: var(--green); border-color: rgba(0,255,136,0.2); }
+        .hist-red { color: var(--red); border-color: rgba(255,68,68,0.2); }
 
         @keyframes crash-shake { 0% { transform: translate(0, -30px); } 20% { transform: translate(-10px, -35px); } 40% { transform: translate(10px, -25px); } 100% { transform: translate(0, -30px) scale(0.9); } }
         @media (max-width: 900px) { .crash-layout { grid-template-columns: 1fr; } .display-area { height: 420px; } #main-mult { font-size: 4rem; } }
@@ -70,14 +72,14 @@
             </button>
             <button id="btn-waiting" class="btn-action btn-waiting">Syncing...</button>
 
-            <div class="history-bar" id="history"></div>
+            <div class="history-bar" id="history-log"></div>
         </div>
 
         <div class="display-area">
             <div class="grid-bg" id="grid-bg"></div>
             <div class="hud-overlay">
-                <div class="hud-stat stat-tl">NETWORK: TIME-SYNCED <br> ENGINE: CHRONOS-V2 <br> STATUS: NOMINAL</div>
-                <div class="hud-stat stat-tr">COORDINATES: <span id="hud-coords">0,0</span> <br> EXTRACTION: <span id="hud-extract">OFF</span> <br> LATENCY: <span id="hud-ping">2ms</span></div>
+                <div class="hud-stat stat-tl">NETWORK: CHRONOS SYNC <br> ENGINE: V2-DETERMINISTIC <br> STATUS: NOMINAL</div>
+                <div class="hud-stat stat-tr">VECTOR POS: <span id="hud-coords">0,0</span> <br> EXTRACTION: <span id="hud-extract">OFF</span> <br> SESSION: <span id="session-id">0000</span></div>
             </div>
             <div id="status-text" style="color: var(--gold); font-size: 0.6rem; position: absolute; top: 35px; font-weight: bold; z-index: 10; opacity: 0.5; letter-spacing: 5px; text-transform: uppercase;">Clock Synchronized</div>
             <div id="main-mult">1.00x</div>
@@ -105,7 +107,8 @@
         const db = getFirestore(app);
         injectMenu();
 
-        let balance = 0, currentMult = 1.00, hasBet = false, myBetAmt = 0, history = [];
+        let balance = 0, currentMult = 1.00, hasBet = false, myBetAmt = 0;
+        let lastLoggedCycle = -1;
         const canvas = document.getElementById('crash-canvas');
         const ctx = canvas.getContext('2d');
         const gridBg = document.getElementById('grid-bg');
@@ -113,8 +116,6 @@
         function resize() { canvas.width = canvas.parentElement.clientWidth; canvas.height = canvas.parentElement.clientHeight; }
         window.addEventListener('resize', resize); resize();
 
-        // --- THE DETERMINISTIC ENGINE ---
-        // Uses the current UTC time to generate identical results for everyone
         function seededRandom(seed) {
             var x = Math.sin(seed) * 10000;
             return x - Math.floor(x);
@@ -122,34 +123,25 @@
 
         function getGameCycle() {
             const now = Date.now();
-            const bettingWindow = 10000; // 10s
-            const resultWindow = 5000;   // 5s
-            
-            // We use a base time unit for our seed. This assumes a game lasts up to 30s total.
-            // Adjusting this determines how many cycles happen per minute.
-            const cycleTotal = 30000; 
+            const bettingWindow = 10000; 
+            const cycleTotal = 25000; // 25s per total game cycle
             const cycleId = Math.floor(now / cycleTotal);
             const elapsedInCycle = now % cycleTotal;
 
-            // Generate a Shared Crash Point for this specific cycle ID
-            const seed = cycleId * 999;
-            const houseEdge = 0.04; // 4% Instant Crash
+            const seed = cycleId * 777;
+            const houseEdge = 0.05; 
             let crashPoint;
             if (seededRandom(seed) < houseEdge) crashPoint = 1.00;
-            else crashPoint = parseFloat((0.96 / (1 - seededRandom(seed + 1))).toFixed(2));
+            else crashPoint = parseFloat((0.95 / (1 - seededRandom(seed + 1))).toFixed(2));
 
             if (elapsedInCycle < bettingWindow) {
-                return { status: "WAITING", time: (bettingWindow - elapsedInCycle) / 1000, crashPoint };
+                return { status: "WAITING", time: (bettingWindow - elapsedInCycle) / 1000, crashPoint, cycleId };
             } else {
                 const flightTime = (elapsedInCycle - bettingWindow) / 1000;
-                const currentVal = Math.pow(1.08, flightTime);
+                const currentVal = Math.pow(1.07, flightTime); // Adjusted curve for less "stretching"
                 
-                if (currentVal >= crashPoint) {
-                    const timeInCrashed = elapsedInCycle - (bettingWindow + (Math.log(crashPoint)/Math.log(1.08)) * 1000);
-                    if (timeInCrashed > resultWindow) return { status: "WAITING", time: 0.1, crashPoint: 1.00 }; // Safety reset
-                    return { status: "CRASHED", crashPoint };
-                }
-                return { status: "RUNNING", mult: currentVal, elapsed: flightTime, crashPoint };
+                if (currentVal >= crashPoint) return { status: "CRASHED", crashPoint, cycleId };
+                return { status: "RUNNING", mult: currentVal, elapsed: flightTime, crashPoint, cycleId };
             }
         }
 
@@ -158,12 +150,19 @@
             const mainMult = document.getElementById('main-mult');
             const statusText = document.getElementById('status-text');
 
+            // Log history when cycle changes
+            if (cycle.status === "CRASHED" && lastLoggedCycle !== cycle.cycleId) {
+                logHistory(cycle.crashPoint);
+                lastLoggedCycle = cycle.cycleId;
+            }
+
+            document.getElementById('session-id').innerText = cycle.cycleId;
+
             if (cycle.status === "WAITING") {
                 mainMult.innerHTML = `${cycle.time.toFixed(1)}s<small>WAITING FOR BETS</small>`;
                 mainMult.classList.remove('crashed');
                 statusText.innerText = "ACCEPTING INVESTMENTS";
                 ctx.clearRect(0,0, canvas.width, canvas.height);
-                document.getElementById('hud-extract').innerText = "OFF";
             } 
             else if (cycle.status === "RUNNING") {
                 currentMult = cycle.mult;
@@ -173,7 +172,6 @@
                 
                 if (hasBet) {
                     document.getElementById('cashout-preview').innerText = `₱${Math.floor(myBetAmt * currentMult).toLocaleString()}`;
-                    document.getElementById('hud-extract').innerText = "READY";
                     if (parseFloat(document.getElementById('auto-cashout').value) <= currentMult) cashout();
                 }
             } 
@@ -181,8 +179,7 @@
                 mainMult.innerHTML = `${cycle.crashPoint.toFixed(2)}x<small>SIGNAL LOST</small>`;
                 mainMult.classList.add('crashed');
                 statusText.innerText = "TERMINATED";
-                if(hasBet) { hasBet = false; }
-                document.getElementById('hud-extract').innerText = "FAILED";
+                hasBet = false;
             }
 
             updateButtons(cycle.status);
@@ -191,26 +188,49 @@
 
         function renderLine(elapsed, mult) {
             ctx.clearRect(0,0, canvas.width, canvas.height);
-            const scale = Math.min(1, 4 / mult);
-            const spacingX = 150 * scale, spacingY = 300 * scale;
-            const headX = elapsed * spacingX, headY = (mult - 1) * spacingY;
-            const cx = canvas.width * 0.4 - headX, cy = canvas.height * 0.7 + headY;
+            
+            // MATH FIX: Use a fixed viewport scale that only compresses when mult > 3x
+            const scale = mult > 3 ? (3 / mult) : 1;
+            const spacingX = 180 * scale; 
+            const spacingY = 320 * scale;
+
+            const headX = elapsed * spacingX;
+            const headY = (mult - 1) * spacingY;
+            
+            const cx = canvas.width * 0.35 - headX;
+            const cy = canvas.height * 0.75 + headY;
             document.getElementById('hud-coords').innerText = `${Math.floor(headX)},${Math.floor(headY)}`;
 
             ctx.save();
             ctx.translate(cx, cy);
             gridBg.style.transform = `perspective(1000px) rotateX(60deg) translateY(${(headY % 80)}px) translateX(${(cx % 80)}px)`;
+            
             ctx.beginPath();
-            ctx.lineWidth = 10 * scale; ctx.strokeStyle = '#D4AF37'; ctx.lineCap = 'round';
-            ctx.shadowBlur = 20; ctx.shadowColor = 'rgba(212, 175, 55, 0.6)';
+            ctx.lineWidth = 10 * scale; 
+            ctx.strokeStyle = '#D4AF37';
+            ctx.lineCap = 'round';
+            ctx.shadowBlur = 15; ctx.shadowColor = 'rgba(212, 175, 55, 0.5)';
+            
             ctx.moveTo(0, 0);
             for(let i=0; i <= elapsed; i+=0.1) {
-                ctx.lineTo(i * spacingX, -(Math.pow(1.08, i) - 1) * spacingY);
+                // Same math as cycle generator for perfect sync
+                const ly = -(Math.pow(1.07, i) - 1) * spacingY;
+                ctx.lineTo(i * spacingX, ly);
             }
             ctx.stroke();
-            ctx.shadowBlur = 40; ctx.fillStyle = "#fff";
-            ctx.beginPath(); ctx.arc(headX, -headY, 8 * scale, 0, Math.PI * 2); ctx.fill();
+            
+            ctx.shadowBlur = 30; ctx.fillStyle = "#fff";
+            ctx.beginPath(); ctx.arc(headX, -headY, 7 * scale, 0, Math.PI * 2); ctx.fill();
             ctx.restore();
+        }
+
+        function logHistory(val) {
+            const bar = document.getElementById('history-log');
+            const item = document.createElement('div');
+            item.className = `hist-item ${val >= 2 ? 'hist-green' : 'hist-red'}`;
+            item.innerText = val.toFixed(2) + "x";
+            bar.prepend(item);
+            if (bar.children.length > 12) bar.lastChild.remove();
         }
 
         window.placeBet = async () => {
