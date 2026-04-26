@@ -17,7 +17,8 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            /* 75px padding-left creates a clear pocket for the absolute-positioned menu button */
+            /* CRITICAL: relative position anchors the menu button to the left of this bar */
+            position: relative; 
             padding: 12px 20px 12px 75px; 
             background: #000;
             border-bottom: 2px solid #222;
@@ -188,12 +189,10 @@
                     const data = snap.data();
                     document.getElementById('user-display').innerText = data.username ? data.username.toUpperCase() : "PLAYER";
                     
-                    // Display admin button if user is Tier 1-6
                     const level = data.level || 7;
                     const adminBtn = document.getElementById('admin-btn');
                     if (level >= 1 && level <= 6) {
                         adminBtn.style.display = "block";
-                        // Send level 1 to dashboard, others to agent manager
                         adminBtn.onclick = () => {
                             window.location.href = (level === 1) ? '/admin/index.html' : '/admin/agents.html';
                         };
