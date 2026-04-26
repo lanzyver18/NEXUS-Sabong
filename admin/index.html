@@ -8,37 +8,53 @@
     <link rel="stylesheet" href="/menu.css">
     <link href="https://fonts.googleapis.com/css2?family=Goldman:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        .top-nav { display: flex; justify-content: space-between; align-items: center; position: relative; padding: 12px 20px 12px 75px; background: #000; border-bottom: 2px solid #222; position: sticky; top: 0; z-index: 1000; }
+        /* FIXED NAVIGATION FOR MENU BUTTON */
+        .top-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative; 
+            padding: 12px 20px 12px 75px; 
+            background: #000;
+            border-bottom: 2px solid #222;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
         .admin-grid { display: grid; grid-template-columns: 1fr 350px; gap: 20px; max-width: 1200px; margin: 20px auto; padding: 0 20px; }
         .insight-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
         .insight-card { background: #111; padding: 20px; border-radius: 12px; border: 1px solid #222; text-align: center; }
         .insight-card h4 { color: #888; font-size: 0.6rem; margin: 0; text-transform: uppercase; letter-spacing: 1px; }
         .insight-card .val { color: var(--gold); font-size: 1.4rem; font-weight: bold; margin-top: 5px; display: block; font-family: 'Goldman'; }
+
         .panel { background: #111; border-radius: 15px; border: 1px solid #333; padding: 20px; margin-bottom: 20px; }
         .panel-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #222; margin-bottom: 15px; padding-bottom: 10px; }
         
+        /* TREND CHART */
         .trend-container { display: flex; gap: 5px; overflow-x: auto; padding: 10px 0; }
         .dot { width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0; }
         .dot.meron { background: #ff4444; box-shadow: 0 0 8px #ff4444; }
         .dot.wala { background: #4444ff; box-shadow: 0 0 8px #4444ff; }
         .dot.draw { background: #ffaa00; }
 
+        /* LIVE MONITOR */
+        .live-bets { display: flex; gap: 10px; margin-bottom: 15px; }
+        .side-monitor { flex: 1; padding: 15px; border-radius: 10px; text-align: center; border: 1px solid #222; }
+        .side-monitor.m { background: rgba(255, 68, 68, 0.1); color: #ff4444; }
+        .side-monitor.w { background: rgba(68, 68, 255, 0.1); color: #4444ff; }
+
         .lock-btn { width: 100%; padding: 14px; border-radius: 8px; font-weight: bold; cursor: pointer; border: none; font-family: 'Goldman'; margin-bottom: 15px; transition: 0.3s; text-transform: uppercase; letter-spacing: 1px; }
+
         .w-request { background: #000; padding: 15px; border-radius: 10px; border-left: 4px solid var(--gold); margin-bottom: 12px; }
         .btn-sm { padding: 8px 12px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 0.7rem; text-transform: uppercase; font-family: 'Goldman'; }
-        .btn-approve { background: #00ff88; color: black; }
         
         .log-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; color: #eee; }
         .log-table th { text-align: left; color: #555; padding: 10px; border-bottom: 1px solid #222; text-transform: uppercase; font-size: 0.65rem; }
         .log-table td { padding: 12px 10px; border-bottom: 1px solid #1a1a1a; }
         
-        .role-tag { font-size: 0.6rem; padding: 2px 6px; border-radius: 3px; background: #222; color: var(--gold); border: 1px solid #333; }
         .search-box { background: #000; border: 1px solid var(--gold); padding: 15px; border-radius: 10px; }
         input { width: 100%; padding: 12px; margin: 10px 0; background: #000; border: 1px solid #333; color: white; border-radius: 5px; box-sizing: border-box; outline: none; }
-        
-        /* LIVE BET STREAM */
-        .live-bets { height: 200px; overflow-y: auto; font-size: 0.7rem; font-family: monospace; padding: 10px; background: #050505; border-radius: 8px; border: 1px solid #222; }
-        .bet-row { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid #111; }
         
         @media (max-width: 900px) { .admin-grid { grid-template-columns: 1fr; } }
     </style>
@@ -59,20 +75,27 @@
                 <div class="insight-card"><h4>Pending Cash-Out</h4><span class="val" id="stat-pending-w" style="color:#ffaa00;">₱0</span></div>
             </div>
 
+            <div class="panel" id="live-bet-panel" style="display:none;">
+                <div class="panel-header">
+                    <h3 style="margin:0; color: var(--gold); font-family: 'Goldman'; font-size: 0.9rem;">LIVE FIGHT MONITOR</h3>
+                </div>
+                <div class="live-bets">
+                    <div class="side-monitor m">
+                        <small>MERON TOTAL</small><br>
+                        <span id="live-m-total" style="font-family:'Goldman'; font-size:1.2rem;">₱0</span>
+                    </div>
+                    <div class="side-monitor w">
+                        <small>WALA TOTAL</small><br>
+                        <span id="live-w-total" style="font-family:'Goldman'; font-size:1.2rem;">₱0</span>
+                    </div>
+                </div>
+            </div>
+
             <div class="panel" id="trend-panel" style="display: none;">
                 <div class="panel-header">
                     <h3 style="margin:0; color: var(--gold); font-family: 'Goldman'; font-size: 0.9rem;">ARENA ROADMAP (LAST 50)</h3>
                 </div>
                 <div class="trend-container" id="roadmap-display"></div>
-            </div>
-
-            <div class="panel">
-                <div class="panel-header">
-                    <h3 style="margin:0; color: var(--gold); font-family: 'Goldman'; font-size: 1rem;">LIVE BETS (PENDING)</h3>
-                    <span id="pending-bet-count" style="color:#555; font-size:0.7rem;">0 ACTIVE</span>
-                </div>
-                <div class="live-bets" id="live-bet-stream">
-                    </div>
             </div>
 
             <div class="panel">
@@ -93,15 +116,21 @@
                     </table>
                 </div>
             </div>
+
+            <div class="panel" id="withdrawal-panel">
+                <div class="panel-header">
+                    <h3 style="margin:0; color: var(--gold); font-family: 'Goldman'; font-size: 1rem;">WITHDRAWAL TICKETS</h3>
+                    <span id="w-count" style="color:#888; font-size: 0.7rem;">0 PENDING</span>
+                </div>
+                <div id="withdrawal-list"></div>
+            </div>
         </div>
 
         <div class="sidebar-admin">
             <div class="panel" id="fight-control-panel" style="border: 1px solid var(--gold); display:none; margin-bottom: 20px;">
                 <h3 style="margin:0; color: var(--gold); margin-bottom:15px; font-size: 0.9rem; font-family: 'Goldman';">FIGHT CONTROL</h3>
                 
-                <button id="btn-lock-betting" onclick="toggleBettingLock()" class="lock-btn">
-                    SYNCING...
-                </button>
+                <button id="btn-lock-betting" onclick="toggleBettingLock()" class="lock-btn">SYNCING...</button>
 
                 <div style="display: grid; grid-template-columns: 1fr; gap: 8px;">
                     <button onclick="settleFight('MERON')" style="background:#ff4444; color:white; padding:12px; border:none; border-radius:5px; font-weight:bold; cursor:pointer;">SETTLE MERON</button>
@@ -111,13 +140,13 @@
             </div>
 
             <div class="panel search-box" id="arena-settings-panel" style="border-color: #00ff88; display: none;">
-                <h3 style="margin-top:0; font-size: 0.8rem; color: #00ff88; font-family: 'Goldman';">ARENA SETTINGS</h3>
-                <label style="font-size:0.6rem; color:#444;">MULTIPLIER</label>
-                <div style="display: flex; gap: 10px; margin-bottom:10px;">
-                    <input type="number" id="payout-multiplier" step="0.01" style="margin:0; font-family: 'Goldman';">
-                    <button onclick="updatePayout()" class="btn-sm btn-approve">SAVE</button>
-                </div>
-                <button onclick="forceResetHype()" style="width:100%; background:#222; color:#555; padding:8px; border:none; border-radius:4px; cursor:pointer; font-size:0.6rem;">FORCE HYPE RESET</button>
+                <h3 style="margin-top:0; font-size: 0.8rem; color: #00ff88; font-family: 'Goldman';">ARENA PAYOUT</h3>
+                <input type="number" id="payout-multiplier" step="0.01" style="margin-bottom:15px; font-family: 'Goldman';">
+                
+                <h3 style="margin-top:0; font-size: 0.8rem; color: #00ff88; font-family: 'Goldman';">FIGHT NUMBER</h3>
+                <input type="text" id="fight-id-input" placeholder="e.g. Fight #126">
+                
+                <button onclick="updateSettings()" class="btn-sm btn-approve" style="width:100%; padding:15px; margin-top:5px;">SAVE ARENA SETTINGS</button>
             </div>
 
             <div class="panel search-box" style="margin-top:20px;">
@@ -137,7 +166,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc, updateDoc, increment, collection, query, where, onSnapshot, writeBatch, getDocs, orderBy } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, setDoc, updateDoc, increment, collection, query, where, onSnapshot, writeBatch, getDocs } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
         import { injectMenu } from "/menu.js";
 
         const firebaseConfig = {
@@ -173,10 +202,10 @@
         });
 
         function initManagement() {
+            // Downlines & Commissions
             const downlineQuery = query(collection(db, "users"), where("uplineId", "==", auth.currentUser.uid));
             onSnapshot(downlineQuery, (snap) => {
-                let totalBank = 0;
-                let networkComm = 0;
+                let totalBank = 0, networkComm = 0;
                 const table = document.getElementById('downline-table-body');
                 table.innerHTML = "";
                 snap.forEach(uDoc => {
@@ -193,22 +222,24 @@
                 document.getElementById('fight-control-panel').style.display = "block";
                 document.getElementById('arena-settings-panel').style.display = "block";
                 document.getElementById('trend-panel').style.display = "block";
+                document.getElementById('live-bet-panel').style.display = "block";
+                loadWithdrawals();
                 syncArenaControl();
-                streamLiveBets();
+                syncLiveMonitor();
             }
         }
 
-        function streamLiveBets() {
-            const q = query(collection(db, "bets"), where("status", "==", "PENDING"), orderBy("timestamp", "desc"));
+        function syncLiveMonitor() {
+            const q = query(collection(db, "bets"), where("status", "==", "PENDING"));
             onSnapshot(q, (snap) => {
-                const stream = document.getElementById('live-bet-stream');
-                document.getElementById('pending-bet-count').innerText = `${snap.size} ACTIVE`;
-                stream.innerHTML = "";
+                let m = 0, w = 0;
                 snap.forEach(d => {
-                    const b = d.data();
-                    const color = b.side === "MERON" ? "#ff4444" : "#4444ff";
-                    stream.innerHTML += `<div class="bet-row"><span style="color:#888">${b.username.toUpperCase()}</span><span style="color:${color}; font-weight:bold;">${b.side}: ₱${b.amount.toLocaleString()}</span></div>`;
+                    const data = d.data();
+                    if(data.side === 'MERON') m += data.amount;
+                    else w += data.amount;
                 });
+                document.getElementById('live-m-total').innerText = "₱" + (m * 12.5).toLocaleString(); // Rigged multiplier
+                document.getElementById('live-w-total').innerText = "₱" + (w * 11.8).toLocaleString(); // Rigged multiplier
             });
         }
 
@@ -222,9 +253,9 @@
                     lockBtn.style.background = arenaLocked ? "#00ff88" : "#ff4444";
                     lockBtn.style.color = arenaLocked ? "black" : "white";
 
-                    const m = data.payoutMultiplier || 1.90;
-                    document.getElementById('payout-multiplier').value = m;
-                    window.currentMultiplier = m;
+                    document.getElementById('payout-multiplier').value = data.payoutMultiplier || 1.90;
+                    document.getElementById('fight-id-input').value = data.currentFightId || "Fight #125";
+                    window.currentMultiplier = data.payoutMultiplier || 1.90;
 
                     const roadmap = data.history || [];
                     const roadDiv = document.getElementById('roadmap-display');
@@ -238,19 +269,22 @@
             });
         }
 
-        window.forceResetHype = async () => {
-            if (confirm("Reset rigged totals to 0 instantly?")) {
-                await updateDoc(doc(db, "settings", "arena"), { resetTime: new Date() });
-            }
-        };
-
         window.toggleBettingLock = async () => {
             await updateDoc(doc(db, "settings", "arena"), { isLocked: !arenaLocked });
         };
 
+        window.updateSettings = async () => {
+            const m = parseFloat(document.getElementById('payout-multiplier').value);
+            const fid = document.getElementById('fight-id-input').value;
+            await updateDoc(doc(db, "settings", "arena"), { 
+                payoutMultiplier: m, 
+                currentFightId: fid 
+            });
+            alert("Settings Applied.");
+        };
+
         window.settleFight = async (winner) => {
             if (myTierData.level !== 1) return;
-            const m = window.currentMultiplier;
             if (!confirm(`Settle as ${winner}?`)) return;
             
             const batch = writeBatch(db);
@@ -260,7 +294,7 @@
             snap.forEach(bDoc => {
                 const b = bDoc.data();
                 if (b.side === winner) {
-                    const win = Math.floor(b.amount * m);
+                    const win = Math.floor(b.amount * window.currentMultiplier);
                     batch.update(doc(db, "users", b.uid), { balance: increment(win) });
                     batch.update(doc(db, "bets", bDoc.id), { status: "WIN", payout: win });
                 } else if (winner === "DRAW") {
@@ -275,13 +309,17 @@
             const arenaSnap = await getDoc(arenaRef);
             let history = arenaSnap.exists() ? (arenaSnap.data().history || []) : [];
             history.push(winner);
-            if(history.length > 100) history.shift();
-            batch.update(arenaRef, { history: history, isLocked: true, resetTime: new Date() });
+            
+            batch.update(arenaRef, { 
+                history: history.slice(-100), 
+                isLocked: true 
+            });
 
             await batch.commit();
-            alert("Fight Settled & Hype Reset.");
+            alert("Fight Settled.");
         };
 
+        // Loader & Withdrawals Logic remains the same...
         window.checkUser = async () => {
             const username = document.getElementById('target-username').value.trim().toLowerCase();
             const q = query(collection(db, "users"), where("username", "==", username));
@@ -300,18 +338,31 @@
             if (!activePlayerId || isNaN(amt)) return;
             if (confirm(`Load ₱${amt}?`)) {
                 await updateDoc(doc(db, "users", activePlayerId), { balance: increment(amt) });
-                await addDoc(collection(db, "wallet_logs"), { uid: auth.currentUser.uid, type: "LOAD", toUser: document.getElementById('res-name').innerText, amount: amt, timestamp: new Date() });
+                await addDoc(collection(db, "wallet_logs")), { uid: auth.currentUser.uid, type: "LOAD", toUser: document.getElementById('res-name').innerText, amount: amt, timestamp: new Date() };
                 alert("Success");
-                location.reload();
             }
         };
 
-        window.quickSelectUser = (u) => { document.getElementById('target-username').value = u; checkUser(); };
-        window.updatePayout = async () => {
-            const newVal = parseFloat(document.getElementById('payout-multiplier').value);
-            await updateDoc(doc(db, "settings", "arena"), { payoutMultiplier: newVal });
-            alert("Payout Saved");
+        function loadWithdrawals() {
+            onSnapshot(query(collection(db, "withdrawals"), where("status", "==", "PENDING")), (snap) => {
+                const list = document.getElementById('withdrawal-list');
+                let total = 0;
+                list.innerHTML = "";
+                snap.forEach(doc => {
+                    const d = doc.data();
+                    total += d.amount;
+                    list.innerHTML += `<div class="w-request"><strong>${d.username.toUpperCase()}</strong> <span style="float:right; color:#00ff88;">₱${d.amount.toLocaleString()}</span><div class="w-actions"><button class="btn-sm btn-approve" onclick="handleWithdraw('${doc.id}', 'APPROVED')">PAID</button></div></div>`;
+                });
+                document.getElementById('stat-pending-w').innerText = "₱" + total.toLocaleString();
+            });
+        }
+
+        window.handleWithdraw = async (id, status) => {
+            await updateDoc(doc(db, "withdrawals", id), { status });
+            alert("Confirmed");
         };
+
+        window.quickSelectUser = (u) => { document.getElementById('target-username').value = u; checkUser(); };
     </script>
 </body>
 </html>
