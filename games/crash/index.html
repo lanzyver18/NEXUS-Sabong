@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Nexus Crash | AUTO-SYNC PRO</title>
+    <title>Nexus Crash | REAL-TIME SYNC</title>
     <link rel="stylesheet" href="/style.css">
     <link rel="stylesheet" href="/menu.css">
     <link href="https://fonts.googleapis.com/css2?family=Goldman:wght@400;700&display=swap" rel="stylesheet">
@@ -11,7 +11,6 @@
         :root { --gold: #D4AF37; --green: #00ff88; --red: #ff4444; --panel-bg: #0f0f0f; }
         body { background: #000; overflow-x: hidden; margin: 0; color: white; -webkit-font-smoothing: antialiased; }
 
-        /* PERMANENT MENU FIX */
         #menu-container { position: fixed !important; top: 0 !important; left: 0 !important; width: 100% !important; height: 100% !important; background: #000 !important; z-index: 10001 !important; display: none; }
         #menu-overlay { background: rgba(0, 0, 0, 0.95) !important; backdrop-filter: blur(15px) !important; z-index: 10000 !important; }
 
@@ -22,7 +21,7 @@
         .grid-bg { position: absolute; width: 400%; height: 400%; background-image: linear-gradient(rgba(212, 175, 55, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(212, 175, 55, 0.03) 1px, transparent 1px); background-size: 80px 80px; transform: perspective(1000px) rotateX(60deg); opacity: 0.5; z-index: 1; pointer-events: none; }
 
         #main-mult { font-family: 'Goldman'; font-size: 7rem; color: white; z-index: 10; text-shadow: 0 0 40px rgba(255,255,255,0.15); pointer-events: none; transform: translateY(-30px); transition: 0.1s; text-align: center; }
-        #main-mult small { display: block; font-size: 1rem; color: var(--gold); letter-spacing: 5px; opacity: 0.6; margin-top: -10px; }
+        #main-mult small { display: block; font-size: 1rem; color: var(--gold); letter-spacing: 5px; opacity: 0.6; margin-top: -10px; text-transform: uppercase; }
         #main-mult.crashed { color: var(--red); animation: crash-shake 0.4s ease-out; }
         
         canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 5; }
@@ -33,8 +32,7 @@
         .stat-tr { top: 30px; right: 30px; text-align: right; }
 
         .control-panel { background: linear-gradient(145deg, #111, #080808); padding: 30px; border-radius: 28px; border: 1px solid #252525; display: flex; flex-direction: column; gap: 20px; }
-        .input-group label { display: block; font-size: 0.6rem; color: #555; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 10px; font-weight: bold; }
-        input { width: 100%; padding: 18px; background: #000; border: 1px solid #333; color: var(--gold); border-radius: 14px; outline: none; font-family: 'Goldman'; transition: 0.3s; box-sizing: border-box; font-size: 1.2rem; }
+        input { width: 100%; padding: 18px; background: #000; border: 1px solid #333; color: var(--gold); border-radius: 14px; outline: none; font-family: 'Goldman'; font-size: 1.2rem; }
         
         .btn-action { width: 100%; padding: 22px; border-radius: 16px; border: none; font-weight: bold; font-family: 'Goldman'; cursor: pointer; text-transform: uppercase; transition: 0.3s; letter-spacing: 2px; font-size: 1.1rem; }
         .btn-bet { background: var(--gold); color: black; box-shadow: 0 8px 0 #917725; }
@@ -43,7 +41,6 @@
 
         .history-bar { display: flex; gap: 10px; overflow-x: auto; padding: 15px; background: rgba(0,0,0,0.4); border-radius: 16px; border: 1px solid #1a1a1a; scrollbar-width: none; margin-top: 10px; }
         .hist-item { padding: 8px 14px; border-radius: 10px; font-size: 0.8rem; font-family: 'Goldman'; font-weight: bold; background: #111; flex-shrink: 0; border: 1px solid #222; }
-        .hist-green { color: var(--green); } .hist-red { color: var(--red); }
 
         @keyframes crash-shake { 0% { transform: translate(0, -30px); } 20% { transform: translate(-10px, -35px); } 40% { transform: translate(10px, -25px); } 100% { transform: translate(0, -30px) scale(0.9); } }
         @media (max-width: 900px) { .crash-layout { grid-template-columns: 1fr; } .display-area { height: 420px; } #main-mult { font-size: 4rem; } }
@@ -59,11 +56,11 @@
     <div class="crash-layout">
         <div class="control-panel">
             <div class="input-group">
-                <label>Investment</label>
+                <label style="font-size: 0.6rem; color: #555; text-transform: uppercase;">Investment</label>
                 <input type="number" id="bet-amount" value="100" min="10">
             </div>
             <div class="input-group">
-                <label>Auto Extract</label>
+                <label style="font-size: 0.6rem; color: #555; text-transform: uppercase;">Extraction Trigger</label>
                 <input type="number" id="auto-cashout" value="2.00" step="0.1">
             </div>
 
@@ -79,11 +76,11 @@
         <div class="display-area">
             <div class="grid-bg" id="grid-bg"></div>
             <div class="hud-overlay">
-                <div class="hud-stat stat-tl">NETWORK: <span id="hud-net">OFFLINE</span> <br> ENGINE: V8-CORE <br> HEALTH: <span id="hud-health">0%</span></div>
-                <div class="hud-stat stat-tr">VECTOR POS: <span id="hud-coords">0,0</span> <br> EXTRACTIONS: 0 <br> STATUS: <span id="hud-status">STANDBY</span></div>
+                <div class="hud-stat stat-tl">NETWORK: TIME-SYNCED <br> ENGINE: CHRONOS-V2 <br> STATUS: NOMINAL</div>
+                <div class="hud-stat stat-tr">COORDINATES: <span id="hud-coords">0,0</span> <br> EXTRACTION: <span id="hud-extract">OFF</span> <br> LATENCY: <span id="hud-ping">2ms</span></div>
             </div>
-            <div id="status-text" style="color: var(--gold); font-size: 0.6rem; position: absolute; top: 35px; font-weight: bold; z-index: 10; opacity: 0.5; letter-spacing: 5px; text-transform: uppercase;">Awaiting Connection</div>
-            <div id="main-mult">---<small>INITIALIZING</small></div>
+            <div id="status-text" style="color: var(--gold); font-size: 0.6rem; position: absolute; top: 35px; font-weight: bold; z-index: 10; opacity: 0.5; letter-spacing: 5px; text-transform: uppercase;">Clock Synchronized</div>
+            <div id="main-mult">1.00x</div>
             <canvas id="crash-canvas"></canvas>
         </div>
     </div>
@@ -91,7 +88,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
-        import { getFirestore, doc, onSnapshot, updateDoc, increment, getDoc, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+        import { getFirestore, doc, onSnapshot, updateDoc, increment, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
         import { injectMenu } from "/menu.js";
 
         const firebaseConfig = {
@@ -108,9 +105,7 @@
         const db = getFirestore(app);
         injectMenu();
 
-        let balance = 0, currentMult = 1.00, gameStatus = "WAITING", hasBet = false, myBetAmt = 0;
-        let particles = [];
-        let isLoaded = false;
+        let balance = 0, currentMult = 1.00, hasBet = false, myBetAmt = 0, history = [];
         const canvas = document.getElementById('crash-canvas');
         const ctx = canvas.getContext('2d');
         const gridBg = document.getElementById('grid-bg');
@@ -118,99 +113,87 @@
         function resize() { canvas.width = canvas.parentElement.clientWidth; canvas.height = canvas.parentElement.clientHeight; }
         window.addEventListener('resize', resize); resize();
 
-        class Particle {
-            constructor(x, y) {
-                this.x = x; this.y = y;
-                this.size = Math.random() * 5 + 1;
-                this.vx = (Math.random() - 0.5) * 15;
-                this.vy = (Math.random() - 0.5) * 15;
-                this.alpha = 1;
-                this.color = Math.random() > 0.5 ? '#D4AF37' : '#ff4444';
-            }
-            update() { this.x += this.vx; this.y += this.vy; this.alpha -= 0.03; }
-            draw() { ctx.globalAlpha = this.alpha; ctx.fillStyle = this.color; ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); ctx.fill(); }
+        // --- THE DETERMINISTIC ENGINE ---
+        // Uses the current UTC time to generate identical results for everyone
+        function seededRandom(seed) {
+            var x = Math.sin(seed) * 10000;
+            return x - Math.floor(x);
         }
 
-        // 1. MASTER SYSTEM ENGINE
-        onSnapshot(doc(db, "settings", "crash"), async (snap) => {
-            if (!snap.exists()) return;
-            const data = snap.data();
+        function getGameCycle() {
+            const now = Date.now();
+            const bettingWindow = 10000; // 10s
+            const resultWindow = 5000;   // 5s
             
-            // Mark as loaded once we receive first data
-            if(!isLoaded) {
-                isLoaded = true;
-                document.getElementById('hud-net').innerText = 'STABLE';
-                document.getElementById('hud-health').innerText = '100%';
-                document.getElementById('hud-status').innerText = 'READY';
-            }
+            // We use a base time unit for our seed. This assumes a game lasts up to 30s total.
+            // Adjusting this determines how many cycles happen per minute.
+            const cycleTotal = 30000; 
+            const cycleId = Math.floor(now / cycleTotal);
+            const elapsedInCycle = now % cycleTotal;
 
-            gameStatus = data.status;
-            const cp = data.crashPoint;
-            const startAt = data.startTime?.toMillis() || Date.now();
-            const lastUpd = data.lastUpdate?.toMillis() || Date.now();
+            // Generate a Shared Crash Point for this specific cycle ID
+            const seed = cycleId * 999;
+            const houseEdge = 0.04; // 4% Instant Crash
+            let crashPoint;
+            if (seededRandom(seed) < houseEdge) crashPoint = 1.00;
+            else crashPoint = parseFloat((0.96 / (1 - seededRandom(seed + 1))).toFixed(2));
 
-            if (gameStatus === "RUNNING") {
-                startAnimationLoop(startAt, cp);
-            } else if (gameStatus === "WAITING") {
-                startBettingPhase(lastUpd);
-            } else if (gameStatus === "CRASHED") {
-                triggerCrashVisuals(cp);
-            }
-            updateHistoryUI(data.history || []);
-        });
-
-        // 2. AUTONOMOUS HEARTBEAT (Runs logic if no one else is)
-        async function runAutoLoop() {
-            if(!isLoaded) return; // Wait for initial sync before acting
-            try {
-                const snap = await getDoc(doc(db, "settings", "crash"));
-                const data = snap.data();
-                const now = Date.now();
-                const lastUpdate = data.lastUpdate?.toMillis() || 0;
-
-                if (data.status === "CRASHED" && (now - lastUpdate) > 5000) {
-                    await updateDoc(doc(db, "settings", "crash"), { status: "WAITING", lastUpdate: serverTimestamp() });
-                } 
-                else if (data.status === "WAITING" && (now - lastUpdate) > 10000) {
-                    const cp = Math.random() < 0.07 ? 1.00 : parseFloat((0.94 / (1 - Math.random())).toFixed(2));
-                    await updateDoc(doc(db, "settings", "crash"), { status: "RUNNING", startTime: serverTimestamp(), crashPoint: cp, lastUpdate: serverTimestamp() });
-                } 
-                else if (data.status === "RUNNING") {
-                    const elapsed = (now - data.startTime.toMillis()) / 1000;
-                    if (Math.pow(1.08, elapsed) >= data.crashPoint) {
-                        let h = data.history || []; h.push(data.crashPoint); if(h.length > 10) h.shift();
-                        await updateDoc(doc(db, "settings", "crash"), { status: "CRASHED", history: h, lastUpdate: serverTimestamp() });
-                    }
+            if (elapsedInCycle < bettingWindow) {
+                return { status: "WAITING", time: (bettingWindow - elapsedInCycle) / 1000, crashPoint };
+            } else {
+                const flightTime = (elapsedInCycle - bettingWindow) / 1000;
+                const currentVal = Math.pow(1.08, flightTime);
+                
+                if (currentVal >= crashPoint) {
+                    const timeInCrashed = elapsedInCycle - (bettingWindow + (Math.log(crashPoint)/Math.log(1.08)) * 1000);
+                    if (timeInCrashed > resultWindow) return { status: "WAITING", time: 0.1, crashPoint: 1.00 }; // Safety reset
+                    return { status: "CRASHED", crashPoint };
                 }
-            } catch (e) {}
+                return { status: "RUNNING", mult: currentVal, elapsed: flightTime, crashPoint };
+            }
         }
-        setInterval(runAutoLoop, 2000);
 
-        function startAnimationLoop(startAt, cp) {
-            document.getElementById('status-text').innerText = "VECTORS LIVE";
-            document.getElementById('main-mult').classList.remove('crashed');
-            updateButtons();
-            const animate = () => {
-                if (gameStatus !== "RUNNING") return;
-                let elapsed = (Date.now() - startAt) / 1000;
-                currentMult = Math.pow(1.08, elapsed);
-                if (currentMult >= cp) return;
+        function gameLoop() {
+            const cycle = getGameCycle();
+            const mainMult = document.getElementById('main-mult');
+            const statusText = document.getElementById('status-text');
 
-                document.getElementById('main-mult').innerHTML = `${currentMult.toFixed(2)}x<small>CLIMBING</small>`;
-                if(hasBet) {
+            if (cycle.status === "WAITING") {
+                mainMult.innerHTML = `${cycle.time.toFixed(1)}s<small>WAITING FOR BETS</small>`;
+                mainMult.classList.remove('crashed');
+                statusText.innerText = "ACCEPTING INVESTMENTS";
+                ctx.clearRect(0,0, canvas.width, canvas.height);
+                document.getElementById('hud-extract').innerText = "OFF";
+            } 
+            else if (cycle.status === "RUNNING") {
+                currentMult = cycle.mult;
+                mainMult.innerHTML = `${currentMult.toFixed(2)}x<small>CLIMBING</small>`;
+                statusText.innerText = "IN FLIGHT";
+                renderLine(cycle.elapsed, currentMult);
+                
+                if (hasBet) {
                     document.getElementById('cashout-preview').innerText = `₱${Math.floor(myBetAmt * currentMult).toLocaleString()}`;
+                    document.getElementById('hud-extract').innerText = "READY";
                     if (parseFloat(document.getElementById('auto-cashout').value) <= currentMult) cashout();
                 }
-                renderScene(elapsed, currentMult);
-                requestAnimationFrame(animate);
-            };
-            requestAnimationFrame(animate);
+            } 
+            else if (cycle.status === "CRASHED") {
+                mainMult.innerHTML = `${cycle.crashPoint.toFixed(2)}x<small>SIGNAL LOST</small>`;
+                mainMult.classList.add('crashed');
+                statusText.innerText = "TERMINATED";
+                if(hasBet) { hasBet = false; }
+                document.getElementById('hud-extract').innerText = "FAILED";
+            }
+
+            updateButtons(cycle.status);
+            requestAnimationFrame(gameLoop);
         }
 
-        function renderScene(elapsed, mult) {
+        function renderLine(elapsed, mult) {
             ctx.clearRect(0,0, canvas.width, canvas.height);
             const scale = Math.min(1, 4 / mult);
-            const headX = elapsed * (140 * scale), headY = (mult - 1) * (280 * scale);
+            const spacingX = 150 * scale, spacingY = 300 * scale;
+            const headX = elapsed * spacingX, headY = (mult - 1) * spacingY;
             const cx = canvas.width * 0.4 - headX, cy = canvas.height * 0.7 + headY;
             document.getElementById('hud-coords').innerText = `${Math.floor(headX)},${Math.floor(headY)}`;
 
@@ -221,76 +204,39 @@
             ctx.lineWidth = 10 * scale; ctx.strokeStyle = '#D4AF37'; ctx.lineCap = 'round';
             ctx.shadowBlur = 20; ctx.shadowColor = 'rgba(212, 175, 55, 0.6)';
             ctx.moveTo(0, 0);
-            for(let i=0; i <= elapsed; i+=0.1) { ctx.lineTo(i * (140 * scale), -(Math.pow(1.08, i) - 1) * (280 * scale)); }
+            for(let i=0; i <= elapsed; i+=0.1) {
+                ctx.lineTo(i * spacingX, -(Math.pow(1.08, i) - 1) * spacingY);
+            }
             ctx.stroke();
-            
             ctx.shadowBlur = 40; ctx.fillStyle = "#fff";
-            ctx.beginPath(); ctx.arc(headX, -headY, 7 * scale, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(headX, -headY, 8 * scale, 0, Math.PI * 2); ctx.fill();
             ctx.restore();
         }
 
-        function startBettingPhase(lastUpd) {
-            ctx.clearRect(0,0, canvas.width, canvas.height);
-            document.getElementById('main-mult').classList.remove('crashed');
-            const timer = setInterval(() => {
-                if (gameStatus !== "WAITING") { clearInterval(timer); return; }
-                let remaining = Math.max(0, 10 - (Date.now() - lastUpd) / 1000);
-                document.getElementById('main-mult').innerHTML = `${remaining.toFixed(1)}s<small>TIME TO BET</small>`;
-                document.getElementById('status-text').innerText = "PREPARING NEXT SYNC";
-                updateButtons();
-            }, 100);
-        }
-
-        function triggerCrashVisuals(cp) {
-            document.getElementById('main-mult').innerHTML = `${cp.toFixed(2)}x<small>SIGNAL LOST</small>`;
-            document.getElementById('main-mult').classList.add('crashed');
-            document.getElementById('status-text').innerText = "NETWORK ERROR";
-            hasBet = false; updateButtons();
-            
-            for(let i=0; i<60; i++) particles.push(new Particle(canvas.width/2, canvas.height/2));
-            const pLoop = setInterval(() => {
-                ctx.clearRect(0,0, canvas.width, canvas.height);
-                particles.forEach((p, idx) => {
-                    p.update(); p.draw(); if(p.alpha <= 0) particles.splice(idx, 1);
-                });
-                if(particles.length === 0) clearInterval(pLoop);
-            }, 16);
-        }
-
         window.placeBet = async () => {
-            if (!isLoaded || gameStatus !== "WAITING") return alert("Round In Progress");
+            const cycle = getGameCycle();
+            if (cycle.status !== "WAITING") return alert("Round In Progress");
             const amt = parseInt(document.getElementById('bet-amount').value);
-            if (amt > balance || amt < 10) return alert("Low Credits");
+            if (amt > balance || amt < 10) return alert("Verify Credits");
             await updateDoc(doc(db, "users", auth.currentUser.uid), { balance: increment(-amt) });
-            myBetAmt = amt; hasBet = true; updateButtons();
+            myBetAmt = amt; hasBet = true;
         };
 
         window.cashout = async () => {
-            if (!hasBet || gameStatus !== "RUNNING") return;
-            const win = Math.floor(myBetAmt * currentMult); hasBet = false;
+            if (!hasBet || getGameCycle().status !== "RUNNING") return;
+            const win = Math.floor(myBetAmt * currentMult);
+            hasBet = false;
             await updateDoc(doc(db, "users", auth.currentUser.uid), { balance: increment(win) });
             await addDoc(collection(db, "wallet_logs"), { uid: auth.currentUser.uid, type: "CRASH_WIN", amount: win, timestamp: serverTimestamp() });
-            updateButtons();
         };
 
-        function updateButtons() {
+        function updateButtons(status) {
             const bBet = document.getElementById('btn-bet'), bCash = document.getElementById('btn-cashout'), bWait = document.getElementById('btn-waiting');
             bBet.style.display = "none"; bCash.style.display = "none"; bWait.style.display = "none";
-            if (!isLoaded) { bWait.style.display = "block"; return; }
-            
-            if (hasBet && gameStatus === "RUNNING") bCash.style.display = "block";
-            else if (hasBet && gameStatus === "WAITING") { bWait.style.display = "block"; bWait.innerText = "LOCKED IN"; }
-            else if (gameStatus === "WAITING") bBet.style.display = "block";
+            if (hasBet && status === "RUNNING") bCash.style.display = "block";
+            else if (hasBet && status === "WAITING") { bWait.style.display = "block"; bWait.innerText = "INVESTED"; }
+            else if (status === "WAITING") bBet.style.display = "block";
             else bWait.style.display = "block";
-        }
-
-        function updateHistoryUI(history) {
-            const bar = document.getElementById('history'); bar.innerHTML = "";
-            [...history].reverse().forEach(val => {
-                const item = document.createElement('div');
-                item.className = `hist-item ${val >= 2 ? 'hist-green' : 'hist-red'}`;
-                item.innerText = val.toFixed(2) + "x"; bar.appendChild(item);
-            });
         }
 
         onAuthStateChanged(auth, user => {
@@ -301,6 +247,7 @@
                         document.getElementById('display-balance').innerText = `₱${balance.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
                     }
                 });
+                gameLoop();
             } else { window.location.href = "/login/"; }
         });
     </script>
