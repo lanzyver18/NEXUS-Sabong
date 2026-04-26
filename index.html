@@ -30,7 +30,23 @@
         .balance-display small { color: #888; font-size: 0.6rem; letter-spacing: 1px; }
         .balance-display span { color: var(--green); font-weight: bold; font-size: 1.1rem; }
         
-        /* ADS CAROUSEL STYLING */
+        /* TICKER AD */
+        .news-ticker {
+            background: #D4AF37;
+            color: #000;
+            font-size: 0.65rem;
+            font-weight: bold;
+            padding: 5px 0;
+            overflow: hidden;
+            white-space: nowrap;
+            font-family: 'Goldman';
+        }
+        .ticker-content {
+            display: inline-block;
+            animation: ticker 30s linear infinite;
+        }
+
+        /* ADS CAROUSEL STYLING - MOBILE OPTIMIZED */
         .promo-container {
             width: 100%;
             height: 160px;
@@ -44,7 +60,7 @@
             width: 100%;
             height: 100%;
             opacity: 0;
-            transition: 1s ease-in-out;
+            transition: 0.8s ease-in-out;
             background-size: cover;
             background-position: center;
             display: flex;
@@ -70,7 +86,7 @@
 
         /* LOBBY GRID */
         .lobby-grid { 
-            padding: 20px 20px 120px; 
+            padding: 20px 20px 40px; 
             max-width: 900px; 
             margin: auto; 
             display: grid; 
@@ -94,12 +110,34 @@
             background-size: cover;
             background-position: center;
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            /* Optimization: Low-quality placeholder color */
+            background-color: #0a0a0a;
         }
-        .game-card:hover { border-color: var(--gold); transform: scale(1.02); box-shadow: 0 15px 40px rgba(212, 175, 55, 0.1); }
+        .game-card:hover { border-color: var(--gold); transform: translateY(-4px); box-shadow: 0 15px 40px rgba(212, 175, 55, 0.15); }
 
-        .card-sabong { background-image: linear-gradient(to right, rgba(0,0,0,0.9), transparent), url('https://images.unsplash.com/photo-1596727147705-61a532a655bd?auto=format&fit=crop&q=60'); }
-        .card-crash { background-image: linear-gradient(to right, rgba(0,0,0,0.9), transparent), url('https://images.unsplash.com/photo-1635070041078-e363dbe005cb?auto=format&fit=crop&q=60'); }
-        .card-mines { background-image: linear-gradient(to right, rgba(0,0,0,0.9), transparent), url('https://images.unsplash.com/photo-1614028674026-a65e31bfd27c?auto=format&fit=crop&q=60'); }
+        /* Optimized Image URL parameters (?w=800&q=60) for faster mobile loading */
+        .card-sabong { background-image: linear-gradient(to right, rgba(0,0,0,0.9), transparent), url('https://images.unsplash.com/photo-1596727147705-61a532a655bd?w=800&q=60'); }
+        .card-crash { background-image: linear-gradient(to right, rgba(0,0,0,0.9), transparent), url('https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=800&q=60'); }
+        .card-mines { background-image: linear-gradient(to right, rgba(0,0,0,0.9), transparent), url('https://images.unsplash.com/photo-1614028674026-a65e31bfd27c?w=800&q=60'); }
+
+        /* IN-FEED AD BANNER */
+        .interstitial-ad {
+            max-width: 900px;
+            margin: 0 auto 30px;
+            padding: 0 20px;
+        }
+        .ad-box {
+            background: linear-gradient(90deg, #111, #000);
+            border: 1px dashed #333;
+            border-radius: 12px;
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .ad-box img { width: 50px; height: 50px; border-radius: 8px; object-fit: cover; }
+        .ad-text h4 { margin: 0; color: var(--gold); font-size: 0.8rem; font-family: 'Goldman'; }
+        .ad-text p { margin: 2px 0 0; color: #666; font-size: 0.65rem; }
 
         .status-tag { 
             position: absolute; top: 15px; right: 15px; 
@@ -122,6 +160,11 @@
         .action-btn.gold { background: var(--gold); color: black; }
         .admin-action { border-color: var(--green); color: var(--green); display: none; }
 
+        @keyframes ticker {
+            0% { transform: translateX(100%); }
+            100% { transform: translateX(-100%); }
+        }
+
         @media (max-width: 600px) { .promo-container { height: 130px; } .lobby-grid { grid-template-columns: 1fr; } }
     </style>
 </head>
@@ -138,15 +181,21 @@
         </div>
     </nav>
 
+    <div class="news-ticker">
+        <div class="ticker-content">
+            ★ SYSTEM ALERT: Withdrawals are processing normally. ★ NEW RECORD: User J***8 just won ₱45,200 in NEXUS CRASH! ★ COMMISSION REBATES: 5% bonus for all Agents this weekend! ★
+        </div>
+    </div>
+
     <div class="promo-container" id="ad-slider">
-        <div class="ad-slide active" style="background-image: linear-gradient(to right, #000, transparent), url('https://images.unsplash.com/photo-1614028674026-a65e31bfd27c?auto=format&fit=crop&q=80');">
+        <div class="ad-slide active" style="background-image: linear-gradient(to right, #000, transparent), url('https://images.unsplash.com/photo-1614028674026-a65e31bfd27c?w=1000&q=60');">
             <div class="ad-content">
                 <h2>NEXUS MINES</h2>
                 <p>New high-multiplier protocol now live. Risk for the diamond.</p>
                 <button onclick="window.location.href='/games/mines/'" style="background:var(--gold); border:none; padding:6px 12px; border-radius:4px; font-size:0.6rem; font-weight:bold; cursor:pointer;">PLAY NOW</button>
             </div>
         </div>
-        <div class="ad-slide" style="background-image: linear-gradient(to right, #000, transparent), url('https://images.unsplash.com/photo-1518623489648-a173ef7824f3?auto=format&fit=crop&q=80');">
+        <div class="ad-slide" style="background-image: linear-gradient(to right, #000, transparent), url('https://images.unsplash.com/photo-1518623489648-a173ef7824f3?w=1000&q=60');">
             <div class="ad-content">
                 <h2>FAST PAYOUTS</h2>
                 <p>Withdrawals processed in under 15 minutes. Secure your wins.</p>
@@ -187,6 +236,16 @@
         </a>
     </main>
 
+    <div class="interstitial-ad">
+        <div class="ad-box">
+            <img src="https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=100&q=40" alt="ad">
+            <div class="ad-text">
+                <h4>SECURE AGENT NETWORK</h4>
+                <p>Become a NEXUS Agent today and earn up to 5% commission on every bet. Fast cash-ins and instant settlements.</p>
+            </div>
+        </div>
+    </div>
+
     <section class="quick-actions">
         <button id="admin-btn" class="action-btn admin-action">MANAGEMENT</button>
         <button onclick="window.location.href='/wallet/'" class="action-btn gold">DEPOSIT</button>
@@ -216,13 +275,14 @@
 
         injectMenu();
 
-        // AD SLIDER LOGIC
         let currentSlide = 0;
         const slides = document.querySelectorAll('.ad-slide');
         setInterval(() => {
-            slides[currentSlide].classList.remove('active');
-            currentSlide = (currentSlide + 1) % slides.length;
-            slides[currentSlide].classList.add('active');
+            if(slides.length > 0) {
+                slides[currentSlide].classList.remove('active');
+                currentSlide = (currentSlide + 1) % slides.length;
+                slides[currentSlide].classList.add('active');
+            }
         }, 5000);
 
         onAuthStateChanged(auth, async (user) => {
