@@ -33,7 +33,8 @@
         
         /* TREND CHART */
         .trend-container { display: flex; gap: 5px; overflow-x: auto; padding: 10px 0; }
-        .dot { width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0; }
+        .dot { width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0; cursor: pointer; transition: 0.2s; }
+        .dot:hover { transform: scale(1.2); filter: brightness(1.5); }
         .dot.meron { background: #ff4444; box-shadow: 0 0 8px #ff4444; }
         .dot.wala { background: #4444ff; box-shadow: 0 0 8px #4444ff; }
         .dot.draw { background: #ffaa00; }
@@ -47,7 +48,10 @@
         .lock-btn { width: 100%; padding: 14px; border-radius: 8px; font-weight: bold; cursor: pointer; border: none; font-family: 'Goldman'; margin-bottom: 15px; transition: 0.3s; text-transform: uppercase; letter-spacing: 1px; }
 
         .w-request { background: #000; padding: 15px; border-radius: 10px; border-left: 4px solid var(--gold); margin-bottom: 12px; }
+        .w-actions { display: flex; gap: 8px; margin-top: 10px; }
         .btn-sm { padding: 8px 12px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 0.7rem; text-transform: uppercase; font-family: 'Goldman'; }
+        .btn-approve { background: #00ff88; color: black; }
+        .btn-reject { background: #ff4444; color: white; }
         
         .log-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; color: #eee; }
         .log-table th { text-align: left; color: #555; padding: 10px; border-bottom: 1px solid #222; text-transform: uppercase; font-size: 0.65rem; }
@@ -94,6 +98,7 @@
             <div class="panel" id="trend-panel" style="display: none;">
                 <div class="panel-header">
                     <h3 style="margin:0; color: var(--gold); font-family: 'Goldman'; font-size: 0.9rem;">ARENA ROADMAP (LAST 50)</h3>
+                    <button class="btn-sm" style="background:#222; color:#555;" onclick="clearRoadmap()">RESET HISTORY</button>
                 </div>
                 <div class="trend-container" id="roadmap-display"></div>
             </div>
@@ -133,9 +138,9 @@
                 <button id="btn-lock-betting" onclick="toggleBettingLock()" class="lock-btn">SYNCING...</button>
 
                 <div style="display: grid; grid-template-columns: 1fr; gap: 8px;">
-                    <button onclick="settleFight('MERON')" style="background:#ff4444; color:white; padding:12px; border:none; border-radius:5px; font-weight:bold; cursor:pointer;">SETTLE MERON</button>
-                    <button onclick="settleFight('WALA')" style="background:#4444ff; color:white; padding:12px; border:none; border-radius:5px; font-weight:bold; cursor:pointer;">SETTLE WALA</button>
-                    <button onclick="settleFight('DRAW')" style="background:#333; color:white; padding:12px; border:none; border-radius:5px; font-weight:bold; cursor:pointer;">DRAW / CANCEL</button>
+                    <button onclick="settleFight('MERON')" style="background:#ff4444; color:white; padding:12px; border:none; border-radius:5px; font-weight:bold; cursor:pointer; font-family: 'Goldman';">SETTLE MERON</button>
+                    <button onclick="settleFight('WALA')" style="background:#4444ff; color:white; padding:12px; border:none; border-radius:5px; font-weight:bold; cursor:pointer; font-family: 'Goldman';">SETTLE WALA</button>
+                    <button onclick="settleFight('DRAW')" style="background:#333; color:white; padding:12px; border:none; border-radius:5px; font-weight:bold; cursor:pointer; font-family: 'Goldman';">DRAW / CANCEL</button>
                 </div>
             </div>
 
@@ -194,7 +199,7 @@
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 const snap = await getDoc(doc(db, "users", user.uid));
-                if (snap.exists() && snap.data().level <= 6) {
+                if (snap.exists() && snap.data().level <= 5) {
                     myTierData = snap.data();
                     initManagement();
                 } else { window.location.href = "/"; }
@@ -202,7 +207,6 @@
         });
 
         function initManagement() {
-            // Downlines & Commissions
             const downlineQuery = query(collection(db, "users"), where("uplineId", "==", auth.currentUser.uid));
             onSnapshot(downlineQuery, (snap) => {
                 let totalBank = 0, networkComm = 0;
@@ -212,7 +216,7 @@
                     const u = uDoc.data();
                     totalBank += (u.balance || 0);
                     networkComm += (u.totalCommission || 0);
-                    table.innerHTML += `<tr><td><strong>${u.username}</strong><br><span class="role-tag">${u.role}</span></td><td style="color:#00ff88;">₱${(u.balance || 0).toLocaleString()}</td><td>₱${(u.totalCommission || 0).toLocaleString()}</td><td><button class="btn-sm" style="background:#222; color:var(--gold); border:1px solid var(--gold);" onclick="quickSelectUser('${u.username}')">LOAD</button></td></tr>`;
+                    table.innerHTML += `<tr><td><strong>${u.username}</strong><br><span style="font-size:0.6rem; color:var(--gold); border:1px solid #333; padding:2px 5px; border-radius:3px;">${u.role}</span></td><td style="color:#00ff88;">₱${(u.balance || 0).toLocaleString()}</td><td>₱${(u.totalCommission || 0).toLocaleString()}</td><td><button class="btn-sm" style="background:#222; color:var(--gold); border:1px solid var(--gold);" onclick="quickSelectUser('${u.username}')">LOAD</button></td></tr>`;
                 });
                 document.getElementById('stat-total-bank').innerText = "₱" + totalBank.toLocaleString();
                 document.getElementById('stat-network-comm').innerText = "₱" + networkComm.toLocaleString();
@@ -238,8 +242,8 @@
                     if(data.side === 'MERON') m += data.amount;
                     else w += data.amount;
                 });
-                document.getElementById('live-m-total').innerText = "₱" + (m * 12.5).toLocaleString(); // Rigged multiplier
-                document.getElementById('live-w-total').innerText = "₱" + (w * 11.8).toLocaleString(); // Rigged multiplier
+                document.getElementById('live-m-total').innerText = "₱" + (m * 12.5).toLocaleString();
+                document.getElementById('live-w-total').innerText = "₱" + (w * 11.8).toLocaleString();
             });
         }
 
@@ -269,6 +273,12 @@
             });
         }
 
+        window.clearRoadmap = async () => {
+            if(confirm("Clear Arena History?")) {
+                await updateDoc(doc(db, "settings", "arena"), { history: [] });
+            }
+        };
+
         window.toggleBettingLock = async () => {
             await updateDoc(doc(db, "settings", "arena"), { isLocked: !arenaLocked });
         };
@@ -276,11 +286,8 @@
         window.updateSettings = async () => {
             const m = parseFloat(document.getElementById('payout-multiplier').value);
             const fid = document.getElementById('fight-id-input').value;
-            await updateDoc(doc(db, "settings", "arena"), { 
-                payoutMultiplier: m, 
-                currentFightId: fid 
-            });
-            alert("Settings Applied.");
+            await updateDoc(doc(db, "settings", "arena"), { payoutMultiplier: m, currentFightId: fid });
+            alert("Settings Updated.");
         };
 
         window.settleFight = async (winner) => {
@@ -309,17 +316,56 @@
             const arenaSnap = await getDoc(arenaRef);
             let history = arenaSnap.exists() ? (arenaSnap.data().history || []) : [];
             history.push(winner);
-            
-            batch.update(arenaRef, { 
-                history: history.slice(-100), 
-                isLocked: true 
-            });
+            batch.update(arenaRef, { history: history.slice(-100), isLocked: true });
 
             await batch.commit();
             alert("Fight Settled.");
         };
 
-        // Loader & Withdrawals Logic remains the same...
+        function loadWithdrawals() {
+            onSnapshot(query(collection(db, "withdrawals"), where("status", "==", "PENDING")), (snap) => {
+                const list = document.getElementById('withdrawal-list');
+                let total = 0;
+                list.innerHTML = "";
+                document.getElementById('w-count').innerText = snap.size + " PENDING";
+                snap.forEach(doc => {
+                    const d = doc.data();
+                    total += d.amount;
+                    list.innerHTML += `
+                        <div class="w-request">
+                            <strong style="color:white;">${d.username.toUpperCase()}</strong> 
+                            <span style="float:right; color:#00ff88; font-family:'Goldman';">₱${d.amount.toLocaleString()}</span>
+                            <div style="font-size:0.6rem; color:#555; margin-top:5px;">${d.bank || 'Vault Account'}: ${d.accountNumber || ''}</div>
+                            <div class="w-actions">
+                                <button class="btn-sm btn-approve" onclick="handleWithdraw('${doc.id}', 'APPROVED')">PAID</button>
+                                <button class="btn-sm btn-reject" onclick="handleWithdraw('${doc.id}', 'REJECTED', '${d.uid}', ${d.amount})">CANCEL / REFUND</button>
+                            </div>
+                        </div>`;
+                });
+                document.getElementById('stat-pending-w').innerText = "₱" + total.toLocaleString();
+            });
+        }
+
+        window.handleWithdraw = async (id, status, pUid, amt) => {
+            const batch = writeBatch(db);
+            const wRef = doc(db, "withdrawals", id);
+
+            if (status === 'REJECTED') {
+                if(!confirm(`Reject and refund ₱${amt} to user?`)) return;
+                batch.update(doc(db, "users", pUid), { balance: increment(amt) });
+                batch.update(wRef, { status: "REJECTED" });
+                batch.set(doc(collection(db, "wallet_logs")), {
+                    uid: pUid, type: "REFUND", amount: amt, timestamp: new Date()
+                });
+            } else {
+                if(!confirm(`Confirm payout of ₱${amt}?`)) return;
+                batch.update(wRef, { status: "APPROVED" });
+            }
+
+            await batch.commit();
+            alert(status);
+        };
+
         window.checkUser = async () => {
             const username = document.getElementById('target-username').value.trim().toLowerCase();
             const q = query(collection(db, "users"), where("username", "==", username));
@@ -335,31 +381,20 @@
 
         window.confirmLoad = async () => {
             const amt = parseInt(document.getElementById('load-amt').value);
-            if (!activePlayerId || isNaN(amt)) return;
+            if (!activePlayerId || isNaN(amt) || amt <= 0) return;
             if (confirm(`Load ₱${amt}?`)) {
-                await updateDoc(doc(db, "users", activePlayerId), { balance: increment(amt) });
-                await addDoc(collection(db, "wallet_logs")), { uid: auth.currentUser.uid, type: "LOAD", toUser: document.getElementById('res-name').innerText, amount: amt, timestamp: new Date() };
-                alert("Success");
-            }
-        };
-
-        function loadWithdrawals() {
-            onSnapshot(query(collection(db, "withdrawals"), where("status", "==", "PENDING")), (snap) => {
-                const list = document.getElementById('withdrawal-list');
-                let total = 0;
-                list.innerHTML = "";
-                snap.forEach(doc => {
-                    const d = doc.data();
-                    total += d.amount;
-                    list.innerHTML += `<div class="w-request"><strong>${d.username.toUpperCase()}</strong> <span style="float:right; color:#00ff88;">₱${d.amount.toLocaleString()}</span><div class="w-actions"><button class="btn-sm btn-approve" onclick="handleWithdraw('${doc.id}', 'APPROVED')">PAID</button></div></div>`;
+                const batch = writeBatch(db);
+                batch.update(doc(db, "users", activePlayerId), { balance: increment(amt) });
+                batch.set(doc(collection(db, "wallet_logs")), { 
+                    uid: auth.currentUser.uid, type: "LOAD_OUT", toUser: document.getElementById('res-name').innerText, amount: amt, timestamp: new Date() 
                 });
-                document.getElementById('stat-pending-w').innerText = "₱" + total.toLocaleString();
-            });
-        }
-
-        window.handleWithdraw = async (id, status) => {
-            await updateDoc(doc(db, "withdrawals", id), { status });
-            alert("Confirmed");
+                batch.set(doc(collection(db, "wallet_logs")), { 
+                    uid: activePlayerId, type: "LOAD_IN", fromUser: myTierData.username, amount: amt, timestamp: new Date() 
+                });
+                await batch.commit();
+                alert("Load Successful");
+                document.getElementById('player-preview').style.display = "none";
+            }
         };
 
         window.quickSelectUser = (u) => { document.getElementById('target-username').value = u; checkUser(); };
