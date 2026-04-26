@@ -5,21 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Live Arena | NEXUS</title>
     <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="/menu.css">
     <style>
         .arena-container { max-width: 1000px; margin: 20px auto; display: grid; grid-template-columns: 1fr 320px; gap: 20px; padding: 0 15px; }
         .video-player { background: #000; aspect-ratio: 16/9; border: 2px solid #222; border-radius: 12px; overflow: hidden; position: relative; }
         .live-tag { position: absolute; top: 15px; left: 15px; background: #ff4444; color: white; padding: 5px 12px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; animation: pulse 1.5s infinite; }
-        
         .betting-panel { background: #111; padding: 20px; border-radius: 15px; border: 1px solid #333; }
         .bet-card { border: 2px solid #333; padding: 20px; border-radius: 10px; margin-bottom: 15px; text-align: center; cursor: pointer; transition: 0.2s; }
         .meron { border-color: #ff4444; color: #ff4444; }
         .wala { border-color: #4444ff; color: #4444ff; }
-        .meron:hover { background: #ff4444; color: white; }
-        .wala:hover { background: #4444ff; color: white; }
-        
+        .meron:hover, .meron.active { background: #ff4444; color: white; }
+        .wala:hover, .wala.active { background: #4444ff; color: white; }
         .odds { font-size: 1.8rem; font-weight: bold; display: block; margin: 5px 0; }
         .bet-input { background: #000; border: 1px solid #444; color: white; padding: 12px; width: 100%; border-radius: 8px; margin-top: 10px; text-align: center; font-size: 1.1rem; }
-        
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
         @media (max-width: 850px) { .arena-container { grid-template-columns: 1fr; } }
     </style>
@@ -28,7 +26,7 @@
 
     <nav class="top-nav">
         <a href="/" style="color: var(--gold); text-decoration: none; font-weight: bold;">← LOBBY</a>
-        <div class="balance-box">₱<span id="display-balance">0.00</span></div>
+        <div class="balance-box" style="color: #00ff88; font-weight: bold;">₱<span id="display-balance">0.00</span></div>
     </nav>
 
     <div class="arena-container">
@@ -60,7 +58,8 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
-        import { getFirestore, doc, onSnapshot, updateDoc, increment, addDoc, collection, getDoc } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+        import { getFirestore, doc, onSnapshot, updateDoc, increment, addDoc, collection, getDoc, writeBatch } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+        import { injectMenu } from "/menu.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCBvOw8HrMhZD0aYSHqFdE196ZITdYBU3Q",
@@ -75,26 +74,75 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
+        window.firebaseAuth = auth;
+        window.firebaseDb = db;
+        injectMenu();
+
         let currentBalance = 0;
         let currentUserData = null;
 
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 const userRef = doc(db, "users", user.uid);
-                
-                // Keep track of user data for bet records
-                const userSnap = await getDoc(userRef);
-                currentUserData = userSnap.data();
-
-                // Live Balance Listener
                 onSnapshot(userRef, (snapshot) => {
                     if (snapshot.exists()) {
-                        currentBalance = snapshot.data().balance || 0;
+                        currentUserData = snapshot.data();
+                        currentBalance = currentUserData.balance || 0;
                         document.getElementById('display-balance').innerText = currentBalance.toLocaleString(undefined, {minimumFractionDigits: 2});
                     }
                 });
             } else { window.location.href = "/login/"; }
         });
+
+        // --- THE PAYOUT ENGINE (COMMISSION LOGIC) ---
+        async function distributeCommissions(betAmount, uplinePath) {
+            if (!uplinePath || uplinePath.length === 0) return;
+
+            const batch = writeBatch(db);
+            let distributedSoFar = 0;
+
+            // Loop from Player's immediate Upline up to Admin
+            // uplinePath: [Admin_UID, Op_UID, SubOp_UID, ...]
+            // We reverse it to process bottom-up
+            const reversedPath = [...uplinePath].reverse();
+
+            for (const uplineUid of reversedPath) {
+                const ref = doc(db, "users", uplineUid);
+                const snap = await getDoc(ref);
+                
+                if (snap.exists()) {
+                    const uplineData = snap.data();
+                    const myRate = uplineData.commissionRate || 0;
+                    
+                    // The "Spread" calculation
+                    const mySharePercent = myRate - distributedSoFar;
+
+                    if (mySharePercent > 0) {
+                        const commissionEarned = betAmount * (mySharePercent / 100);
+                        
+                        batch.update(ref, {
+                            balance: increment(commissionEarned),
+                            totalTurnover: increment(betAmount),
+                            totalCommission: increment(commissionEarned)
+                        });
+
+                        // Log the commission for the Agent's History
+                        const logRef = doc(collection(db, "wallet_logs"));
+                        batch.set(logRef, {
+                            uid: uplineUid,
+                            type: "COMMISSION",
+                            amount: commissionEarned,
+                            fromUser: currentUserData.username,
+                            status: "APPROVED",
+                            timestamp: new Date()
+                        });
+
+                        distributedSoFar = myRate;
+                    }
+                }
+            }
+            await batch.commit();
+        }
 
         window.placeBet = async (side) => {
             const amount = parseInt(document.getElementById('bet-amount').value);
@@ -106,27 +154,31 @@
                 try {
                     const userRef = doc(db, "users", auth.currentUser.uid);
                     
-                    // 1. Deduct Balance
+                    // 1. Deduct Player Balance
                     await updateDoc(userRef, {
-                        balance: increment(-amount)
+                        balance: increment(-amount),
+                        totalBetAmount: increment(amount)
                     });
 
-                    // 2. Create Bet Record (This populates your Admin History)
+                    // 2. Create Bet Record
                     await addDoc(collection(db, "bets"), {
                         uid: auth.currentUser.uid,
                         username: currentUserData.username,
                         amount: amount,
                         side: side,
-                        fightId: "125", // In a real app, this comes from a 'currentFight' doc
+                        fightId: "125",
                         status: "PENDING",
                         timestamp: new Date()
                     });
 
-                    alert(`Bet Placed on ${side}! Good luck!`);
+                    // 3. TRIGGER PAYOUT ENGINE (Distribute Commission Upwards)
+                    await distributeCommissions(amount, currentUserData.uplinePath);
+
+                    alert(`Bet Placed! Commission distributed to your uplines.`);
 
                 } catch (e) {
-                    alert("Error placing bet. Please try again.");
                     console.error(e);
+                    alert("Transaction failed.");
                 }
             }
         };
