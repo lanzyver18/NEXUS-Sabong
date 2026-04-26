@@ -69,7 +69,17 @@
         </div>
 
         <div class="sidebar-admin">
-            <div class="panel" id="fight-control-panel" style="border: 1px solid var(--gold); display:none;">
+            <div class="panel search-box" id="arena-settings-panel" style="border-color: #00ff88; display: none; margin-bottom: 20px;">
+                <h3 style="margin-top:0; font-size: 1rem; color: #00ff88;">ARENA SETTINGS</h3>
+                <label style="font-size: 0.7rem; color: #555;">GLOBAL PAYOUT MULTIPLIER</label>
+                <div style="display: flex; gap: 10px; margin-top: 5px;">
+                    <input type="number" id="payout-multiplier" step="0.01" placeholder="e.g. 1.90" style="margin:0;">
+                    <button onclick="updatePayout()" class="btn-sm btn-approve" style="padding: 0 15px;">SAVE</button>
+                </div>
+                <p style="font-size: 0.6rem; color: #666; margin-top: 8px;">Current: 1.00 bet pays ₱<span id="current-payout-display">...</span></p>
+            </div>
+
+            <div class="panel" id="fight-control-panel" style="border: 1px solid var(--gold); display:none; margin-bottom: 20px;">
                 <h3 style="margin:0; color: var(--gold); margin-bottom:10px;">GLOBAL SETTLEMENT</h3>
                 <div style="display: grid; grid-template-columns: 1fr; gap: 8px;">
                     <button onclick="settleFight('MERON')" style="background:#ff4444; color:white; padding:12px; border:none; border-radius:5px; font-weight:bold; cursor:pointer;">MERON WINS</button>
@@ -95,7 +105,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
-        import { getFirestore, doc, getDoc, getDocs, updateDoc, increment, collection, query, where, orderBy, limit, onSnapshot, addDoc } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, setDoc, getDocs, updateDoc, increment, collection, query, where, orderBy, limit, onSnapshot, addDoc, writeBatch } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
         import { injectMenu } from "/menu.js";
 
         const firebaseConfig = {
@@ -117,6 +127,7 @@
 
         let myTierData = null;
         let activePlayerId = null;
+        window.currentMultiplier = 1.90; // Fallback
 
         onAuthStateChanged(auth, async (user) => {
             if (user) {
@@ -129,7 +140,7 @@
         });
 
         function initManagement() {
-            // Stats based on hierarchy (Show only your direct downlines for Levels 2-6)
+            // Stats based on hierarchy
             const downlineQuery = query(collection(db, "users"), where("uplineId", "==", auth.currentUser.uid));
             onSnapshot(downlineQuery, (snap) => {
                 let total = 0;
@@ -138,13 +149,15 @@
                 document.getElementById('stat-total-bank').innerText = "₱" + total.toLocaleString();
             });
 
-            // Global Controls for Admin (Level 1)
+            // Admin Only Panels (Level 1)
             if (myTierData.level === 1) {
                 document.getElementById('fight-control-panel').style.display = "block";
+                document.getElementById('arena-settings-panel').style.display = "block";
                 loadWithdrawals();
+                loadArenaSettings();
             }
 
-            // Transaction Logs (Only show logs involving the current Agent)
+            // Transaction Logs
             const logQ = query(collection(db, "wallet_logs"), where("uid", "==", auth.currentUser.uid), orderBy("timestamp", "desc"), limit(20));
             onSnapshot(logQ, (snap) => {
                 const l = document.getElementById('master-log-list');
@@ -157,13 +170,122 @@
             });
         }
 
+        function loadArenaSettings() {
+            onSnapshot(doc(db, "settings", "arena"), (docSnap) => {
+                if (docSnap.exists()) {
+                    const multiplier = docSnap.data().payoutMultiplier || 1.90;
+                    document.getElementById('payout-multiplier').value = multiplier;
+                    document.getElementById('current-payout-display').innerText = multiplier.toFixed(2);
+                    window.currentMultiplier = multiplier;
+                }
+            });
+        }
+
+        window.updatePayout = async () => {
+            const newVal = parseFloat(document.getElementById('payout-multiplier').value);
+            if (isNaN(newVal) || newVal < 1) return alert("Invalid multiplier. Must be at least 1.0");
+            
+            try {
+                await setDoc(doc(db, "settings", "arena"), {
+                    payoutMultiplier: newVal,
+                    lastUpdated: new Date()
+                }, { merge: true });
+                alert("Global Arena Payout Updated!");
+            } catch (e) { 
+                console.error(e);
+                alert("Failed to update settings."); 
+            }
+        };
+
+        window.settleFight = async (winner) => {
+            if (myTierData.level !== 1) return alert("Unauthorized.");
+            const multiplier = window.currentMultiplier;
+            if (!confirm(`Settle fight as ${winner} with ${multiplier} payout?`)) return;
+            
+            const q = query(collection(db, "bets"), where("status", "==", "PENDING"));
+            const snap = await getDocs(q);
+            const batch = writeBatch(db);
+            
+            for (const b of snap.docs) {
+                const bd = b.data();
+                const userRef = doc(db, "users", bd.uid);
+                const betRef = doc(db, "bets", b.id);
+
+                if (bd.side === winner) {
+                    const pay = Math.floor(bd.amount * multiplier);
+                    batch.update(userRef, { balance: increment(pay) });
+                    batch.update(betRef, { status: "WIN", payout: pay });
+                } else if (winner === "DRAW") {
+                    batch.update(userRef, { balance: increment(bd.amount) });
+                    batch.update(betRef, { status: "DRAW", payout: bd.amount });
+                } else {
+                    batch.update(betRef, { status: "LOSS", payout: 0 });
+                }
+            }
+            await batch.commit();
+            alert(`Fight Settled! Multiplier used: ${multiplier}`);
+        };
+
+        // ... Keep existing checkUser, confirmLoad, and handleWithdraw functions below ...
+        window.checkUser = async () => {
+            const username = document.getElementById('target-username').value.trim().toLowerCase();
+            const q = query(collection(db, "users"), where("username", "==", username));
+            const snap = await getDocs(q);
+            if (!snap.empty) {
+                const p = snap.docs[0];
+                const pData = p.data();
+                if (pData.uplineId !== auth.currentUser.uid && myTierData.level !== 1) {
+                    return alert("You can only load credits to your direct downlines.");
+                }
+                activePlayerId = p.id;
+                document.getElementById('res-name').innerText = pData.username.toUpperCase();
+                document.getElementById('res-bal').innerText = "₱" + (pData.balance || 0).toLocaleString();
+                document.getElementById('player-preview').style.display = "block";
+            } else { alert("User not found."); }
+        };
+
+        window.confirmLoad = async () => {
+            const amt = parseInt(document.getElementById('load-amt').value);
+            if (!activePlayerId || isNaN(amt)) return alert("Select user and amount.");
+            if (myTierData.level > 1 && myTierData.balance < amt) {
+                return alert("Insufficient commission balance to load credits.");
+            }
+            if (confirm(`Send ₱${amt} to ${document.getElementById('res-name').innerText}?`)) {
+                try {
+                    if (myTierData.level > 1) {
+                        await updateDoc(doc(db, "users", auth.currentUser.uid), { balance: increment(-amt) });
+                    }
+                    await updateDoc(doc(db, "users", activePlayerId), { balance: increment(amt) });
+                    await addDoc(collection(db, "wallet_logs"), { 
+                        uid: auth.currentUser.uid,
+                        type: "LOAD",
+                        toUser: document.getElementById('res-name').innerText, 
+                        amount: amt, 
+                        timestamp: new Date() 
+                    });
+                    alert("Credit Load Successful");
+                    location.reload();
+                } catch (e) { alert("Transfer failed."); }
+            }
+        };
+
+        window.handleWithdraw = async (id, status, pUid, amt) => {
+            if (!confirm(`Mark as ${status}?`)) return;
+            try {
+                if (status === 'REJECTED') {
+                    await updateDoc(doc(db, "users", pUid), { balance: increment(amt) });
+                }
+                await updateDoc(doc(db, "withdrawals", id), { status: status });
+                alert("Success");
+            } catch (e) { alert("Error"); }
+        };
+
         function loadWithdrawals() {
             onSnapshot(query(collection(db, "withdrawals"), where("status", "==", "PENDING")), (snap) => {
                 const list = document.getElementById('withdrawal-list');
                 let totalP = 0;
                 list.innerHTML = snap.empty ? '<p style="text-align:center; color:#444; padding:20px;">No pending withdrawals.</p>' : '';
                 document.getElementById('w-count').innerText = snap.size + " PENDING";
-
                 snap.forEach(req => {
                     const d = req.data();
                     totalP += d.amount;
@@ -180,93 +302,6 @@
                 document.getElementById('stat-pending-w').innerText = "₱" + totalP.toLocaleString();
             });
         }
-
-        window.checkUser = async () => {
-            const username = document.getElementById('target-username').value.trim().toLowerCase();
-            const q = query(collection(db, "users"), where("username", "==", username));
-            const snap = await getDocs(q);
-            if (!snap.empty) {
-                const p = snap.docs[0];
-                const pData = p.data();
-                
-                // Security check: Can only load credits to your direct downlines
-                if (pData.uplineId !== auth.currentUser.uid && myTierData.level !== 1) {
-                    return alert("You can only load credits to your direct downlines.");
-                }
-
-                activePlayerId = p.id;
-                document.getElementById('res-name').innerText = pData.username.toUpperCase();
-                document.getElementById('res-bal').innerText = "₱" + (pData.balance || 0).toLocaleString();
-                document.getElementById('player-preview').style.display = "block";
-            } else { alert("User not found."); }
-        };
-
-        window.confirmLoad = async () => {
-            const amt = parseInt(document.getElementById('load-amt').value);
-            if (!activePlayerId || isNaN(amt)) return alert("Select user and amount.");
-            
-            // Check if Agent has enough balance to load (If Tier 2-6)
-            if (myTierData.level > 1 && myTierData.balance < amt) {
-                return alert("Insufficient commission balance to load credits.");
-            }
-
-            if (confirm(`Send ₱${amt} to ${document.getElementById('res-name').innerText}?`)) {
-                try {
-                    // Deduct from Agent, Add to Player
-                    if (myTierData.level > 1) {
-                        await updateDoc(doc(db, "users", auth.currentUser.uid), { balance: increment(-amt) });
-                    }
-                    await updateDoc(doc(db, "users", activePlayerId), { balance: increment(amt) });
-                    
-                    // Log the transaction
-                    await addDoc(collection(db, "wallet_logs"), { 
-                        uid: auth.currentUser.uid,
-                        type: "LOAD",
-                        toUser: document.getElementById('res-name').innerText, 
-                        amount: amt, 
-                        timestamp: new Date() 
-                    });
-                    
-                    alert("Credit Load Successful");
-                    location.reload();
-                } catch (e) { alert("Transfer failed."); }
-            }
-        };
-
-        window.settleFight = async (winner) => {
-            if (myTierData.level !== 1) return alert("Unauthorized.");
-            if (!confirm(`Settle fight as ${winner}?`)) return;
-            
-            const q = query(collection(db, "bets"), where("status", "==", "PENDING"));
-            const snap = await getDocs(q);
-            
-            for (const b of snap.docs) {
-                const bd = b.data();
-                const userRef = doc(db, "users", bd.uid);
-                if (bd.side === winner) {
-                    const pay = Math.floor(bd.amount * 1.9);
-                    await updateDoc(userRef, { balance: increment(pay) });
-                    await updateDoc(doc(db, "bets", b.id), { status: "WIN", payout: pay });
-                } else if (winner === "DRAW") {
-                    await updateDoc(userRef, { balance: increment(bd.amount) });
-                    await updateDoc(doc(db, "bets", b.id), { status: "DRAW", payout: bd.amount });
-                } else {
-                    await updateDoc(doc(db, "bets", b.id), { status: "LOSS", payout: 0 });
-                }
-            }
-            alert("All bets settled successfully.");
-        };
-
-        window.handleWithdraw = async (id, status, pUid, amt) => {
-            if (!confirm(`Mark as ${status}?`)) return;
-            try {
-                if (status === 'REJECTED') {
-                    await updateDoc(doc(db, "users", pUid), { balance: increment(amt) });
-                }
-                await updateDoc(doc(db, "withdrawals", id), { status: status });
-                alert("Success");
-            } catch (e) { alert("Error"); }
-        };
     </script>
 </body>
 </html>
