@@ -13,9 +13,20 @@
         .video-player { background: #000; aspect-ratio: 16/9; border: 2px solid #222; border-radius: 12px; overflow: hidden; position: relative; }
         .live-tag { position: absolute; top: 15px; left: 15px; background: #ff4444; color: white; padding: 5px 12px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; animation: pulse 1.5s infinite; z-index: 10; }
         
+        /* GAME TREND / ROADMAP */
+        .trend-container { background: #000; padding: 12px; border-radius: 12px; border: 1px solid #222; margin-bottom: 15px; display: flex; gap: 6px; overflow-x: auto; min-height: 30px; align-items: center; }
+        .trend-dot { min-width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.6rem; font-weight: bold; color: white; flex-shrink: 0; font-family: 'Goldman'; }
+        .dot-meron { background: #ff4444; box-shadow: 0 0 10px rgba(255,68,68,0.4); }
+        .dot-wala { background: #4444ff; box-shadow: 0 0 10px rgba(68,68,255,0.4); }
+        .dot-draw { background: #ffaa00; }
+
+        /* VOLUME BAR */
+        .volume-container { margin-bottom: 15px; background: #222; height: 12px; border-radius: 6px; overflow: hidden; display: flex; }
+        .vol-meron { background: #ff4444; width: 50%; transition: 0.5s; height: 100%; }
+        .vol-wala { background: #4444ff; width: 50%; transition: 0.5s; height: 100%; }
+
         .betting-panel { background: #111; padding: 20px; border-radius: 15px; border: 1px solid #333; display: flex; flex-direction: column; }
         
-        /* BET CARDS */
         .bet-card { border: 2px solid #333; padding: 15px; border-radius: 12px; margin-bottom: 12px; text-align: center; cursor: pointer; transition: 0.2s; position: relative; overflow: hidden; }
         .meron { border-color: #ff4444; color: #ff4444; background: rgba(255, 68, 68, 0.05); }
         .wala { border-color: #4444ff; color: #4444ff; background: rgba(68, 68, 255, 0.05); }
@@ -23,19 +34,16 @@
         .wala:hover { background: #4444ff; color: white; }
         .odds { font-family: 'Goldman'; font-size: 1.8rem; display: block; margin: 2px 0; }
 
-        /* QUICK CHIPS */
         .chip-row { display: flex; gap: 8px; margin: 15px 0; overflow-x: auto; padding-bottom: 5px; }
         .chip { background: #222; border: 1px solid #444; color: #eee; padding: 8px 12px; border-radius: 6px; font-size: 0.75rem; cursor: pointer; white-space: nowrap; transition: 0.2s; }
         .chip:hover { border-color: var(--gold); color: var(--gold); }
 
         .bet-input { background: #000; border: 1px solid #444; color: #00ff88; padding: 15px; width: 100%; border-radius: 8px; text-align: center; font-size: 1.2rem; font-family: 'Goldman'; box-sizing: border-box; }
 
-        /* RECENT BETS LIST */
         .history-list { margin-top: 20px; flex-grow: 1; border-top: 1px solid #222; padding-top: 15px; }
         .history-item { display: flex; justify-content: space-between; font-size: 0.75rem; padding: 8px 0; border-bottom: 1px solid #1a1a1a; }
         .side-tag { font-weight: bold; padding: 2px 6px; border-radius: 3px; font-size: 0.6rem; }
 
-        /* NAV OVERLAP FIX */
         .top-nav { position: relative; display: flex; justify-content: space-between; align-items: center; padding: 12px 20px 12px 75px; background: #000; border-bottom: 2px solid #222; }
 
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
@@ -50,14 +58,25 @@
     </nav>
 
     <div class="arena-container">
-        <div class="video-player">
-            <div class="live-tag">LIVE FEED</div>
-            <iframe width="100%" height="100%" src="https://www.youtube.com/embed/live_stream?channel=YOUR_CHANNEL_ID" frameborder="0" allowfullscreen></iframe>
+        <div class="main-content">
+            <div class="trend-container" id="game-trend">
+                <span style="color:#444; font-size:0.6rem; text-transform:uppercase; letter-spacing:1px;">Arena Roadmap Loading...</span>
+            </div>
+
+            <div class="video-player">
+                <div class="live-tag">LIVE FEED</div>
+                <iframe width="100%" height="100%" src="https://www.youtube.com/embed/live_stream?channel=YOUR_CHANNEL_ID" frameborder="0" allowfullscreen></iframe>
+            </div>
         </div>
 
         <div class="betting-panel">
             <h3 style="text-align: center; color: var(--gold); margin-top: 0; font-family: 'Goldman'; letter-spacing: 1px;">FIGHT #125</h3>
             
+            <div class="volume-container">
+                <div id="bar-meron" class="vol-meron"></div>
+                <div id="bar-wala" class="vol-wala"></div>
+            </div>
+
             <div class="bet-card meron" onclick="placeBet('MERON')">
                 <small>BET ON</small>
                 <span class="odds">MERON</span>
@@ -126,16 +145,47 @@
                     }
                 });
 
-                // Sync Global Payout Odds
+                // Sync Arena Settings (Multiplier & Trend History)
                 onSnapshot(doc(db, "settings", "arena"), (docSnap) => {
-                    let multiplier = 1.90;
-                    if (docSnap.exists()) multiplier = docSnap.data().payoutMultiplier || 1.90;
-                    const text = `Payout: ${multiplier.toFixed(2)}`;
-                    document.getElementById('meron-payout-label').innerText = text;
-                    document.getElementById('wala-payout-label').innerText = text;
+                    if (docSnap.exists()) {
+                        const data = docSnap.data();
+                        
+                        // Update Multipliers
+                        let multiplier = data.payoutMultiplier || 1.90;
+                        const text = `Payout: ${multiplier.toFixed(2)}`;
+                        document.getElementById('meron-payout-label').innerText = text;
+                        document.getElementById('wala-payout-label').innerText = text;
+
+                        // Update Roadmap Trend
+                        const history = data.history || [];
+                        const trendEl = document.getElementById('game-trend');
+                        trendEl.innerHTML = "";
+                        history.slice(-25).forEach(res => {
+                            const dot = document.createElement('div');
+                            dot.className = `trend-dot dot-${res.toLowerCase()}`;
+                            dot.innerText = res.charAt(0);
+                            trendEl.appendChild(dot);
+                        });
+                    }
                 });
 
-                // Load Personal Session History
+                // Sync Global Betting Volume (Real-time bar)
+                const pendingBetsQuery = query(collection(db, "bets"), where("status", "==", "PENDING"));
+                onSnapshot(pendingBetsQuery, (snap) => {
+                    let meronTotal = 0;
+                    let walaTotal = 0;
+                    snap.forEach(d => {
+                        if (d.data().side === 'MERON') meronTotal += d.data().amount;
+                        if (d.data().side === 'WALA') walaTotal += d.data().amount;
+                    });
+                    const total = meronTotal + walaTotal;
+                    if (total > 0) {
+                        document.getElementById('bar-meron').style.width = (meronTotal / total * 100) + "%";
+                        document.getElementById('bar-wala').style.width = (walaTotal / total * 100) + "%";
+                    }
+                });
+
+                // Personal Bet History
                 const q = query(collection(db, "bets"), where("uid", "==", user.uid), orderBy("timestamp", "desc"), limit(5));
                 onSnapshot(q, (snap) => {
                     const hist = document.getElementById('local-bet-history');
