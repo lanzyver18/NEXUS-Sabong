@@ -10,14 +10,13 @@
     <link href="https://fonts.googleapis.com/css2?family=Goldman:wght@400;700&display=swap" rel="stylesheet">
     
     <style>
-        :root { --gold: #D4AF37; }
+        :root { --gold: #D4AF37; --green: #00ff88; }
 
         /* NAVIGATION ADJUSTMENT */
         .top-nav {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            /* CRITICAL: relative position anchors the menu button to the left of this bar */
             position: relative; 
             padding: 12px 20px 12px 75px; 
             background: #000;
@@ -30,7 +29,7 @@
         .user-controls { display: flex; align-items: center; gap: 15px; }
         .balance-display { text-align: right; display: flex; flex-direction: column; }
         .balance-display small { color: #888; font-size: 0.6rem; letter-spacing: 1px; }
-        .balance-display span { color: #00ff88; font-weight: bold; font-size: 1.1rem; }
+        .balance-display span { color: var(--green); font-weight: bold; font-size: 1.1rem; }
         
         .nav-profile-btn {
             background: transparent;
@@ -48,7 +47,7 @@
 
         /* HERO SECTION */
         .hero {
-            height: 35vh;
+            height: 30vh;
             background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), url('https://images.unsplash.com/photo-1511192336575-5a79af67a629?auto=format&fit=crop&q=80');
             background-size: cover;
             background-position: center;
@@ -59,38 +58,51 @@
             border-bottom: 2px solid var(--gold);
         }
         .hero h1 { font-size: 2.2rem; margin: 0; color: white; text-transform: uppercase; font-family: 'Goldman'; letter-spacing: 2px; }
-        .hero p { color: #ccc; margin: 10px 0 20px; font-size: 0.9rem; }
+        .hero p { color: #ccc; margin: 10px 0 0; font-size: 0.9rem; }
 
-        /* LOBBY DISPLAY */
-        .lobby-grid { padding: 40px 20px 120px; max-width: 600px; margin: auto; }
+        /* LOBBY GRID - Updated for Multiple Games */
+        .lobby-grid { 
+            padding: 30px 20px 120px; 
+            max-width: 800px; 
+            margin: auto; 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 20px; 
+        }
         
         .game-card {
             background: #1a1a1a;
             border-radius: 16px;
             overflow: hidden;
-            border: 2px solid var(--gold);
+            border: 1px solid #333;
             cursor: pointer;
             position: relative;
-            min-height: 220px;
+            min-height: 200px;
             display: flex;
             align-items: flex-end;
-            padding: 25px;
+            padding: 20px;
             transition: 0.3s;
             text-decoration: none;
-            background: linear-gradient(transparent, #000), url('https://images.unsplash.com/photo-1596727147705-61a532a655bd?auto=format&fit=crop&q=60');
             background-size: cover;
             background-position: center;
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
+        .game-card:hover { border-color: var(--gold); transform: translateY(-5px); }
+
+        /* Specific Backgrounds */
+        .card-sabong { background-image: linear-gradient(transparent, #000), url('https://images.unsplash.com/photo-1596727147705-61a532a655bd?auto=format&fit=crop&q=60'); }
+        .card-mines { background-image: linear-gradient(transparent, #000), url('https://images.unsplash.com/photo-1614028674026-a65e31bfd27c?auto=format&fit=crop&q=60'); }
 
         .status-tag { 
-            position: absolute; top: 20px; left: 20px; 
-            background: #ff4444; color: white; font-size: 0.7rem; padding: 5px 12px; 
+            position: absolute; top: 15px; left: 15px; 
+            background: #ff4444; color: white; font-size: 0.6rem; padding: 4px 10px; 
             border-radius: 4px; font-weight: bold; display: flex; align-items: center; gap: 6px;
+            letter-spacing: 1px;
         }
+        .tag-new { background: var(--green); color: #000; }
 
         .pulse {
-            width: 8px; height: 8px; background: white; border-radius: 50%;
+            width: 6px; height: 6px; background: white; border-radius: 50%;
             animation: pulse-animation 1.5s infinite;
         }
 
@@ -100,8 +112,8 @@
             100% { transform: scale(0.95); opacity: 0; }
         }
 
-        .card-info h3 { margin: 0; color: white; font-size: 1.5rem; font-family: 'Goldman'; }
-        .card-info p { margin: 5px 0 0; color: var(--gold); font-size: 0.9rem; font-weight: bold; }
+        .card-info h3 { margin: 0; color: white; font-size: 1.2rem; font-family: 'Goldman'; }
+        .card-info p { margin: 5px 0 0; color: var(--gold); font-size: 0.75rem; font-weight: bold; }
 
         /* BOTTOM ACTIONS */
         .quick-actions { 
@@ -111,7 +123,12 @@
         }
         .action-btn { flex: 1; padding: 15px; border: 1px solid var(--gold); background: transparent; color: var(--gold); border-radius: 8px; font-weight: bold; text-transform: uppercase; cursor: pointer; font-size: 0.8rem; }
         .action-btn.gold { background: var(--gold); color: black; }
-        .admin-action { border-color: #00ff88; color: #00ff88; display: none; }
+        .admin-action { border-color: var(--green); color: var(--green); display: none; }
+
+        @media (max-width: 600px) {
+            .lobby-grid { grid-template-columns: 1fr; }
+            .hero h1 { font-size: 1.8rem; }
+        }
     </style>
 </head>
 <body>
@@ -130,12 +147,12 @@
     <header class="hero">
         <div class="hero-content">
             <h1>NEXUS ARENA</h1>
-            <p>The Premium Sabong Experience</p>
+            <p>The Premium Gaming Experience</p>
         </div>
     </header>
 
     <main class="lobby-grid">
-        <a href="/games/" class="game-card">
+        <a href="/games/" class="game-card card-sabong">
             <div class="status-tag">
                 <div class="pulse"></div>
                 LIVE NOW
@@ -143,6 +160,16 @@
             <div class="card-info">
                 <h3>LIVE SABONG</h3>
                 <p>ENTER ARENA →</p>
+            </div>
+        </a>
+
+        <a href="/games/mines/" class="game-card card-mines">
+            <div class="status-tag tag-new">
+                NEW GAME
+            </div>
+            <div class="card-info">
+                <h3>NEXUS MINES</h3>
+                <p>PLAY NOW →</p>
             </div>
         </a>
     </main>
@@ -173,11 +200,9 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // Required for hierarchy-aware menu.js
         window.firebaseAuth = auth;
         window.firebaseDb = db; 
 
-        // Run Menu Injection
         injectMenu();
 
         onAuthStateChanged(auth, async (user) => {
@@ -189,9 +214,10 @@
                     const data = snap.data();
                     document.getElementById('user-display').innerText = data.username ? data.username.toUpperCase() : "PLAYER";
                     
-                    const level = data.level || 7;
+                    const level = data.level || 6;
                     const adminBtn = document.getElementById('admin-btn');
-                    if (level >= 1 && level <= 6) {
+                    // Management check for levels 1-5
+                    if (level >= 1 && level <= 5) {
                         adminBtn.style.display = "block";
                         adminBtn.onclick = () => {
                             window.location.href = (level === 1) ? '/admin/index.html' : '/admin/agents.html';
