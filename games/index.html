@@ -20,18 +20,21 @@
         .dot-wala { background: #4444ff; box-shadow: 0 0 10px rgba(68,68,255,0.4); }
         .dot-draw { background: #ffaa00; }
 
-        /* VOLUME BAR */
-        .volume-container { margin-bottom: 15px; background: #222; height: 12px; border-radius: 6px; overflow: hidden; display: flex; }
-        .vol-meron { background: #ff4444; width: 50%; transition: 0.5s; height: 100%; }
-        .vol-wala { background: #4444ff; width: 50%; transition: 0.5s; height: 100%; }
+        /* VOLUME BAR & STATS */
+        .vol-header { display: flex; justify-content: space-between; font-size: 0.65rem; color: #888; margin-bottom: 5px; font-family: 'Goldman'; }
+        .volume-container { margin-bottom: 15px; background: #222; height: 12px; border-radius: 6px; overflow: hidden; display: flex; border: 1px solid #333; }
+        .vol-meron { background: #ff4444; width: 50%; transition: 0.8s cubic-bezier(0.4, 0, 0.2, 1); height: 100%; }
+        .vol-wala { background: #4444ff; width: 50%; transition: 0.8s cubic-bezier(0.4, 0, 0.2, 1); height: 100%; }
 
         .betting-panel { background: #111; padding: 20px; border-radius: 15px; border: 1px solid #333; display: flex; flex-direction: column; }
         
+        /* BET CARDS - LOCKED STATE */
         .bet-card { border: 2px solid #333; padding: 15px; border-radius: 12px; margin-bottom: 12px; text-align: center; cursor: pointer; transition: 0.2s; position: relative; overflow: hidden; }
+        .bet-card.locked { opacity: 0.4; cursor: not-allowed; filter: grayscale(0.5); }
         .meron { border-color: #ff4444; color: #ff4444; background: rgba(255, 68, 68, 0.05); }
         .wala { border-color: #4444ff; color: #4444ff; background: rgba(68, 68, 255, 0.05); }
-        .meron:hover { background: #ff4444; color: white; }
-        .wala:hover { background: #4444ff; color: white; }
+        .meron:not(.locked):hover { background: #ff4444; color: white; }
+        .wala:not(.locked):hover { background: #4444ff; color: white; }
         .odds { font-family: 'Goldman'; font-size: 1.8rem; display: block; margin: 2px 0; }
 
         .chip-row { display: flex; gap: 8px; margin: 15px 0; overflow-x: auto; padding-bottom: 5px; }
@@ -42,8 +45,7 @@
 
         .history-list { margin-top: 20px; flex-grow: 1; border-top: 1px solid #222; padding-top: 15px; }
         .history-item { display: flex; justify-content: space-between; font-size: 0.75rem; padding: 8px 0; border-bottom: 1px solid #1a1a1a; }
-        .side-tag { font-weight: bold; padding: 2px 6px; border-radius: 3px; font-size: 0.6rem; }
-
+        
         .top-nav { position: relative; display: flex; justify-content: space-between; align-items: center; padding: 12px 20px 12px 75px; background: #000; border-bottom: 2px solid #222; }
 
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
@@ -60,30 +62,34 @@
     <div class="arena-container">
         <div class="main-content">
             <div class="trend-container" id="game-trend">
-                <span style="color:#444; font-size:0.6rem; text-transform:uppercase; letter-spacing:1px;">Arena Roadmap Loading...</span>
+                <span style="color:#444; font-size:0.6rem; text-transform:uppercase; letter-spacing:1px;">Syncing Roadmap...</span>
             </div>
 
             <div class="video-player">
-                <div class="live-tag">LIVE FEED</div>
+                <div class="live-tag" id="live-status-tag">LIVE FEED</div>
                 <iframe width="100%" height="100%" src="https://www.youtube.com/embed/live_stream?channel=YOUR_CHANNEL_ID" frameborder="0" allowfullscreen></iframe>
             </div>
         </div>
 
         <div class="betting-panel">
-            <h3 style="text-align: center; color: var(--gold); margin-top: 0; font-family: 'Goldman'; letter-spacing: 1px;">FIGHT #125</h3>
+            <h3 style="text-align: center; color: var(--gold); margin-top: 0; font-family: 'Goldman'; letter-spacing: 1px;">FIGHT CONTROL</h3>
             
+            <div class="vol-header">
+                <span id="txt-vol-meron">MERON 50%</span>
+                <span id="txt-vol-wala">50% WALA</span>
+            </div>
             <div class="volume-container">
                 <div id="bar-meron" class="vol-meron"></div>
                 <div id="bar-wala" class="vol-wala"></div>
             </div>
 
-            <div class="bet-card meron" onclick="placeBet('MERON')">
+            <div class="bet-card meron" id="card-meron" onclick="placeBet('MERON')">
                 <small>BET ON</small>
                 <span class="odds">MERON</span>
                 <small id="meron-payout-label">Payout: ...</small>
             </div>
 
-            <div class="bet-card wala" onclick="placeBet('WALA')">
+            <div class="bet-card wala" id="card-wala" onclick="placeBet('WALA')">
                 <small>BET ON</small>
                 <span class="odds">WALA</span>
                 <small id="wala-payout-label">Payout: ...</small>
@@ -101,9 +107,7 @@
             
             <div class="history-list">
                 <h4 style="font-size: 0.7rem; color: #555; margin-bottom: 10px; letter-spacing: 1px;">MY RECENT BETS</h4>
-                <div id="local-bet-history">
-                    <p style="text-align: center; color: #333; font-size: 0.7rem; margin-top: 10px;">No bets in this session.</p>
-                </div>
+                <div id="local-bet-history"></div>
             </div>
         </div>
     </div>
@@ -133,6 +137,7 @@
 
         let currentBalance = 0;
         let currentUserData = null;
+        let isLocked = false;
 
         onAuthStateChanged(auth, async (user) => {
             if (user) {
@@ -145,18 +150,33 @@
                     }
                 });
 
-                // Sync Arena Settings (Multiplier & Trend History)
+                // Arena State Listener (Lock/Multiplier/Trend)
                 onSnapshot(doc(db, "settings", "arena"), (docSnap) => {
                     if (docSnap.exists()) {
                         const data = docSnap.data();
                         
-                        // Update Multipliers
-                        let multiplier = data.payoutMultiplier || 1.90;
-                        const text = `Payout: ${multiplier.toFixed(2)}`;
-                        document.getElementById('meron-payout-label').innerText = text;
-                        document.getElementById('wala-payout-label').innerText = text;
+                        // 1. Handle Betting Lock
+                        isLocked = data.isLocked || false;
+                        const cards = [document.getElementById('card-meron'), document.getElementById('card-wala')];
+                        const liveTag = document.getElementById('live-status-tag');
 
-                        // Update Roadmap Trend
+                        cards.forEach(c => c.classList.toggle('locked', isLocked));
+                        if(isLocked) {
+                            liveTag.innerText = "BETTING CLOSED";
+                            liveTag.style.background = "#555";
+                            liveTag.style.animation = "none";
+                        } else {
+                            liveTag.innerText = "LIVE FEED";
+                            liveTag.style.background = "#ff4444";
+                            liveTag.style.animation = "pulse 1.5s infinite";
+                        }
+
+                        // 2. Multipliers
+                        let multiplier = data.payoutMultiplier || 1.90;
+                        document.getElementById('meron-payout-label').innerText = `Payout: ${multiplier.toFixed(2)}`;
+                        document.getElementById('wala-payout-label').innerText = `Payout: ${multiplier.toFixed(2)}`;
+
+                        // 3. Roadmap
                         const history = data.history || [];
                         const trendEl = document.getElementById('game-trend');
                         trendEl.innerHTML = "";
@@ -169,36 +189,31 @@
                     }
                 });
 
-                // Sync Global Betting Volume (Real-time bar)
-                const pendingBetsQuery = query(collection(db, "bets"), where("status", "==", "PENDING"));
-                onSnapshot(pendingBetsQuery, (snap) => {
-                    let meronTotal = 0;
-                    let walaTotal = 0;
+                // Global Betting Volume
+                onSnapshot(query(collection(db, "bets"), where("status", "==", "PENDING")), (snap) => {
+                    let mTotal = 0, wTotal = 0;
                     snap.forEach(d => {
-                        if (d.data().side === 'MERON') meronTotal += d.data().amount;
-                        if (d.data().side === 'WALA') walaTotal += d.data().amount;
+                        if (d.data().side === 'MERON') mTotal += d.data().amount;
+                        else wTotal += d.data().amount;
                     });
-                    const total = meronTotal + walaTotal;
-                    if (total > 0) {
-                        document.getElementById('bar-meron').style.width = (meronTotal / total * 100) + "%";
-                        document.getElementById('bar-wala').style.width = (walaTotal / total * 100) + "%";
-                    }
+                    const total = mTotal + wTotal;
+                    const mPerc = total > 0 ? Math.round((mTotal/total)*100) : 50;
+                    const wPerc = 100 - mPerc;
+                    
+                    document.getElementById('bar-meron').style.width = mPerc + "%";
+                    document.getElementById('bar-wala').style.width = wPerc + "%";
+                    document.getElementById('txt-vol-meron').innerText = `MERON ${mPerc}%`;
+                    document.getElementById('txt-vol-wala').innerText = `${wPerc}% WALA`;
                 });
 
-                // Personal Bet History
-                const q = query(collection(db, "bets"), where("uid", "==", user.uid), orderBy("timestamp", "desc"), limit(5));
-                onSnapshot(q, (snap) => {
+                // Session history
+                onSnapshot(query(collection(db, "bets"), where("uid", "==", user.uid), orderBy("timestamp", "desc"), limit(5)), (snap) => {
                     const hist = document.getElementById('local-bet-history');
-                    hist.innerHTML = "";
+                    hist.innerHTML = snap.empty ? '<p style="text-align:center; color:#333; font-size:0.7rem; margin-top:10px;">No bets yet.</p>' : "";
                     snap.forEach(doc => {
                         const b = doc.data();
                         const color = b.side === 'MERON' ? '#ff4444' : '#4444ff';
-                        hist.innerHTML += `
-                            <div class="history-item">
-                                <span>₱${b.amount.toLocaleString()} <span class="side-tag" style="background:${color}; color:white">${b.side}</span></span>
-                                <span style="color:${b.status === 'WIN' ? '#00ff88' : '#666'}">${b.status}</span>
-                            </div>
-                        `;
+                        hist.innerHTML += `<div class="history-item"><span>₱${b.amount.toLocaleString()} <b style="color:${color}">${b.side}</b></span><span style="color:${b.status === 'WIN' ? '#00ff88' : '#666'}">${b.status}</span></div>`;
                     });
                 });
 
@@ -207,52 +222,49 @@
 
         window.setBet = (val) => {
             const input = document.getElementById('bet-amount');
-            if (val === 'MAX') input.value = Math.floor(currentBalance);
-            else input.value = val;
+            input.value = (val === 'MAX') ? Math.floor(currentBalance) : val;
+        };
+
+        window.placeBet = async (side) => {
+            if (isLocked) return alert("Betting is currently CLOSED.");
+            
+            const amount = parseInt(document.getElementById('bet-amount').value);
+            if (isNaN(amount) || amount < 100) return alert("Min bet ₱100");
+            if (amount > currentBalance) return alert("Insufficient Balance!");
+
+            if (confirm(`Confirm ₱${amount} on ${side}?`)) {
+                try {
+                    await updateDoc(doc(db, "users", auth.currentUser.uid), { balance: increment(-amount) });
+                    await addDoc(collection(db, "bets"), {
+                        uid: auth.currentUser.uid, username: currentUserData.username,
+                        amount, side, fightId: "125", status: "PENDING", timestamp: new Date()
+                    });
+                    // Commission logic remains the same...
+                    distributeCommissions(amount, currentUserData.uplinePath);
+                } catch (e) { alert("Betting Error!"); }
+            }
         };
 
         async function distributeCommissions(betAmount, uplinePath) {
-            if (!uplinePath || uplinePath.length === 0) return;
+            if (!uplinePath) return;
             const batch = writeBatch(db);
             let distributedSoFar = 0;
             const reversedPath = [...uplinePath].reverse();
-
             for (const uplineUid of reversedPath) {
-                const ref = doc(db, "users", uplineUid);
-                const snap = await getDoc(ref);
+                const snap = await getDoc(doc(db, "users", uplineUid));
                 if (snap.exists()) {
-                    const uData = snap.data();
-                    const spread = (uData.commissionRate || 0) - distributedSoFar;
+                    const u = snap.data();
+                    const spread = (u.commissionRate || 0) - distributedSoFar;
                     if (spread > 0) {
                         const earned = betAmount * (spread / 100);
-                        batch.update(ref, { balance: increment(earned), totalTurnover: increment(betAmount) });
-                        batch.set(doc(collection(db, "wallet_logs")), {
-                            uid: uplineUid, type: "COMMISSION", amount: earned,
-                            fromUser: currentUserData.username, status: "APPROVED", timestamp: new Date()
-                        });
-                        distributedSoFar = uData.commissionRate;
+                        batch.update(doc(db, "users", uplineUid), { balance: increment(earned), totalTurnover: increment(betAmount) });
+                        batch.set(doc(collection(db, "wallet_logs")), { uid: uplineUid, type: "COMMISSION", amount: earned, fromUser: currentUserData.username, status: "APPROVED", timestamp: new Date() });
+                        distributedSoFar = u.commissionRate;
                     }
                 }
             }
             await batch.commit();
         }
-
-        window.placeBet = async (side) => {
-            const amount = parseInt(document.getElementById('bet-amount').value);
-            if (isNaN(amount) || amount < 100) return alert("Min bet ₱100");
-            if (amount > currentBalance) return alert("Insufficient Balance!");
-
-            if (confirm(`Bet ₱${amount} on ${side}?`)) {
-                try {
-                    await updateDoc(doc(db, "users", auth.currentUser.uid), { balance: increment(-amount) });
-                    await addDoc(collection(db, "bets"), {
-                        uid: auth.currentUser.uid, username: currentUserData.username,
-                        amount: amount, side: side, fightId: "125", status: "PENDING", timestamp: new Date()
-                    });
-                    await distributeCommissions(amount, currentUserData.uplinePath);
-                } catch (e) { alert("Error!"); }
-            }
-        };
     </script>
 </body>
 </html>
