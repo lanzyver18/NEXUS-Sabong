@@ -8,6 +8,21 @@
     <link rel="stylesheet" href="/menu.css">
     <link href="https://fonts.googleapis.com/css2?family=Goldman:wght@400;700&display=swap" rel="stylesheet">
     <style>
+        /* FIXED NAVIGATION FOR MENU BUTTON */
+        .top-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            /* CRITICAL: relative position keeps the hamburger button locked to the left of this bar */
+            position: relative; 
+            padding: 12px 20px 12px 75px; 
+            background: #000;
+            border-bottom: 2px solid #222;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
         .admin-grid { display: grid; grid-template-columns: 1fr 350px; gap: 20px; max-width: 1200px; margin: 20px auto; padding: 0 20px; }
         .insight-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
         .insight-card { background: #111; padding: 20px; border-radius: 12px; border: 1px solid #222; text-align: center; }
@@ -154,31 +169,16 @@
         });
 
         function initManagement() {
-            // Real-time Downline Table & Stats
             const downlineQuery = query(collection(db, "users"), where("uplineId", "==", auth.currentUser.uid));
             onSnapshot(downlineQuery, (snap) => {
                 let totalBank = 0;
                 const table = document.getElementById('downline-table-body');
                 table.innerHTML = snap.empty ? '<tr><td colspan="4" style="text-align:center; color:#444; padding:20px;">No direct downlines found.</td></tr>' : '';
-                
                 document.getElementById('stat-players').innerText = snap.size;
-
                 snap.forEach(uDoc => {
                     const u = uDoc.data();
                     totalBank += (u.balance || 0);
-                    table.innerHTML += `
-                        <tr>
-                            <td>
-                                <strong>${u.username}</strong><br>
-                                <span class="role-tag">${u.role}</span>
-                            </td>
-                            <td style="color:#00ff88; font-weight:bold;">₱${(u.balance || 0).toLocaleString()}</td>
-                            <td style="color:#888;">₱${(u.totalTurnover || 0).toLocaleString()}</td>
-                            <td>
-                                <button class="btn-sm" style="background:#222; color:var(--gold); border:1px solid var(--gold);" onclick="quickSelectUser('${u.username}')">LOAD</button>
-                            </td>
-                        </tr>
-                    `;
+                    table.innerHTML += `<tr><td><strong>${u.username}</strong><br><span class="role-tag">${u.role}</span></td><td style="color:#00ff88; font-weight:bold;">₱${(u.balance || 0).toLocaleString()}</td><td style="color:#888;">₱${(u.totalTurnover || 0).toLocaleString()}</td><td><button class="btn-sm" style="background:#222; color:var(--gold); border:1px solid var(--gold);" onclick="quickSelectUser('${u.username}')">LOAD</button></td></tr>`;
                 });
                 document.getElementById('stat-total-bank').innerText = "₱" + totalBank.toLocaleString();
             });
@@ -218,11 +218,9 @@
             if (myTierData.level !== 1) return;
             const m = window.currentMultiplier;
             if (!confirm(`Settle as ${winner} (@${m})?`)) return;
-            
             const q = query(collection(db, "bets"), where("status", "==", "PENDING"));
             const snap = await getDocs(q);
             const batch = writeBatch(db);
-            
             snap.forEach(bDoc => {
                 const b = bDoc.data();
                 if (b.side === winner) {
@@ -258,7 +256,6 @@
             const amt = parseInt(document.getElementById('load-amt').value);
             if (!activePlayerId || isNaN(amt)) return;
             if (myTierData.level > 1 && myTierData.balance < amt) return alert("Low balance");
-            
             if (confirm(`Load ₱${amt}?`)) {
                 if (myTierData.level > 1) await updateDoc(doc(db, "users", auth.currentUser.uid), { balance: increment(-amt) });
                 await updateDoc(doc(db, "users", activePlayerId), { balance: increment(amt) });
