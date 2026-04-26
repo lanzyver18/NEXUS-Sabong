@@ -8,32 +8,71 @@
     <link rel="stylesheet" href="/menu.css">
     <link href="https://fonts.googleapis.com/css2?family=Goldman:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        .history-container { max-width: 800px; margin: 60px auto 40px; padding: 20px; }
+        .history-container { max-width: 800px; margin: 40px auto; padding: 20px; }
+        
+        /* Stats Summary */
+        .summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 25px; }
+        .summary-card { background: #111; padding: 20px; border-radius: 15px; border: 1px solid #222; text-align: center; }
+        .summary-card small { font-size: 0.6rem; color: #555; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 5px; }
+        .summary-card span { font-family: 'Goldman'; font-size: 1.2rem; color: var(--gold); }
+
+        /* Filter Tabs */
+        .filter-tabs { display: flex; gap: 10px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 5px; }
+        .tab { 
+            background: #111; border: 1px solid #333; color: #666; padding: 8px 16px; 
+            border-radius: 20px; font-size: 0.75rem; cursor: pointer; white-space: nowrap; transition: 0.2s;
+        }
+        .tab.active { border-color: var(--gold); color: var(--gold); background: rgba(212, 175, 55, 0.1); }
+
+        /* Log Items */
         .history-item { 
             background: #111; border: 1px solid #222; border-radius: 12px; 
             padding: 18px; margin-bottom: 12px; display: flex; 
             justify-content: space-between; align-items: center; 
-            transition: 0.2s;
+            border-left: 4px solid transparent;
         }
-        .history-item:hover { border-color: #333; background: #151515; }
+        .history-item.income { border-left-color: #00ff88; }
+        .history-item.expense { border-left-color: #ff4444; }
+        .history-item.comm { border-left-color: var(--gold); }
+
         .item-left { display: flex; flex-direction: column; }
-        .item-left span { font-weight: bold; color: #eee; font-size: 0.9rem; letter-spacing: 0.5px; }
-        .item-left small { color: #555; font-size: 0.7rem; margin-top: 6px; }
+        .item-left .type-label { font-weight: bold; color: #eee; font-size: 0.9rem; letter-spacing: 0.5px; }
+        .item-left .sub-text { color: #555; font-size: 0.7rem; margin-top: 4px; display: flex; flex-direction: column; gap: 2px; }
+        
         .item-right { text-align: right; }
         .amount { font-family: 'Goldman', sans-serif; font-weight: bold; font-size: 1.1rem; }
         .status-badge { font-size: 0.6rem; padding: 3px 8px; border-radius: 4px; text-transform: uppercase; font-weight: bold; margin-top: 5px; display: inline-block; }
         
-        /* Status Colors */
-        .pending { background: #555; color: white; }
-        .approved, .success { background: rgba(0, 255, 136, 0.1); color: #00ff88; border: 1px solid #00ff88; }
-        .rejected, .failed { background: rgba(255, 68, 68, 0.1); color: #ff4444; border: 1px solid #ff4444; }
-        .commission { background: rgba(212, 175, 55, 0.1); color: var(--gold); border: 1px solid var(--gold); }
+        .approved { background: rgba(0, 255, 136, 0.1); color: #00ff88; border: 1px solid #00ff88; }
+        .rejected { background: rgba(255, 68, 68, 0.1); color: #ff4444; border: 1px solid #ff4444; }
+
+        /* Top Nav Overlap Fix */
+        .top-nav { position: relative; display: flex; justify-content: space-between; align-items: center; padding: 12px 20px 12px 75px; background: #000; border-bottom: 2px solid #222; }
     </style>
 </head>
 <body>
 
+    <nav class="top-nav">
+        <div class="logo" style="color:var(--gold); font-family:'Goldman'; font-weight:bold; font-size:1.2rem;">FINANCE</div>
+        <div id="nav-bal" style="color: #00ff88; font-weight: bold; font-family: 'Goldman';">₱0.00</div>
+    </nav>
+
     <div class="history-container">
-        <h3 style="color: var(--gold); font-family: 'Goldman'; margin-bottom: 30px; letter-spacing: 1px;">FINANCIAL RECORDS</h3>
+        <h3 style="color: var(--gold); font-family: 'Goldman'; margin-bottom: 25px; letter-spacing: 1px;">FINANCIAL RECORDS</h3>
+
+        <div class="summary-grid">
+            <div class="summary-card"><small>Total Cash-In</small><span id="sum-in">₱0</span></div>
+            <div class="summary-card"><small>Total Commissions</small><span id="sum-comm" style="color:#00ff88;">₱0</span></div>
+        </div>
+
+        <div class="filter-tabs">
+            <div class="tab active" onclick="setFilter('ALL')">ALL</div>
+            <div class="tab" onclick="setFilter('COMMISSION')">COMMISSIONS</div>
+            <div class="tab" onclick="setFilter('CASH-IN')">CASH-IN</div>
+            <div class="tab" onclick="setFilter('WITHDRAW')">WITHDRAWALS</div>
+            <div class="tab" onclick="setFilter('LOAD')">LOADS</div>
+        </div>
+
         <div id="wallet-history-list">
             <p style="color: #444; text-align: center; margin-top: 50px;">Fetching logs...</p>
         </div>
@@ -58,61 +97,88 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // Required for menu.js logic
         window.firebaseAuth = auth;
         window.firebaseDb = db;
         injectMenu();
 
+        let currentFilter = 'ALL';
+        let allLogs = [];
+
         onAuthStateChanged(auth, (user) => {
             if (user) {
-                const q = query(
-                    collection(db, "wallet_logs"), 
-                    where("uid", "==", user.uid), 
-                    orderBy("timestamp", "desc")
-                );
-                
-                onSnapshot(q, (snap) => {
-                    const list = document.getElementById('wallet-history-list');
-                    list.innerHTML = "";
-                    
-                    if (snap.empty) {
-                        list.innerHTML = `
-                            <div style="text-align:center; padding: 40px; color: #333;">
-                                <div style="font-size: 3rem; margin-bottom: 10px;">📄</div>
-                                <p>No transactions recorded yet.</p>
-                            </div>`;
-                        return;
-                    }
+                // Sync Balance
+                onSnapshot(doc(db, "users", user.uid), (snap) => {
+                    if (snap.exists()) document.getElementById('nav-bal').innerText = `₱${snap.data().balance.toLocaleString()}`;
+                });
 
-                    snap.forEach(logDoc => {
-                        const d = logDoc.data();
-                        
-                        // Logic for amount styling based on type
-                        // COMMISSION and CASH-IN are positive (+), WITHDRAW and LOAD (to players) are negative (-)
-                        const isPositive = (d.type === "CASH-IN" || d.type === "COMMISSION");
-                        const statusClass = d.status ? d.status.toLowerCase() : 'pending';
-                        
-                        list.innerHTML += `
-                            <div class="history-item">
-                                <div class="item-left">
-                                    <span>${d.type} ${d.fromUser ? `<small style="color:var(--gold)">FROM: ${d.fromUser.toUpperCase()}</small>` : ''}</span>
-                                    <span>${d.toUser ? `<small style="color:#00ff88">TO: ${d.toUser.toUpperCase()}</small>` : ''}</span>
-                                    <small>${d.timestamp?.toDate().toLocaleString('en-PH') || 'Processing...'}</small>
-                                </div>
-                                <div class="item-right">
-                                    <div class="amount" style="color: ${isPositive ? '#00ff88' : '#ff4444'}">
-                                        ${isPositive ? '+' : '-'}₱${parseFloat(d.amount).toLocaleString(undefined, {minimumFractionDigits: 2})}
-                                    </div>
-                                    <span class="status-badge ${d.type === 'COMMISSION' ? 'commission' : statusClass}">
-                                        ${d.type === 'COMMISSION' ? 'EARNED' : d.status}
-                                    </span>
-                                </div>
-                            </div>
-                        `;
-                    });
+                // Financial Logs
+                const q = query(collection(db, "wallet_logs"), where("uid", "==", user.uid), orderBy("timestamp", "desc"));
+                onSnapshot(q, (snap) => {
+                    allLogs = [];
+                    snap.forEach(d => allLogs.push(d.data()));
+                    calculateStats();
+                    renderLogs();
                 });
             } else { window.location.href = "/login/"; }
         });
+
+        function calculateStats() {
+            let cashIn = 0;
+            let comms = 0;
+            allLogs.forEach(l => {
+                if(l.type === "CASH-IN" && l.status === "APPROVED") cashIn += l.amount;
+                if(l.type === "COMMISSION") comms += l.amount;
+            });
+            document.getElementById('sum-in').innerText = `₱${cashIn.toLocaleString()}`;
+            document.getElementById('sum-comm').innerText = `₱${comms.toLocaleString()}`;
+        }
+
+        window.setFilter = (f) => {
+            currentFilter = f;
+            document.querySelectorAll('.tab').forEach(t => {
+                t.classList.toggle('active', t.innerText === f || (f === 'ALL' && t.innerText === 'ALL'));
+            });
+            renderLogs();
+        };
+
+        function renderLogs() {
+            const list = document.getElementById('wallet-history-list');
+            list.innerHTML = "";
+            
+            const filtered = allLogs.filter(l => currentFilter === 'ALL' || l.type === currentFilter);
+
+            if (filtered.length === 0) {
+                list.innerHTML = `<p style="text-align:center; color:#333; margin-top:50px;">No records found.</p>`;
+                return;
+            }
+
+            filtered.forEach(d => {
+                const isPositive = (d.type === "CASH-IN" || d.type === "COMMISSION");
+                const borderClass = d.type === "COMMISSION" ? "comm" : (isPositive ? "income" : "expense");
+                const statusLabel = d.type === "COMMISSION" ? "EARNED" : (d.status || 'PENDING');
+                
+                list.innerHTML += `
+                    <div class="history-item ${borderClass}">
+                        <div class="item-left">
+                            <span class="type-label">${d.type}</span>
+                            <div class="sub-text">
+                                ${d.fromUser ? `<span>FROM: ${d.fromUser.toUpperCase()}</span>` : ''}
+                                ${d.toUser ? `<span>TO: ${d.toUser.toUpperCase()}</span>` : ''}
+                                <small>${d.timestamp?.toDate().toLocaleString()}</small>
+                            </div>
+                        </div>
+                        <div class="item-right">
+                            <div class="amount" style="color: ${isPositive ? '#00ff88' : '#ff4444'}">
+                                ${isPositive ? '+' : '-'}₱${parseFloat(d.amount).toLocaleString(undefined, {minimumFractionDigits: 2})}
+                            </div>
+                            <span class="status-badge ${statusLabel.toLowerCase()}">
+                                ${statusLabel}
+                            </span>
+                        </div>
+                    </div>
+                `;
+            });
+        }
     </script>
 </body>
 </html>
