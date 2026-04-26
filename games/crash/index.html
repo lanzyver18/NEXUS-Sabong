@@ -11,6 +11,7 @@
         :root { --gold: #D4AF37; --green: #00ff88; --red: #ff4444; --panel-bg: #0f0f0f; }
         body { background: #000; overflow-x: hidden; margin: 0; color: white; -webkit-font-smoothing: antialiased; }
 
+        /* SOLID MENU FIX */
         #menu-container { position: fixed !important; top: 0 !important; left: 0 !important; width: 100% !important; height: 100% !important; background: #000 !important; z-index: 10001 !important; display: none; }
         #menu-overlay { background: rgba(0, 0, 0, 0.95) !important; backdrop-filter: blur(15px) !important; z-index: 10000 !important; }
 
@@ -20,7 +21,7 @@
         .display-area { background: #050505; border-radius: 28px; border: 1px solid #222; height: 550px; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.8), inset 0 0 100px rgba(0,0,0,1); }
         .grid-bg { position: absolute; width: 400%; height: 400%; background-image: linear-gradient(rgba(212, 175, 55, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(212, 175, 55, 0.03) 1px, transparent 1px); background-size: 80px 80px; transform: perspective(1000px) rotateX(60deg); opacity: 0.5; z-index: 1; pointer-events: none; }
 
-        #main-mult { font-family: 'Goldman'; font-size: 7rem; color: white; z-index: 10; text-shadow: 0 0 40px rgba(255,255,255,0.15); pointer-events: none; transform: translateY(-30px); }
+        #main-mult { font-family: 'Goldman'; font-size: 7rem; color: white; z-index: 10; text-shadow: 0 0 40px rgba(255,255,255,0.15); pointer-events: none; transform: translateY(-30px); transition: 0.1s; }
         #main-mult.crashed { color: var(--red); animation: crash-shake 0.4s ease-out; }
         canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 5; }
 
@@ -28,15 +29,15 @@
         input { width: 100%; padding: 18px; background: #000; border: 1px solid #333; color: var(--gold); border-radius: 14px; outline: none; font-family: 'Goldman'; font-size: 1.2rem; }
         
         .btn-action { width: 100%; padding: 22px; border-radius: 16px; border: none; font-weight: bold; font-family: 'Goldman'; cursor: pointer; text-transform: uppercase; transition: 0.3s; letter-spacing: 2px; font-size: 1.1rem; }
-        .btn-bet { background: var(--gold); color: black; }
-        .btn-cashout { background: var(--green); color: black; display: none; }
+        .btn-bet { background: var(--gold); color: black; box-shadow: 0 8px 0 #917725; }
+        .btn-cashout { background: var(--green); color: black; display: none; box-shadow: 0 8px 0 #008f4c; }
         .btn-waiting { background: #1a1a1a; color: #444; cursor: not-allowed; display: none; border: 1px solid #222; }
 
         .history-bar { display: flex; gap: 10px; overflow-x: auto; padding: 15px; background: rgba(0,0,0,0.4); border-radius: 16px; border: 1px solid #1a1a1a; scrollbar-width: none; margin-top: 10px; }
         .hist-item { padding: 8px 14px; border-radius: 10px; font-size: 0.8rem; font-family: 'Goldman'; font-weight: bold; background: #111; flex-shrink: 0; border: 1px solid #222; }
         .hist-green { color: var(--green); } .hist-red { color: var(--red); }
 
-        @keyframes crash-shake { 0% { transform: translate(0, -30px); } 20% { transform: translate(-10px, -35px); } 40% { transform: translate(10px, -25px); } 100% { transform: translate(0, -30px) scale(0.9); } }
+        @keyframes crash-shake { 0% { transform: translate(0, -30px); } 20% { transform: translate(-10px, -35px); } 40% { transform: translate(10px, -25px); } 60% { transform: translate(-5px, -30px); } 100% { transform: translate(0, -30px) scale(0.9); } }
         @media (max-width: 900px) { .crash-layout { grid-template-columns: 1fr; } .display-area { height: 400px; } #main-mult { font-size: 4rem; } }
     </style>
 </head>
@@ -44,7 +45,7 @@
 
     <nav class="top-nav">
         <div class="logo" style="color:var(--gold); font-family:'Goldman'; font-weight:bold; font-size:1.4rem;">NEXUS</div>
-        <div style="color: var(--green); font-weight: bold; font-family: 'Goldman';" id="display-balance">₱0.00</div>
+        <div style="color: var(--green); font-weight: bold; font-family: 'Goldman'; font-size: 1.2rem;" id="display-balance">₱0.00</div>
     </nav>
 
     <div class="crash-layout">
@@ -62,7 +63,7 @@
             <button id="btn-cashout" class="btn-action btn-cashout" onclick="cashout()">
                 EXTRACT <span id="cashout-preview" style="display:block; font-size:0.7rem; opacity:0.6;">₱0.00</span>
             </button>
-            <button id="btn-waiting" class="btn-action btn-waiting">Waiting...</button>
+            <button id="btn-waiting" class="btn-action btn-waiting">Syncing Network...</button>
 
             <div class="history-bar" id="history"></div>
         </div>
@@ -78,7 +79,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
-        import { getFirestore, doc, onSnapshot, updateDoc, increment, setDoc, getDoc, collection, addDoc, serverTimestamp, arrayUnion } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+        import { getFirestore, doc, onSnapshot, updateDoc, increment, getDoc, collection, addDoc, serverTimestamp, arrayUnion } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
         import { injectMenu } from "/menu.js";
 
         const firebaseConfig = {
@@ -96,7 +97,7 @@
         injectMenu();
 
         let balance = 0, currentMult = 1.00, gameStatus = "WAITING", hasBet = false, myBetAmt = 0;
-        let localCrashPoint = 0;
+        let particles = [];
         const canvas = document.getElementById('crash-canvas');
         const ctx = canvas.getContext('2d');
         const gridBg = document.getElementById('grid-bg');
@@ -104,145 +105,116 @@
         function resize() { canvas.width = canvas.parentElement.clientWidth; canvas.height = canvas.parentElement.clientHeight; }
         window.addEventListener('resize', resize); resize();
 
-        // 1. MASTER ENGINE: Syncs with Firestore Document
+        // 1. SYSTEM ENGINE: Listens to the Shared Firestore State
         onSnapshot(doc(db, "settings", "crash"), async (snap) => {
             if (!snap.exists()) return;
             const data = snap.data();
             gameStatus = data.status;
-            localCrashPoint = data.crashPoint;
-            const startTime = data.startTime?.toMillis() || Date.now();
+            const crashPoint = data.crashPoint;
+            const startAt = data.startTime?.toMillis() || Date.now();
 
             if (gameStatus === "RUNNING") {
-                startAnimation(startTime, localCrashPoint);
+                document.getElementById('status-text').innerText = "IN FLIGHT";
+                document.getElementById('main-mult').classList.remove('crashed');
+                startFlight(startAt, crashPoint);
             } else if (gameStatus === "WAITING") {
-                resetUI();
+                resetArena();
             } else if (gameStatus === "CRASHED") {
-                showCrash(localCrashPoint);
+                showCrashResult(crashPoint);
             }
-            
             updateHistory(data.history || []);
         });
 
-        // 2. AUTONOMOUS LOOP: If this client is the first one, it pushes updates to Firestore
-        // This ensures the game plays even if the admin isn't looking.
-        async function runAutoEngine() {
+        // 2. AUTONOMOUS HEARTBEAT: Checks every 2 seconds if the system needs to cycle
+        async function runCycle() {
             const snap = await getDoc(doc(db, "settings", "crash"));
+            if (!snap.exists()) return;
             const data = snap.data();
             const now = Date.now();
             const lastUpdate = data.lastUpdate?.toMillis() || 0;
 
-            // Logic to cycle the game every X seconds automatically
-            if (gameStatus === "CRASHED" && (now - lastUpdate) > 5000) {
-                // Time to wait for bets
+            if (data.status === "CRASHED" && (now - lastUpdate) > 5000) {
+                await updateDoc(doc(db, "settings", "crash"), { status: "WAITING", lastUpdate: serverTimestamp() });
+            } else if (data.status === "WAITING" && (now - lastUpdate) > 10000) {
+                const cp = Math.random() < 0.08 ? 1.00 : parseFloat((Math.max(1.01, 0.93 / (1 - Math.random()))).toFixed(2));
                 await updateDoc(doc(db, "settings", "crash"), { 
-                    status: "WAITING", 
-                    lastUpdate: serverTimestamp() 
+                    status: "RUNNING", startTime: serverTimestamp(), crashPoint: cp, lastUpdate: serverTimestamp() 
                 });
-            } else if (gameStatus === "WAITING" && (now - lastUpdate) > 10000) {
-                // Time to fly!
-                const newCrashPoint = generateCrashPoint();
-                await updateDoc(doc(db, "settings", "crash"), { 
-                    status: "RUNNING", 
-                    startTime: serverTimestamp(),
-                    crashPoint: newCrashPoint,
-                    lastUpdate: serverTimestamp() 
-                });
-            } else if (gameStatus === "RUNNING") {
+            } else if (data.status === "RUNNING") {
                 const elapsed = (now - data.startTime.toMillis()) / 1000;
-                const currentVal = Math.pow(1.08, elapsed);
-                if (currentVal >= data.crashPoint) {
-                    await updateDoc(doc(db, "settings", "crash"), { 
-                        status: "CRASHED", 
-                        history: arrayUnion(data.crashPoint),
-                        lastUpdate: serverTimestamp() 
-                    });
+                if (Math.pow(1.08, elapsed) >= data.crashPoint) {
+                    let newHist = [...(data.history || [])];
+                    newHist.push(data.crashPoint);
+                    if(newHist.length > 10) newHist.shift();
+                    await updateDoc(doc(db, "settings", "crash"), { status: "CRASHED", history: newHist, lastUpdate: serverTimestamp() });
                 }
             }
         }
-        setInterval(runAutoEngine, 2000); // Check engine state every 2 seconds
+        setInterval(runCycle, 2000);
 
-        function generateCrashPoint() {
-            // High payout logic: 7% instant crash, rest is random exponential
-            if (Math.random() < 0.07) return 1.00;
-            const e = 0.94 / (1 - Math.random());
-            return parseFloat(Math.max(1.01, e).toFixed(2));
-        }
-
-        function startAnimation(startTime, crashPoint) {
-            document.getElementById('status-text').innerText = "SYSTEM LIVE";
-            document.getElementById('main-mult').classList.remove('crashed');
+        function startFlight(startAt, cp) {
             updateButtons();
-
             const animate = () => {
                 if (gameStatus !== "RUNNING") return;
-                let elapsed = (Date.now() - startTime) / 1000;
+                let elapsed = (Date.now() - startAt) / 1000;
                 currentMult = Math.pow(1.08, elapsed);
-
-                if (currentMult >= crashPoint) return;
+                if (currentMult >= cp) return;
 
                 document.getElementById('main-mult').innerText = currentMult.toFixed(2) + "x";
                 if(hasBet) {
                     document.getElementById('cashout-preview').innerText = `₱${Math.floor(myBetAmt * currentMult).toLocaleString()}`;
-                    const auto = parseFloat(document.getElementById('auto-cashout').value);
-                    if (auto > 1 && currentMult >= auto) cashout();
+                    if (parseFloat(document.getElementById('auto-cashout').value) <= currentMult) cashout();
                 }
-
-                renderCanvas(elapsed, currentMult);
+                renderLine(elapsed, currentMult);
                 requestAnimationFrame(animate);
             };
             requestAnimationFrame(animate);
         }
 
-        function renderCanvas(elapsed, mult) {
+        function renderLine(elapsed, mult) {
             ctx.clearRect(0,0, canvas.width, canvas.height);
             const scale = Math.min(1, 4 / mult);
-            const spacingX = 140 * scale, spacingY = 280 * scale;
-            const headX = elapsed * spacingX, headY = (mult - 1) * spacingY;
-            const camX = canvas.width * 0.3 - headX, camY = canvas.height * 0.7 + headY;
+            const headX = elapsed * (140 * scale), headY = (mult - 1) * (280 * scale);
+            const cx = canvas.width * 0.3 - headX, cy = canvas.height * 0.7 + headY;
 
             ctx.save();
-            ctx.translate(camX, camY);
-            gridBg.style.transform = `perspective(1000px) rotateX(60deg) translateY(${(headY % 80)}px) translateX(${(camX % 80)}px)`;
+            ctx.translate(cx, cy);
+            gridBg.style.transform = `perspective(1000px) rotateX(60deg) translateY(${(headY % 80)}px) translateX(${(cx % 80)}px)`;
             ctx.beginPath();
             ctx.lineWidth = 10 * scale; ctx.strokeStyle = '#D4AF37'; ctx.lineCap = 'round';
             ctx.shadowBlur = 20; ctx.shadowColor = 'rgba(212, 175, 55, 0.6)';
             ctx.moveTo(0, 0);
-            for(let i=0; i <= elapsed; i+=0.1) {
-                ctx.lineTo(i * spacingX, -(Math.pow(1.08, i) - 1) * spacingY);
-            }
+            for(let i=0; i <= elapsed; i+=0.1) { ctx.lineTo(i * (140 * scale), -(Math.pow(1.08, i) - 1) * (280 * scale)); }
             ctx.stroke();
             ctx.restore();
         }
 
-        function showCrash(cp) {
+        function showCrashResult(cp) {
             document.getElementById('main-mult').innerText = cp.toFixed(2) + "x";
             document.getElementById('main-mult').classList.add('crashed');
-            document.getElementById('status-text').innerText = "SIGNAL LOST";
-            hasBet = false;
-            updateButtons();
+            document.getElementById('status-text').innerText = "CRASHED";
+            hasBet = false; updateButtons();
         }
 
-        function resetUI() {
+        function resetArena() {
             ctx.clearRect(0,0, canvas.width, canvas.height);
             document.getElementById('main-mult').innerText = "1.00x";
-            document.getElementById('status-text').innerText = "PREPARING NEXT LAUNCH...";
+            document.getElementById('status-text').innerText = "PREPARING...";
             document.getElementById('main-mult').classList.remove('crashed');
             updateButtons();
         }
 
         window.placeBet = async () => {
-            if (gameStatus !== "WAITING") return alert("Round In Progress");
+            if (gameStatus !== "WAITING") return alert("Locked");
             const amt = parseInt(document.getElementById('bet-amount').value);
-            if (amt > balance || amt < 10) return alert("Verify Balance");
+            if (amt > balance || amt < 10) return alert("Low Balance");
             await updateDoc(doc(db, "users", auth.currentUser.uid), { balance: increment(-amt) });
-            myBetAmt = amt; hasBet = true;
-            updateButtons();
+            myBetAmt = amt; hasBet = true; updateButtons();
         };
 
         window.cashout = async () => {
             if (!hasBet || gameStatus !== "RUNNING") return;
-            const win = Math.floor(myBetAmt * currentMult);
-            hasBet = false;
+            const win = Math.floor(myBetAmt * currentMult); hasBet = false;
             await updateDoc(doc(db, "users", auth.currentUser.uid), { balance: increment(win) });
             await addDoc(collection(db, "wallet_logs"), { uid: auth.currentUser.uid, type: "CRASH_WIN", amount: win, timestamp: serverTimestamp() });
             updateButtons();
@@ -252,19 +224,17 @@
             const bBet = document.getElementById('btn-bet'), bCash = document.getElementById('btn-cashout'), bWait = document.getElementById('btn-waiting');
             bBet.style.display = "none"; bCash.style.display = "none"; bWait.style.display = "none";
             if (hasBet && gameStatus === "RUNNING") bCash.style.display = "block";
-            else if (hasBet && gameStatus === "WAITING") { bWait.style.display = "block"; bWait.innerText = "READY FOR LAUNCH"; }
+            else if (hasBet && gameStatus === "WAITING") { bWait.style.display = "block"; bWait.innerText = "READY"; }
             else if (gameStatus === "WAITING") bBet.style.display = "block";
             else bWait.style.display = "block";
         }
 
         function updateHistory(history) {
-            const bar = document.getElementById('history');
-            bar.innerHTML = "";
-            history.slice(-10).reverse().forEach(val => {
+            const bar = document.getElementById('history'); bar.innerHTML = "";
+            [...history].reverse().forEach(val => {
                 const item = document.createElement('div');
                 item.className = `hist-item ${val >= 2 ? 'hist-green' : 'hist-red'}`;
-                item.innerText = val.toFixed(2) + "x";
-                bar.appendChild(item);
+                item.innerText = val.toFixed(2) + "x"; bar.appendChild(item);
             });
         }
 
@@ -272,7 +242,7 @@
             if (user) {
                 onSnapshot(doc(db, "users", user.uid), snap => {
                     if(snap.exists()) {
-                        balance = snap.data().balance;
+                        balance = snap.data().balance || 0;
                         document.getElementById('display-balance').innerText = `₱${balance.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
                     }
                 });
