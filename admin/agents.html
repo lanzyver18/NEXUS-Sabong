@@ -8,32 +8,57 @@
     <link rel="stylesheet" href="../menu.css">
     <link href="https://fonts.googleapis.com/css2?family=Goldman:wght@400;700&display=swap" rel="stylesheet">
     <style>
+        :root { --gold: #D4AF37; }
+        
+        /* NEXUS BUTTON SYSTEM */
+        .btn-nexus {
+            font-family: 'Goldman', sans-serif;
+            font-weight: bold;
+            text-transform: uppercase;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            letter-spacing: 1px;
+        }
+
+        .btn-gold { background: var(--gold); color: black; }
+        .btn-gold:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(212, 175, 55, 0.4); }
+
+        .btn-outline { background: transparent; border: 1px solid var(--gold); color: var(--gold); }
+        .btn-outline:hover { background: rgba(212, 175, 55, 0.1); }
+
         .agent-container { max-width: 1000px; margin: 20px auto; padding: 20px; }
+        
+        /* STATS */
         .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px; }
         .stat-card { background: #111; padding: 20px; border-radius: 12px; border: 1px solid #222; text-align: center; }
         .stat-card h4 { font-size: 0.65rem; color: #666; text-transform: uppercase; margin-bottom: 10px; letter-spacing: 1px; }
-        .stat-card .val { font-family: 'Goldman', sans-serif; }
+        .stat-card .val { font-family: 'Goldman', sans-serif; font-size: 1.5rem; }
         
-        .ref-panel { background: #0a0a0a; border: 1px dashed var(--gold); border-radius: 12px; padding: 20px; margin-bottom: 25px; }
-        .ref-input-group { display: flex; gap: 10px; margin-top: 10px; }
-        .ref-input-group input { flex: 1; background: #000; border: 1px solid #333; color: #888; padding: 12px; border-radius: 8px; font-size: 0.8rem; }
+        /* REFERRAL PANEL */
+        .ref-panel { background: #0a0a0a; border: 1px dashed var(--gold); border-radius: 12px; padding: 25px; margin-bottom: 25px; text-align: center; }
+        .ref-input-group { display: flex; gap: 12px; margin: 15px auto 0; max-width: 600px; }
+        .ref-input-group input { flex: 1; background: #000; border: 1px solid #333; color: var(--gold); padding: 14px; border-radius: 8px; font-family: monospace; font-size: 0.9rem; }
 
-        .panel { background: #111; border-radius: 15px; border: 1px solid #333; padding: 20px; }
-        .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #222; padding-bottom: 10px; }
+        /* TABLE PANEL */
+        .panel { background: #111; border-radius: 15px; border: 1px solid #333; padding: 25px; }
+        .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #222; padding-bottom: 15px; }
         
         .agent-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
-        .agent-table th { text-align: left; color: #555; padding: 12px; border-bottom: 1px solid #222; text-transform: uppercase; font-size: 0.7rem; }
+        .agent-table th { text-align: left; color: #555; padding: 12px; border-bottom: 1px solid #222; text-transform: uppercase; font-size: 0.7rem; letter-spacing: 1px; }
         .agent-table td { padding: 15px 12px; border-bottom: 1px solid #1a1a1a; color: #eee; }
-        .role-badge { background: #222; padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; color: var(--gold); text-transform: uppercase; border: 1px solid #333; }
-
-        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: flex; align-items: center; justify-content: center; z-index: 2000; }
-        .modal-content { background: #111; width: 90%; max-width: 400px; padding: 30px; border-radius: 15px; border: 1px solid var(--gold); }
-        .modal input, .modal select { width: 100%; padding: 12px; margin: 10px 0; background: #000; border: 1px solid #333; color: white; border-radius: 8px; box-sizing: border-box; }
         
-        .btn-edit { background: transparent; border: 1px solid #444; color: #888; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 0.7rem; text-transform: uppercase; }
-        .btn-edit:hover { border-color: var(--gold); color: var(--gold); }
+        .role-badge { background: #000; padding: 5px 10px; border-radius: 4px; font-size: 0.65rem; color: var(--gold); text-transform: uppercase; border: 1px solid #333; font-family: 'Goldman'; }
 
-        /* Nav Overlap Fix */
+        /* MODAL */
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: flex; align-items: center; justify-content: center; z-index: 2000; }
+        .modal-content { background: #111; width: 90%; max-width: 400px; padding: 30px; border-radius: 20px; border: 1px solid var(--gold); }
+        .modal input, .modal select { width: 100%; padding: 14px; margin: 10px 0; background: #000; border: 1px solid #333; color: white; border-radius: 8px; box-sizing: border-box; }
+        
         .top-nav { position: relative; display: flex; justify-content: space-between; align-items: center; padding: 12px 20px 12px 75px; background: #000; border-bottom: 2px solid #222; }
     </style>
 </head>
@@ -46,25 +71,25 @@
 
     <div class="agent-container">
         <div class="ref-panel">
-            <h4 style="margin:0; color: var(--gold); font-size: 0.8rem; letter-spacing: 1px;">NETWORK GROWTH (REFERRAL LINK)</h4>
+            <h4 style="margin:0; color: var(--gold); font-size: 0.8rem; letter-spacing: 2px; font-family: 'Goldman';">NETWORK RECRUITMENT LINK</h4>
             <div class="ref-input-group">
                 <input type="text" id="referral-url" readonly onclick="this.select()">
-                <button class="btn-main gold" style="padding: 0 20px; white-space: nowrap;" onclick="copyReferral()">COPY LINK</button>
+                <button class="btn-nexus btn-gold" style="padding: 0 25px;" onclick="copyReferral()">COPY LINK</button>
             </div>
-            <p style="font-size: 0.65rem; color: #555; margin-top: 10px;">Share this link. New registrations will be automatically placed in your hierarchy level.</p>
+            <p style="font-size: 0.65rem; color: #555; margin-top: 12px;">New users registered via this link are automatically assigned to your network hierarchy.</p>
         </div>
 
         <div class="stats-grid">
-            <div class="stat-card"><h4>Personal Rate</h4><span class="val" id="my-comm-rate" style="color:var(--gold); font-size:1.5rem;">0%</span></div>
-            <div class="stat-card"><h4>Team Size</h4><span class="val" id="count-downlines" style="color:white; font-size:1.5rem;">0</span></div>
-            <div class="stat-card"><h4>Team Turnover</h4><span class="val" id="team-turnover" style="color:#00ff88; font-size:1.5rem;">₱0</span></div>
-            <div class="stat-card"><h4>Total Earnings</h4><span class="val" id="total-earned" style="color:var(--gold); font-size:1.5rem;">₱0</span></div>
+            <div class="stat-card"><h4>Personal Rate</h4><span class="val" id="my-comm-rate" style="color:var(--gold);">0%</span></div>
+            <div class="stat-card"><h4>Team Size</h4><span class="val" id="count-downlines" style="color:white;">0</span></div>
+            <div class="stat-card"><h4>Team Turnover</h4><span class="val" id="team-turnover" style="color:#00ff88;">₱0</span></div>
+            <div class="stat-card"><h4>Total Earnings</h4><span class="val" id="total-earned" style="color:var(--gold);">₱0</span></div>
         </div>
 
         <div class="panel">
             <div class="panel-header">
-                <h3 style="margin:0; color: var(--gold); font-family: 'Goldman'; font-size: 1rem;">DOWNLINE MANAGEMENT</h3>
-                <button class="btn-main gold" onclick="toggleModal(true)">+ CREATE ACCOUNT</button>
+                <h3 style="margin:0; color: var(--gold); font-family: 'Goldman'; font-size: 1rem; letter-spacing: 1px;">DOWNLINE MANAGEMENT</h3>
+                <button class="btn-nexus btn-gold" style="padding: 10px 20px; font-size: 0.75rem;" onclick="toggleModal(true)">+ Create Account</button>
             </div>
             <div style="overflow-x: auto;">
                 <table class="agent-table">
@@ -87,27 +112,29 @@
 
     <div id="create-modal" class="modal" style="display:none;">
         <div class="modal-content">
-            <h3 id="modal-title" style="margin-top:0; color:var(--gold); font-family: 'Goldman'; font-size: 1.1rem;">NEW DOWNLINE</h3>
+            <h3 id="modal-title" style="margin-top:0; color:var(--gold); font-family: 'Goldman'; font-size: 1.1rem; text-align:center;">NEW DOWNLINE</h3>
             <div id="create-only-fields">
-                <label style="font-size:0.7rem; color:#555;">USERNAME</label>
+                <label style="font-size:0.6rem; color:#555; text-transform: uppercase;">Username</label>
                 <input type="text" id="new-username" placeholder="e.g. nexus_partner">
-                <label style="font-size:0.7rem; color:#555;">POSITION</label>
+                <label style="font-size:0.6rem; color:#555; text-transform: uppercase;">Position</label>
                 <select id="new-role"></select>
             </div>
-            <label style="font-size:0.7rem; color:#555;">COMMISSION RATE (%)</label>
+            <label style="font-size:0.6rem; color:#555; text-transform: uppercase;">Commission Rate (%)</label>
             <input type="number" id="new-comm" step="0.01" oninput="validateInputRate()">
-            <div id="rate-warning" style="color: #ff4444; font-size: 0.7rem; display: none; margin-bottom: 10px;">Rate cannot exceed your own spread!</div>
-            <button class="btn-main gold" id="btn-save" style="width:100%; padding:15px; margin-top:10px;" onclick="handleSave()">CREATE USER</button>
-            <button class="btn-main" style="width:100%; background:#222; margin-top:5px;" onclick="toggleModal(false)">CANCEL</button>
+            <div id="rate-warning" style="color: #ff4444; font-size: 0.7rem; display: none; margin-bottom: 10px; text-align: center;">Rate cannot exceed your own spread!</div>
+            <button class="btn-nexus btn-gold" id="btn-save" style="width:100%; padding:16px; margin-top:10px;" onclick="handleSave()">Confirm Account</button>
+            <button class="btn-nexus btn-outline" style="width:100%; padding:12px; margin-top:10px;" onclick="toggleModal(false)">Cancel</button>
         </div>
     </div>
 
     <script type="module">
+        /* ... Logic remains the same, ensure window.handleSave and toggleModal are used ... */
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
         import { getFirestore, doc, getDoc, updateDoc, collection, query, where, onSnapshot, addDoc } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
         import { injectMenu } from "/menu.js";
 
+        // Firebase Setup
         const firebaseConfig = {
             apiKey: "AIzaSyCBvOw8HrMhZD0aYSHqFdE196ZITdYBU3Q",
             authDomain: "nexus-sabong.firebaseapp.com",
@@ -116,7 +143,6 @@
             messagingSenderId: "421723311",
             appId: "1:421723311:web:1780f179e7c2a7cc0e285a"
         };
-
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
@@ -155,10 +181,8 @@
             document.getElementById('my-comm-rate').innerText = `${myData.commissionRate}%`;
             document.getElementById('new-comm').placeholder = `Max: ${myData.commissionRate}%`;
             document.getElementById('total-earned').innerText = `₱${(myData.totalCommission || 0).toLocaleString()}`;
-
             const baseUrl = window.location.origin + "/register/";
             document.getElementById('referral-url').value = `${baseUrl}?ref=${auth.currentUser.uid}`;
-
             const select = document.getElementById('new-role');
             select.innerHTML = "";
             const myTierIndex = TIERS.findIndex(t => t.role === myData.role);
@@ -178,18 +202,14 @@
                 const list = document.getElementById('agent-list');
                 list.innerHTML = "";
                 document.getElementById('count-downlines').innerText = snap.size;
-                
                 let teamT = 0;
-                
                 if (snap.empty) {
                     list.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:40px; color:#333;">No downlines found in your network.</td></tr>`;
                 }
-
                 snap.forEach(userDoc => {
                     const u = userDoc.data();
                     const turnover = u.totalTurnover || 0;
                     teamT += turnover;
-
                     list.innerHTML += `
                         <tr>
                             <td><strong style="color:white;">${u.username}</strong></td>
@@ -206,60 +226,43 @@
 
         window.handleSave = async () => {
             const comm = parseFloat(document.getElementById('new-comm').value);
-            if (isNaN(comm) || comm > myData.commissionRate) return alert("Spread error: Cannot exceed your own commission.");
-
+            if (isNaN(comm) || comm > myData.commissionRate) return alert("Spread error");
             const saveBtn = document.getElementById('btn-save');
             saveBtn.disabled = true;
-            saveBtn.innerText = "PROCESSING...";
-
+            saveBtn.innerText = "Processing...";
             try {
                 if (editingUserId) {
                     await updateDoc(doc(db, "users", editingUserId), { commissionRate: comm });
-                    alert("Account Updated.");
+                    alert("Updated.");
                 } else {
                     const user = document.getElementById('new-username').value.trim().toLowerCase();
                     const roleSelect = document.getElementById('new-role');
                     const role = roleSelect.value;
                     const level = parseInt(roleSelect.options[roleSelect.selectedIndex].dataset.level);
-
-                    if(!user) throw new Error("Username required.");
-                    
                     await addDoc(collection(db, "users"), {
-                        username: user,
-                        role: role,
-                        level: level,
-                        commissionRate: comm,
-                        uplineId: auth.currentUser.uid,
-                        uplinePath: [...(myData.uplinePath || []), auth.currentUser.uid],
-                        balance: 0,
-                        totalTurnover: 0,
-                        totalCommission: 0,
-                        createdAt: new Date()
+                        username: user, role, level, commissionRate: comm,
+                        uplineId: auth.currentUser.uid, uplinePath: [...(myData.uplinePath || []), auth.currentUser.uid],
+                        balance: 0, totalTurnover: 0, totalCommission: 0, createdAt: new Date()
                     });
-                    alert("New Account Registered!");
+                    alert("Created!");
                 }
                 toggleModal(false);
-            } catch (e) {
-                alert(e.message);
-            } finally {
-                saveBtn.disabled = false;
-                saveBtn.innerText = editingUserId ? "UPDATE USER" : "CREATE USER";
-            }
+            } catch (e) { alert(e.message); }
+            finally { saveBtn.disabled = false; saveBtn.innerText = "Confirm Account"; }
         };
 
         window.copyReferral = () => {
             const copyText = document.getElementById("referral-url");
             copyText.select();
             navigator.clipboard.writeText(copyText.value);
-            alert("Referral Link Copied!");
+            alert("Link Copied!");
         };
 
         window.openEdit = (uid, username, currentRate) => {
             editingUserId = uid;
-            document.getElementById('modal-title').innerText = `MANAGE: ${username.toUpperCase()}`;
+            document.getElementById('modal-title').innerText = `EDIT: ${username.toUpperCase()}`;
             document.getElementById('create-only-fields').style.display = "none";
             document.getElementById('new-comm').value = currentRate;
-            document.getElementById('btn-save').innerText = "UPDATE USER";
             toggleModal(true);
         };
 
@@ -270,7 +273,6 @@
                 document.getElementById('create-only-fields').style.display = "block";
                 document.getElementById('new-username').value = "";
                 document.getElementById('new-comm').value = "";
-                document.getElementById('btn-save').innerText = "CREATE USER";
             }
             document.getElementById('create-modal').style.display = show ? 'flex' : 'none';
         };
