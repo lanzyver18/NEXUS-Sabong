@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Library | NEXUS</title>
+    
+    <link rel="stylesheet" href="/menu.css">
+    <link rel="stylesheet" href="/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Goldman:wght@400;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root { --gold: #D4AF37; --green: #00ff88; --panel-bg: #0f0f0f; }
+
+        .top-nav { 
+            display: flex; justify-content: space-between; align-items: center; 
+            padding: 12px 20px 12px 75px; background: #000; border-bottom: 2px solid #222;
+            position: sticky; top: 0; z-index: 1000;
+        }
+
+        .library-wrapper { max-width: 1000px; margin: 20px auto; padding: 0 15px 100px; }
+
+        /* ADVERTISEMENT CAROUSEL */
+        .ad-banner {
+            width: 100%; height: 180px; background: #111; border-radius: 20px;
+            margin-bottom: 30px; border: 1px solid #222; overflow: hidden;
+            position: relative; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        .ad-slide {
+            width: 100%; height: 100%; display: flex; align-items: center;
+            justify-content: center; background-size: cover; background-position: center;
+            position: absolute; opacity: 0; transition: 0.8s ease-in-out;
+        }
+        .ad-slide.active { opacity: 1; }
+        .ad-overlay {
+            background: linear-gradient(to right, rgba(0,0,0,0.9), transparent);
+            width: 100%; height: 100%; display: flex; flex-direction: column;
+            justify-content: center; padding: 30px; box-sizing: border-box;
+        }
+        .ad-overlay h2 { color: var(--gold); margin: 0; font-family: 'Goldman'; font-size: 1.4rem; }
+        .ad-overlay p { color: #888; font-size: 0.8rem; margin: 5px 0 15px; }
+
+        /* CATEGORY TABS */
+        .cat-row { display: flex; gap: 15px; margin-bottom: 25px; overflow-x: auto; padding-bottom: 10px; scrollbar-width: none; }
+        .cat-tab {
+            padding: 10px 20px; background: #111; border: 1px solid #222; border-radius: 30px;
+            color: #666; font-size: 0.7rem; font-weight: bold; cursor: pointer;
+            white-space: nowrap; transition: 0.3s; text-transform: uppercase; font-family: 'Goldman';
+        }
+        .cat-tab.active { border-color: var(--gold); color: var(--gold); background: rgba(212,175,55,0.05); }
+
+        /* GAMES GRID */
+        .games-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 20px; }
+        .game-item {
+            background: var(--panel-bg); border-radius: 18px; border: 1px solid #222;
+            overflow: hidden; text-decoration: none; transition: 0.3s; position: relative;
+        }
+        .game-item:hover { transform: translateY(-5px); border-color: var(--gold); }
+        .game-thumb { width: 100%; aspect-ratio: 1/1; background-size: cover; background-position: center; }
+        .game-meta { padding: 15px; text-align: center; }
+        .game-meta h4 { margin: 0; color: #eee; font-family: 'Goldman'; font-size: 0.85rem; }
+        .game-meta small { color: #555; font-size: 0.6rem; text-transform: uppercase; letter-spacing: 1px; }
+
+        .badge-hot { position: absolute; top: 10px; right: 10px; background: #ff4444; color: white; font-size: 0.5rem; padding: 3px 7px; border-radius: 4px; font-weight: bold; }
+
+        @media (max-width: 600px) { .ad-banner { height: 140px; } .ad-overlay h2 { font-size: 1.1rem; } }
+    </style>
+</head>
+<body>
+
+    <nav class="top-nav">
+        <div class="logo" style="color:var(--gold); font-family:'Goldman'; font-weight:bold; font-size:1.2rem;">NEXUS LIBRARY</div>
+        <div style="color: var(--green); font-weight: bold; font-family: 'Goldman';" id="nav-bal">₱0.00</div>
+    </nav>
+
+    <div class="library-wrapper">
+        
+        <div class="ad-banner" id="ad-carousel">
+            <div class="ad-slide active" style="background-image: url('https://images.unsplash.com/photo-1518623489648-a173ef7824f3?auto=format&fit=crop&q=80&w=1000');">
+                <div class="ad-overlay">
+                    <h2>TRIPLE REBATE WEEK</h2>
+                    <p>Get 3.0% commission on every bet made today.</p>
+                    <button class="nav-profile-btn" style="width:fit-content; font-size:0.6rem;">LEARN MORE</button>
+                </div>
+            </div>
+            <div class="ad-slide" style="background-image: url('https://images.unsplash.com/photo-1642104704074-907c0698cbd9?auto=format&fit=crop&q=80&w=1000');">
+                <div class="ad-overlay">
+                    <h2>NEW PROTOCOL: MINES</h2>
+                    <p>Experience the ultimate high-risk game on Nexus.</p>
+                    <button class="nav-profile-btn" onclick="window.location.href='/games/mines/'" style="width:fit-content; font-size:0.6rem;">PLAY NOW</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="cat-row">
+            <div class="cat-tab active">All Games</div>
+            <div class="cat-tab">Sabong</div>
+            <div class="cat-tab">Crash</div>
+            <div class="cat-tab">Table Games</div>
+            <div class="cat-tab">Slots</div>
+        </div>
+
+        <div class="games-grid">
+            
+            <a href="/games/sabong/" class="game-item">
+                <div class="game-thumb" style="background-image: url('https://images.unsplash.com/photo-1596727147705-61a532a655bd?auto=format&fit=crop&q=60');"></div>
+                <div class="badge-hot">LIVE</div>
+                <div class="game-meta">
+                    <h4>SABONG ARENA</h4>
+                    <small>Real-time Betting</small>
+                </div>
+            </a>
+
+            <a href="/games/crash/" class="game-item">
+                <div class="game-thumb" style="background-image: url('https://images.unsplash.com/photo-1635070041078-e363dbe005cb?auto=format&fit=crop&q=60');"></div>
+                <div class="game-meta">
+                    <h4>NEXUS CRASH</h4>
+                    <small>Multiplayer Action</small>
+                </div>
+            </a>
+
+            <a href="/games/mines/" class="game-item">
+                <div class="game-thumb" style="background-image: url('https://images.unsplash.com/photo-1614028674026-a65e31bfd27c?auto=format&fit=crop&q=60');"></div>
+                <div class="game-meta">
+                    <h4>NEXUS MINES</h4>
+                    <small>Risk & Reward</small>
+                </div>
+            </a>
+
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
+        import { getFirestore, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+        import { injectMenu } from "/menu.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCBvOw8HrMhZD0aYSHqFdE196ZITdYBU3Q",
+            authDomain: "nexus-sabong.firebaseapp.com",
+            projectId: "nexus-sabong",
+            storageBucket: "nexus-sabong.firebasestorage.app",
+            messagingSenderId: "421723311",
+            appId: "1:421723311:web:1780f179e7c2a7cc0e285a"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        window.firebaseAuth = auth;
+        window.firebaseDb = db;
+        injectMenu();
+
+        // Ad Carousel Logic
+        let currentAd = 0;
+        const slides = document.querySelectorAll('.ad-slide');
+        setInterval(() => {
+            slides[currentAd].classList.remove('active');
+            currentAd = (currentAd + 1) % slides.length;
+            slides[currentAd].classList.add('active');
+        }, 5000);
+
+        onAuthStateChanged(auth, user => {
+            if (user) {
+                onSnapshot(doc(db, "users", user.uid), snap => {
+                    if (snap.exists()) {
+                        document.getElementById('nav-bal').innerText = `₱${snap.data().balance.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
+                    }
+                });
+            } else { window.location.href = "/login/"; }
+        });
+    </script>
+</body>
+</html>
