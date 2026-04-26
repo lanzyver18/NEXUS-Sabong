@@ -14,16 +14,16 @@ export function injectMenu() {
             </div>
             
             <div class="sidebar-links">
-                <a href="/">🏠 Home</a>
-                <a href="/games/">🐓 Sabong Arena</a>
-                <a href="/profile/">👤 My Profile</a>
+                <a href="/">Home</a>
+                <a href="/games/">Sabong Arena</a>
+                <a href="/profile/">My Profile</a>
                 
                 <div style="margin: 15px 0 5px 0; color:#444; font-size:0.7rem; font-weight:bold; letter-spacing:1px;">RECORDS</div>
-                <a href="/history/wallet.html">💰 Wallet History</a>
-                <a href="/history/bets.html">📝 Bet History</a>
+                <a href="/history/wallet.html">Wallet History</a>
+                <a href="/history/bets.html">Bet History</a>
                 
                 <div style="margin: 15px 0 5px 0; color:#444; font-size:0.7rem; font-weight:bold; letter-spacing:1px;">FINANCE</div>
-                <a href="/wallet/" style="color:#D4AF37;">📥 Cash-In / Out</a>
+                <a href="/wallet/" style="color:#D4AF37;">Cash-In / Out</a>
                 
                 <div id="agent-manager-section"></div>
             </div>
