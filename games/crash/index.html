@@ -34,7 +34,6 @@
             box-shadow: 0 20px 50px rgba(0,0,0,0.8), inset 0 0 100px rgba(0,0,0,1);
         }
 
-        /* Moving Grid Background */
         .grid-bg {
             position: absolute; width: 400%; height: 400%;
             background-image: 
@@ -43,7 +42,6 @@
             background-size: 80px 80px;
             transform: perspective(1000px) rotateX(60deg);
             opacity: 0.5; z-index: 1; pointer-events: none;
-            transition: transform 0.05s linear;
         }
 
         #main-mult { 
@@ -52,35 +50,32 @@
             pointer-events: none; transform: translateY(-30px);
             transition: color 0.3s, transform 0.1s;
         }
-        #main-mult.crashed { color: var(--red); text-shadow: 0 0 50px rgba(255, 68, 68, 0.6); animation: glitch 0.2s infinite; }
+        
+        /* Explosion Shake */
+        .shake { animation: shake-anim 0.4s cubic-bezier(.36,.07,.19,.97) both; }
+        @keyframes shake-anim {
+            10%, 90% { transform: translate3d(-1px, -31px, 0); }
+            20%, 80% { transform: translate3d(2px, -28px, 0); }
+            30%, 50%, 70% { transform: translate3d(-4px, -34px, 0); }
+            40%, 60% { transform: translate3d(4px, -26px, 0); }
+        }
+
+        #main-mult.crashed { color: var(--red); text-shadow: 0 0 50px rgba(255, 68, 68, 0.6); }
         
         canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 5; }
-
-        .hud-overlay { position: absolute; width: 100%; height: 100%; z-index: 6; pointer-events: none; padding: 30px; box-sizing: border-box; }
-        .hud-corner { position: absolute; width: 20px; height: 20px; border: 2px solid var(--gold); opacity: 0.3; }
-        .tl { top: 30px; left: 30px; border-right: 0; border-bottom: 0; }
-        .tr { top: 30px; right: 30px; border-left: 0; border-bottom: 0; }
-        .bl { bottom: 30px; left: 30px; border-right: 0; border-top: 0; }
-        .br { bottom: 30px; right: 30px; border-left: 0; border-top: 0; }
 
         .control-panel { 
             background: linear-gradient(145deg, #111, #080808); padding: 30px; border-radius: 28px; 
             border: 1px solid #252525; display: flex; flex-direction: column; gap: 20px; 
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
         
-        .input-group label { display: block; font-size: 0.6rem; color: #555; text-transform: uppercase; letter-spacing: 2.5px; margin-bottom: 12px; font-weight: bold; }
-        input { 
-            width: 100%; padding: 18px; background: #000; border: 1px solid #333; 
-            color: var(--gold); border-radius: 14px; outline: none; font-family: 'Goldman'; 
-            transition: 0.3s; box-sizing: border-box; font-size: 1.2rem;
-        }
+        input { width: 100%; padding: 18px; background: #000; border: 1px solid #333; color: var(--gold); border-radius: 14px; outline: none; font-family: 'Goldman'; font-size: 1.2rem; }
         .btn-action { width: 100%; padding: 22px; border-radius: 16px; border: none; font-weight: bold; font-family: 'Goldman'; cursor: pointer; text-transform: uppercase; transition: 0.3s; letter-spacing: 2px; font-size: 1.1rem; }
-        .btn-bet { background: var(--gold); color: black; box-shadow: 0 8px 0 #917725; }
-        .btn-cashout { background: var(--green); color: black; display: none; box-shadow: 0 8px 0 #008f4c; }
+        .btn-bet { background: var(--gold); color: black; }
+        .btn-cashout { background: var(--green); color: black; display: none; }
         .btn-waiting { background: #1a1a1a; color: #444; cursor: not-allowed; display: none; border: 1px solid #222; }
 
-        .history-bar { display: flex; gap: 10px; overflow-x: auto; padding: 15px; background: rgba(0,0,0,0.4); border-radius: 16px; border: 1px solid #1a1a1a; scrollbar-width: none; margin-top: 10px; }
+        .history-bar { display: flex; gap: 10px; overflow-x: auto; padding: 15px; scrollbar-width: none; margin-top: 10px; }
         .hist-item { padding: 8px 14px; border-radius: 10px; font-size: 0.8rem; font-family: 'Goldman'; font-weight: bold; background: #111; flex-shrink: 0; border: 1px solid #222; }
         .hist-green { color: var(--green); border-color: rgba(0, 255, 136, 0.2); }
         .hist-red { color: var(--red); border-color: rgba(255, 68, 68, 0.2); }
@@ -98,31 +93,23 @@
     <div class="crash-layout">
         <div class="control-panel">
             <div class="input-group">
-                <label>Investment Value</label>
-                <input type="number" id="bet-amount" value="100" min="10" step="10">
+                <label style="font-size: 0.6rem; color: #555; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 10px; display: block;">Bet Amount</label>
+                <input type="number" id="bet-amount" value="100" min="10">
             </div>
             <div class="input-group">
-                <label>Automatic Extraction</label>
-                <input type="number" id="auto-cashout" value="2.00" step="0.1" min="1.1">
+                <label style="font-size: 0.6rem; color: #555; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 10px; display: block;">Auto Extraction</label>
+                <input type="number" id="auto-cashout" value="2.00" step="0.1">
             </div>
 
             <button id="btn-bet" class="btn-action btn-bet" onclick="placeBet()">Initiate Round</button>
-            <button id="btn-cashout" class="btn-action btn-cashout" onclick="cashout()">
-                EXTRACT
-                <span id="cashout-preview">₱0.00</span>
-            </button>
-            <button id="btn-waiting" class="btn-action btn-waiting">Syncing Network...</button>
+            <button id="btn-cashout" class="btn-action btn-cashout" onclick="cashout()">EXTRACT <span id="cashout-preview" style="display:block; font-size:0.7rem; opacity:0.6;">₱0.00</span></button>
+            <button id="btn-waiting" class="btn-action btn-waiting">Syncing...</button>
 
             <div class="history-bar" id="history"></div>
         </div>
 
-        <div class="display-area">
+        <div class="display-area" id="arena-box">
             <div class="grid-bg" id="grid-bg"></div>
-            <div class="hud-overlay">
-                <div class="hud-corner tl"></div><div class="hud-corner tr"></div>
-                <div class="hud-corner bl"></div><div class="hud-corner br"></div>
-            </div>
-            <div id="status-text" style="color: var(--gold); font-size: 0.6rem; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 5px; position: absolute; top: 35px; font-weight: bold; z-index: 10; opacity: 0.5;">HUB CONNECTED</div>
             <div id="main-mult">1.00x</div>
             <canvas id="crash-canvas"></canvas>
         </div>
@@ -136,28 +123,44 @@
 
         const firebaseConfig = {
             apiKey: "AIzaSyCBvOw8HrMhZD0aYSHqFdE196ZITdYBU3Q",
-            authDomain: "nexus-sabong.firebaseapp.com",
-            projectId: "nexus-sabong",
-            storageBucket: "nexus-sabong.firebasestorage.app",
-            messagingSenderId: "421723311",
+            authDomain: "nexus-sabong.firebaseapp.com", projectId: "nexus-sabong",
+            storageBucket: "nexus-sabong.firebasestorage.app", messagingSenderId: "421723311",
             appId: "1:421723311:web:1780f179e7c2a7cc0e285a"
         };
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        window.firebaseAuth = auth;
-        window.firebaseDb = db;
         injectMenu();
 
         let balance = 0, currentMult = 1.00, gameStatus = "WAITING", hasBet = false, betPlacedForNext = false, myBetAmt = 0, crashPoint = 0, startTime = 0;
-        
+        let particles = [];
         const canvas = document.getElementById('crash-canvas');
         const ctx = canvas.getContext('2d');
         const gridBg = document.getElementById('grid-bg');
 
         function resize() { canvas.width = canvas.parentElement.clientWidth; canvas.height = canvas.parentElement.clientHeight; }
         window.addEventListener('resize', resize); resize();
+
+        class Particle {
+            constructor(x, y, color) {
+                this.x = x; this.y = y;
+                this.color = color;
+                this.size = Math.random() * 5 + 2;
+                this.vx = (Math.random() - 0.5) * 12;
+                this.vy = (Math.random() - 0.5) * 12;
+                this.alpha = 1;
+            }
+            update() { this.x += this.vx; this.y += this.vy; this.alpha -= 0.02; }
+            draw(ox, oy) {
+                ctx.save();
+                ctx.translate(ox, oy);
+                ctx.globalAlpha = this.alpha;
+                ctx.fillStyle = this.color;
+                ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI*2); ctx.fill();
+                ctx.restore();
+            }
+        }
 
         onAuthStateChanged(auth, user => {
             if (user) {
@@ -173,22 +176,19 @@
         function initEngine() {
             gameStatus = "WAITING";
             let countdown = 5.0;
+            particles = [];
             updateButtons();
             const timer = setInterval(() => {
                 countdown -= 0.1;
-                document.getElementById('status-text').innerText = `SYNCING NEXT IN ${countdown.toFixed(1)}S`;
                 ctx.clearRect(0,0, canvas.width, canvas.height);
-                gridBg.style.transform = `perspective(1000px) rotateX(60deg) translateY(0px) translateX(0px)`;
                 if (countdown <= 0) { clearInterval(timer); runRound(); }
             }, 100);
         }
 
         function runRound() {
             gameStatus = "RUNNING";
-            document.getElementById('status-text').innerText = "CLIMBING...";
             if (Math.random() < 0.08) crashPoint = 1.00;
             else crashPoint = parseFloat((Math.max(1.01, 0.93 / (1 - Math.random()))).toFixed(2));
-
             if (betPlacedForNext) { hasBet = true; betPlacedForNext = false; }
             updateButtons();
             startTime = Date.now();
@@ -197,71 +197,59 @@
                 let elapsed = (Date.now() - startTime) / 1000;
                 currentMult = Math.pow(1.08, elapsed); 
                 document.getElementById('main-mult').innerText = currentMult.toFixed(2) + "x";
-                
-                if(hasBet) document.getElementById('cashout-preview').innerText = `PAYOUT: ₱${Math.floor(myBetAmt * currentMult).toLocaleString()}`;
+                if(hasBet) document.getElementById('cashout-preview').innerText = `₱${Math.floor(myBetAmt * currentMult).toLocaleString()}`;
 
                 ctx.clearRect(0,0, canvas.width, canvas.height);
-                
-                // --- CAMERA FOLLOW LOGIC ---
-                // We keep the "Head" of the line roughly at the center-right of the screen.
-                // As the line head moves, we translate the context in the opposite direction.
-                
-                const headX = (elapsed * 150); // Speed of X progress
-                const headY = (currentMult - 1) * 300; // Speed of Y climb
-                
-                const offsetX = canvas.width * 0.4 - headX;
-                const offsetY = canvas.height * 0.7 + headY;
+                const headX = (elapsed * 150), headY = (currentMult - 1) * 300;
+                const offsetX = canvas.width * 0.4 - headX, offsetY = canvas.height * 0.7 + headY;
 
                 ctx.save();
                 ctx.translate(offsetX, offsetY);
-
-                // Grid background sync
                 gridBg.style.transform = `perspective(1000px) rotateX(60deg) translateY(${headY % 80}px) translateX(${offsetX % 80}px)`;
 
-                // LINE DRAWING
                 ctx.beginPath();
-                ctx.lineWidth = 8;
-                ctx.strokeStyle = '#D4AF37';
-                ctx.lineCap = 'round';
-                ctx.shadowBlur = 20;
-                ctx.shadowColor = 'rgba(212, 175, 55, 0.6)';
-                
-                ctx.moveTo(0, 0); // Origin point moves with translation
-                
+                ctx.lineWidth = 8; ctx.strokeStyle = '#D4AF37'; ctx.lineCap = 'round';
+                ctx.shadowBlur = 20; ctx.shadowColor = 'rgba(212, 175, 55, 0.6)';
+                ctx.moveTo(0, 0);
                 for(let i=0; i <= elapsed; i+=0.05) {
-                    const lx = i * 150;
-                    const ly = -(Math.pow(1.08, i) - 1) * 300;
-                    ctx.lineTo(lx, ly);
+                    ctx.lineTo(i * 150, -(Math.pow(1.08, i) - 1) * 300);
                 }
                 ctx.stroke();
 
-                // Glowing Head Dot
-                ctx.shadowBlur = 40;
-                ctx.fillStyle = "#fff";
-                ctx.beginPath(); 
-                ctx.arc(headX, -headY, 8, 0, Math.PI * 2); 
-                ctx.fill();
-
+                ctx.shadowBlur = 40; ctx.fillStyle = "#fff";
+                ctx.beginPath(); ctx.arc(headX, -headY, 8, 0, Math.PI * 2); ctx.fill();
                 ctx.restore();
 
                 const auto = parseFloat(document.getElementById('auto-cashout').value);
                 if (hasBet && !isNaN(auto) && auto > 1 && currentMult >= auto) cashout();
-
-                if (currentMult >= crashPoint) { clearInterval(tick); doCrash(); }
+                if (currentMult >= crashPoint) { clearInterval(tick); doCrash(headX, -headY, offsetX, offsetY); }
             }, 30);
         }
 
-        function doCrash() {
+        function doCrash(hx, hy, ox, oy) {
             gameStatus = "CRASHED";
             hasBet = false;
-            document.getElementById('main-mult').classList.add('crashed');
-            document.getElementById('main-mult').innerText = crashPoint.toFixed(2) + "x";
-            document.getElementById('status-text').innerText = "NETWORK CRASHED";
+            const multText = document.getElementById('main-mult');
+            multText.classList.add('crashed', 'shake');
+            
+            // Create Explosion Particles
+            for(let i=0; i<40; i++) particles.push(new Particle(hx, hy, i % 2 === 0 ? '#ff4444' : '#gold'));
+
+            const anim = setInterval(() => {
+                ctx.clearRect(0,0, canvas.width, canvas.height);
+                particles.forEach((p, index) => {
+                    p.update();
+                    p.draw(ox, oy);
+                    if(p.alpha <= 0) particles.splice(index, 1);
+                });
+                if(particles.length === 0) clearInterval(anim);
+            }, 30);
+
             addHistory(crashPoint);
             updateButtons();
             setTimeout(() => {
-                document.getElementById('main-mult').classList.remove('crashed');
-                document.getElementById('main-mult').innerText = "1.00x";
+                multText.classList.remove('crashed', 'shake');
+                multText.innerText = "1.00x";
                 initEngine();
             }, 3000);
         }
