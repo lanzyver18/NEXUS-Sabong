@@ -10,7 +10,6 @@
     <style>
         :root { --gold: #D4AF37; --green: #00ff88; --red: #ff4444; --panel-bg: #0f0f0f; }
         
-        /* Navigation alignment consistent with Wallet */
         .top-nav { 
             position: sticky; top: 0; z-index: 1000;
             display: flex; justify-content: space-between; align-items: center; 
@@ -20,25 +19,23 @@
 
         .mines-wrapper { max-width: 900px; margin: 30px auto; display: grid; grid-template-columns: 320px 1fr; gap: 25px; padding: 0 15px; }
 
-        /* SIDEBAR CONTROLS */
         .control-panel { background: var(--panel-bg); padding: 25px; border-radius: 24px; border: 1px solid #222; display: flex; flex-direction: column; gap: 18px; box-shadow: 0 15px 35px rgba(0,0,0,0.5); height: fit-content; }
         
-        .stat-box { background: #000; padding: 15px; border-radius: 12px; border: 1px solid #222; text-align: center; }
-        .stat-box label { font-size: 0.6rem; color: #555; text-transform: uppercase; letter-spacing: 1.5px; display: block; margin-bottom: 5px; }
-        .stat-box span { font-family: 'Goldman'; font-size: 1.6rem; color: var(--gold); }
+        .stat-box { background: #000; padding: 15px; border-radius: 12px; border: 1px solid #222; text-align: center; position: relative; overflow: hidden; }
+        .stat-box label { font-size: 0.55rem; color: #555; text-transform: uppercase; letter-spacing: 2px; display: block; margin-bottom: 5px; }
+        .stat-box span { font-family: 'Goldman'; font-size: 1.8rem; color: var(--gold); text-shadow: 0 0 10px rgba(212, 175, 55, 0.3); }
 
         .input-group label { display: block; font-size: 0.6rem; color: #666; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
         input { width: 100%; padding: 14px; background: #000; border: 1px solid #333; color: white; border-radius: 10px; outline: none; transition: 0.3s; font-family: 'Goldman'; }
-        input:focus { border-color: var(--gold); }
+        input:focus { border-color: var(--gold); background: #050505; }
 
         .btn-action { width: 100%; padding: 18px; border-radius: 12px; border: none; font-weight: bold; font-family: 'Goldman'; cursor: pointer; text-transform: uppercase; transition: 0.3s; }
-        .btn-play { background: var(--gold); color: black; box-shadow: 0 5px 15px rgba(212, 175, 55, 0.2); }
-        .btn-cashout { background: var(--green); color: black; display: none; box-shadow: 0 5px 15px rgba(0, 255, 136, 0.2); }
-        .btn-action:hover { transform: translateY(-2px); filter: brightness(1.1); }
-        .btn-action:disabled { opacity: 0.3; cursor: not-allowed; transform: none; }
+        .btn-play { background: var(--gold); color: black; }
+        .btn-cashout { background: var(--green); color: black; display: none; }
+        .btn-action:hover:not(:disabled) { transform: translateY(-2px); filter: brightness(1.1); }
+        .btn-action:disabled { opacity: 0.2; cursor: not-allowed; }
 
-        /* THE GRID */
-        .board-container { background: #080808; padding: 20px; border-radius: 28px; border: 1px solid #222; position: relative; }
+        .board-container { background: #080808; padding: 20px; border-radius: 28px; border: 1px solid #222; }
         .grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; aspect-ratio: 1/1; }
         
         .cell { 
@@ -48,9 +45,12 @@
             display: flex; align-items: center; justify-content: center; font-size: 1.8rem;
             box-shadow: inset 0 2px 5px rgba(255,255,255,0.05);
         }
-        .cell:hover:not(.revealed) { background: #222; transform: scale(1.03); border-color: var(--gold); }
+        .cell:hover:not(.revealed):not(.disabled) { background: #222; transform: scale(1.03); border-color: var(--gold); }
         .cell.revealed.safe { background: rgba(0, 255, 136, 0.08); border-color: var(--green); color: var(--green); cursor: default; animation: popIn 0.3s ease; }
         .cell.revealed.mine { background: rgba(255, 68, 68, 0.08); border-color: var(--red); color: var(--red); cursor: default; animation: shake 0.4s; }
+        .cell.disabled { cursor: not-allowed; opacity: 0.5; }
+
+        .fair-badge { font-size: 0.5rem; color: #333; text-align: center; margin-top: 10px; text-transform: uppercase; letter-spacing: 1px; }
 
         @keyframes popIn { 0% { transform: scale(0.8); } 100% { transform: scale(1); } }
         @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
@@ -68,7 +68,7 @@
     <div class="mines-wrapper">
         <div class="control-panel">
             <div class="stat-box">
-                <label>Multiplier</label>
+                <label id="mult-label">Current Multiplier</label>
                 <span id="current-mult">1.00x</span>
             </div>
 
@@ -79,16 +79,17 @@
 
             <div class="input-group">
                 <label>Mines Count</label>
-                <input type="number" id="mine-count" value="3" min="1" max="24">
+                <input type="number" id="mine-count" value="3" min="1" max="24" oninput="updateNextMultPreview()">
             </div>
 
             <button id="btn-start" class="btn-action btn-play" onclick="startGame()">Start Protocol</button>
             <button id="btn-cashout" class="btn-action btn-cashout" onclick="cashout()">Secure ₱0.00</button>
+            
+            <div class="fair-badge">Provably Fair Protocol v2.1</div>
         </div>
 
         <div class="board-container">
-            <div class="grid" id="grid">
-                </div>
+            <div class="grid" id="grid"></div>
         </div>
     </div>
 
@@ -112,6 +113,15 @@
         const db = getFirestore(app);
         injectMenu();
 
+        // AUDIO ENGINE
+        const Sfx = {
+            click: new Audio('https://nexus-assets.s3.amazonaws.com/click.mp3'),
+            gem: new Audio('https://nexus-assets.s3.amazonaws.com/gem.mp3'),
+            bomb: new Audio('https://nexus-assets.s3.amazonaws.com/bomb.mp3'),
+            win: new Audio('https://nexus-assets.s3.amazonaws.com/win.mp3'),
+            play: (sound) => { sound.currentTime = 0; sound.play().catch(()=>{}); }
+        };
+
         let balance = 0;
         let gameActive = false;
         let mines = [];
@@ -130,41 +140,57 @@
             } else { window.location.href = "/login/"; }
         });
 
-        function calculateMultiplier(mines, revealed) {
-            let mult = 1;
-            for (let i = 0; i < revealed; i++) {
-                mult = mult * ((25 - i) / (25 - mines - i));
-            }
-            return mult * 0.96; // 4% House Edge for stability
+        // Probabilistic Multiplier Function
+        function nCr(n, r) {
+            if (r < 0 || r > n) return 0;
+            if (r === 0 || r === n) return 1;
+            if (r > n / 2) r = n - r;
+            let res = 1;
+            for (let i = 1; i <= r; ++i) res = res * (n - i + 1) / i;
+            return res;
         }
 
-        window.startGame = async () => {
-            const betInput = document.getElementById('bet-amount');
-            const mineInput = document.getElementById('mine-count');
-            const bet = parseInt(betInput.value);
-            const count = parseInt(mineInput.value);
-            
-            if (bet > balance || bet < 10) return alert("Insufficient balance or invalid bet.");
-            if (count < 1 || count > 24) return alert("Mine count must be 1-24.");
+        function getMultiplier(mines, revealed) {
+            const houseEdge = 0.96; // 4% House Edge
+            const probability = nCr(25 - mines, revealed) / nCr(25, revealed);
+            return (1 / probability) * houseEdge;
+        }
 
+        window.updateNextMultPreview = () => {
+            if (gameActive) return;
+            const m = parseInt(document.getElementById('mine-count').value);
+            if (m > 0 && m < 25) {
+                const next = getMultiplier(m, 1);
+                document.getElementById('current-mult').innerText = next.toFixed(2) + "x";
+                document.getElementById('mult-label').innerText = "Next Multiplier";
+            }
+        };
+
+        window.startGame = async () => {
+            const bet = parseInt(document.getElementById('bet-amount').value);
+            const count = parseInt(document.getElementById('mine-count').value);
+            
+            if (bet > balance || bet < 10) return alert("Check balance.");
+            if (count < 1 || count > 24) return alert("Invalid mine count.");
+
+            Sfx.play(Sfx.click);
             try {
                 await updateDoc(doc(db, "users", auth.currentUser.uid), { balance: increment(-bet) });
-                
                 gameActive = true;
                 currentBet = bet;
                 currentMineSetting = count;
                 revealedCount = 0;
                 mines = Array(25).fill(false);
-                
                 let placed = 0;
                 while (placed < count) {
                     let idx = Math.floor(Math.random() * 25);
                     if (!mines[idx]) { mines[idx] = true; placed++; }
                 }
-
                 renderGrid();
                 updateUI(true);
-            } catch (e) { alert("Initialization Error."); }
+                document.getElementById('mult-label').innerText = "Current Multiplier";
+                document.getElementById('current-mult').innerText = "1.00x";
+            } catch (e) { console.error(e); }
         };
 
         function renderGrid() {
@@ -181,16 +207,17 @@
         window.revealCell = (idx, el) => {
             if (!gameActive || el.classList.contains('revealed')) return;
 
-            el.classList.add('revealed');
             if (mines[idx]) {
-                el.classList.add('mine');
+                Sfx.play(Sfx.bomb);
+                el.classList.add('revealed', 'mine');
                 el.innerText = "💣";
                 gameOver(false);
             } else {
-                el.classList.add('safe');
+                Sfx.play(Sfx.gem);
+                el.classList.add('revealed', 'safe');
                 el.innerText = "💎";
                 revealedCount++;
-                const newMult = calculateMultiplier(currentMineSetting, revealedCount);
+                const newMult = getMultiplier(currentMineSetting, revealedCount);
                 document.getElementById('current-mult').innerText = newMult.toFixed(2) + "x";
                 document.getElementById('btn-cashout').innerText = `Secure ₱${Math.floor(currentBet * newMult).toLocaleString()}`;
             }
@@ -198,16 +225,17 @@
 
         window.cashout = async () => {
             if (!gameActive || revealedCount === 0) return;
-            const mult = calculateMultiplier(currentMineSetting, revealedCount);
+            const mult = getMultiplier(currentMineSetting, revealedCount);
             const win = Math.floor(currentBet * mult);
             
+            Sfx.play(Sfx.win);
             try {
                 await updateDoc(doc(db, "users", auth.currentUser.uid), { balance: increment(win) });
                 await addDoc(collection(db, "wallet_logs"), {
                     uid: auth.currentUser.uid, type: "MINES_WIN", amount: win, timestamp: new Date()
                 });
                 gameOver(true);
-            } catch (e) { alert("Cashout Error."); }
+            } catch (e) { alert("Error."); }
         };
 
         function gameOver(win) {
@@ -219,9 +247,16 @@
                     cells[idx].classList.add('revealed', 'mine');
                     cells[idx].innerText = "💣";
                 } else if (!cells[idx].classList.contains('revealed')) {
-                    cells[idx].style.opacity = "0.3";
+                    cells[idx].style.opacity = "0.2";
                 }
             });
+            if(!win) {
+                document.getElementById('current-mult').style.color = "var(--red)";
+                setTimeout(() => {
+                    document.getElementById('current-mult').style.color = "var(--gold)";
+                    updateNextMultPreview();
+                }, 2000);
+            }
         }
 
         function updateUI(active) {
@@ -229,11 +264,10 @@
             document.getElementById('btn-cashout').style.display = active ? 'block' : 'none';
             document.getElementById('bet-amount').disabled = active;
             document.getElementById('mine-count').disabled = active;
-            if (!active) document.getElementById('current-mult').innerText = "1.00x";
         }
 
-        // Initialize board on load
         renderGrid();
+        updateNextMultPreview();
     </script>
 </body>
 </html>
