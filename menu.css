@@ -1,73 +1,78 @@
 /* menu.css */
 :root {
     --gold: #D4AF37;
-    --bg-dark: #0a0a0a;
-    --text-gray: #ccc;
-    --nav-height: 60px; /* Optional: standardizing nav height helps alignment */
+    --gold-dark: #aa8c2c;
+    --green: #00ff88;
+    --red: #ff4444;
+    --bg-dark: #050505;
+    --text-gray: #888;
+    --sidebar-width: 300px;
 }
 
-/* ☰ Hamburger Button 
-   Note: Works best when parent .top-nav has position: relative; */
+/* ☰ Hamburger Trigger 
+   Aligned perfectly for the .top-nav center-vertical axis */
 .menu-trigger {
     position: absolute; 
     top: 50%;
-    left: 20px; /* Slightly more breathing room from the edge */
+    left: 15px; 
     transform: translateY(-50%); 
     z-index: 1001; 
     background: #000;
     color: var(--gold);
-    border: 1px solid var(--gold);
-    padding: 10px 14px;
-    border-radius: 8px;
-    font-size: 1.3rem;
+    border: 1px solid #222;
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
     cursor: pointer;
     box-shadow: 0 4px 15px rgba(0,0,0,0.5);
     font-family: 'Goldman', sans-serif;
-    line-height: 1;
-    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .menu-trigger:hover {
-    background: var(--gold);
-    color: #000;
-    box-shadow: 0 0 15px rgba(212, 175, 55, 0.4);
+    border-color: var(--gold);
+    background: rgba(212, 175, 55, 0.05);
+    box-shadow: 0 0 20px rgba(212, 175, 55, 0.2);
 }
 
-/* Sidebar Container */
+/* Sidebar Body with Glassmorphism */
 .sidebar {
     position: fixed;
     top: 0;
-    left: -300px; /* Matching width for smoother transition */
-    width: 280px;
-    height: 100%;
-    background: var(--bg-dark);
-    border-right: 1px solid #222;
-    transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    z-index: 10000;
-    padding: 25px;
-    box-sizing: border-box;
+    left: calc(-1 * var(--sidebar-width)); 
+    width: var(--sidebar-width);
+    height: 100vh;
+    background: rgba(5, 5, 5, 0.98);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-right: 1px solid #1a1a1a;
+    transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    z-index: 10002;
     display: flex;
     flex-direction: column;
+    box-sizing: border-box;
+    box-shadow: 20px 0 80px rgba(0,0,0,0.9);
 }
 
-/* Slide-in Effect */
 .sidebar.active {
     left: 0;
-    box-shadow: 10px 0 50px rgba(0,0,0,0.9);
 }
 
-/* Dark Background Overlay */
+/* Background Overlay */
 .menu-overlay {
     position: fixed;
     top: 0;
     left: 0;
-    width: 100%;
-    height: 100%;
+    width: 100vw;
+    height: 100vh;
     background: rgba(0,0,0,0.85);
     opacity: 0;
     visibility: hidden;
     transition: 0.3s ease;
-    z-index: 9998;
+    z-index: 10001;
 }
 
 .menu-overlay.active {
@@ -75,67 +80,95 @@
     visibility: visible;
 }
 
-/* Links Section */
+/* Nav Section */
 .sidebar-links {
-    margin-top: 30px;
+    margin-top: 10px;
     overflow-y: auto;
-    flex-grow: 1; /* Pushes footer to the bottom */
+    flex-grow: 1;
+    padding: 0 20px;
+    scrollbar-width: none;
+}
+
+.sidebar-links::-webkit-scrollbar {
+    display: none;
 }
 
 .sidebar-links a {
     display: flex;
     align-items: center;
-    padding: 16px 12px;
+    padding: 14px 16px;
     color: var(--text-gray);
     text-decoration: none;
-    font-size: 1rem;
-    border-bottom: 1px solid #1a1a1a;
-    transition: 0.3s ease;
-    border-radius: 4px;
+    font-size: 0.85rem;
+    border-radius: 12px;
+    transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    margin-bottom: 4px;
+    border: 1px solid transparent;
 }
 
-.sidebar-links a:hover, 
-.sidebar-links a:active {
+.sidebar-links a:hover {
+    color: #fff;
+    background: #0f0f0f;
+    padding-left: 24px;
+    border-color: #222;
+}
+
+.sidebar-links a.active {
     color: var(--gold);
-    padding-left: 20px; /* Slight bounce effect */
-    background: rgba(212, 175, 55, 0.08);
+    background: linear-gradient(90deg, #111, #050505);
+    border-color: rgba(212, 175, 55, 0.15);
+    font-weight: bold;
 }
 
-/* Section Labels (e.g., RECORDS, FINANCE) */
-.sidebar-links div {
-    padding-left: 12px;
-    margin-bottom: 5px;
+/* Category Labels */
+.menu-category {
+    font-size: 0.55rem;
+    color: #333;
+    font-weight: bold;
+    letter-spacing: 3px;
+    margin: 25px 0 10px 18px;
+    text-transform: uppercase;
+    font-family: 'Goldman', sans-serif;
 }
 
-/* Footer & Logout Area */
+/* Footer & Terminate Button */
 .sidebar-footer {
-    padding-top: 20px;
-    border-top: 1px solid #222;
-    margin-top: 20px;
+    padding: 20px;
+    border-top: 1px solid #111;
+    background: #030303;
+    margin-top: auto;
 }
 
 .logout-btn {
     width: 100%;
-    background: #111;
-    color: #ff4444;
-    border: 1px solid #333;
-    padding: 14px;
-    border-radius: 8px;
+    background: rgba(255, 68, 68, 0.03);
+    color: var(--red);
+    border: 1px solid rgba(255, 68, 68, 0.1);
+    padding: 15px;
+    border-radius: 12px;
     font-weight: bold;
-    font-family: inherit;
     cursor: pointer;
     transition: 0.3s ease;
     text-transform: uppercase;
-    font-size: 0.85rem;
-    letter-spacing: 1.5px;
+    font-size: 0.75rem;
+    letter-spacing: 2px;
+    font-family: 'Goldman', sans-serif;
 }
 
 .logout-btn:hover {
     background: rgba(255, 68, 68, 0.1);
-    border-color: #ff4444;
+    border-color: var(--red);
+    box-shadow: 0 0 20px rgba(255, 68, 68, 0.1);
 }
 
-/* Utility */
-body.menu-open {
-    overflow: hidden;
+/* Mobile Compatibility */
+@media (max-width: 600px) {
+    .sidebar {
+        width: 85%;
+    }
+    .menu-trigger {
+        width: 40px;
+        height: 40px;
+        font-size: 1.1rem;
+    }
 }
