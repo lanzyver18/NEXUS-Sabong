@@ -3,116 +3,109 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Wallet History | NEXUS</title>
+    <title>Wallet History | NEXUS PRO</title>
     <link rel="stylesheet" href="/style.css">
     <link rel="stylesheet" href="/menu.css">
     <link href="https://fonts.googleapis.com/css2?family=Goldman:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        .history-container { max-width: 800px; margin: 40px auto; padding: 20px; }
-        
-        /* Stats Summary */
-        .summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 25px; }
-        .summary-card { background: #111; padding: 20px; border-radius: 15px; border: 1px solid #222; text-align: center; }
-        .summary-card small { font-size: 0.6rem; color: #555; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 5px; }
-        .summary-card span { font-family: 'Goldman'; font-size: 1.2rem; color: var(--gold); }
+        :root { --gold: #D4AF37; --green: #00ff88; --red: #ff4444; }
+        body { background: #000; color: #fff; overflow-x: hidden; }
+        .top-nav { position: relative; display: flex; justify-content: space-between; align-items: center; padding: 12px 20px 12px 75px; background: #000; border-bottom: 2px solid #222; }
 
-        /* Filter Tabs */
-        .filter-tabs { display: flex; gap: 10px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 5px; }
-        .tab { 
-            background: #111; border: 1px solid #333; color: #666; padding: 8px 16px; 
-            border-radius: 20px; font-size: 0.75rem; cursor: pointer; white-space: nowrap; transition: 0.2s;
-        }
+        .history-container { max-width: 850px; margin: 40px auto; padding: 0 20px 100px; }
+        
+        /* Summary Grid */
+        .summary-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 25px; }
+        .summary-card { background: linear-gradient(145deg, #111, #080808); padding: 18px; border-radius: 14px; border: 1px solid #222; text-align: center; }
+        .summary-card small { font-size: 0.55rem; color: #555; text-transform: uppercase; letter-spacing: 1.5px; display: block; margin-bottom: 6px; }
+        .summary-card span { font-family: 'Goldman'; font-size: 1.1rem; color: var(--gold); }
+
+        /* Tabs */
+        .filter-tabs { display: flex; gap: 8px; margin-bottom: 25px; overflow-x: auto; padding-bottom: 5px; scrollbar-width: none; }
+        .tab { background: #0a0a0a; border: 1px solid #222; color: #555; padding: 10px 16px; border-radius: 10px; font-size: 0.7rem; cursor: pointer; white-space: nowrap; transition: 0.2s; font-family: 'Goldman'; }
         .tab.active { border-color: var(--gold); color: var(--gold); background: rgba(212, 175, 55, 0.1); }
 
-        /* Log Items */
-        .history-item { 
-            background: #111; border: 1px solid #222; border-radius: 12px; 
-            padding: 18px; margin-bottom: 12px; display: flex; 
-            justify-content: space-between; align-items: center; 
-            border-left: 4px solid transparent;
-        }
-        .history-item.income { border-left-color: #00ff88; }
-        .history-item.expense { border-left-color: #ff4444; }
+        /* Items */
+        .history-item { background: #0a0a0a; border: 1px solid #1a1a1a; border-radius: 16px; padding: 20px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; border-left: 5px solid transparent; transition: 0.3s; }
+        .history-item:hover { border-color: #333; transform: scale(1.01); }
+        .history-item.income { border-left-color: var(--green); }
+        .history-item.expense { border-left-color: var(--red); }
         .history-item.comm { border-left-color: var(--gold); }
 
         .item-left { display: flex; flex-direction: column; }
-        .item-left .type-label { font-weight: bold; color: #eee; font-size: 0.9rem; letter-spacing: 0.5px; }
-        .item-left .sub-text { color: #555; font-size: 0.7rem; margin-top: 4px; display: flex; flex-direction: column; gap: 2px; }
+        .type-label { font-weight: bold; color: #eee; font-size: 0.85rem; font-family: 'Goldman'; letter-spacing: 1px; }
+        .sub-text { color: #444; font-size: 0.65rem; margin-top: 5px; display: flex; flex-direction: column; gap: 3px; }
         
         .item-right { text-align: right; }
         .amount { font-family: 'Goldman', sans-serif; font-weight: bold; font-size: 1.1rem; }
-        .status-badge { font-size: 0.6rem; padding: 3px 8px; border-radius: 4px; text-transform: uppercase; font-weight: bold; margin-top: 5px; display: inline-block; }
+        .status-badge { font-size: 0.55rem; padding: 3px 8px; border-radius: 4px; text-transform: uppercase; font-weight: bold; margin-top: 6px; display: inline-block; border: 1px solid transparent; }
         
-        .approved { background: rgba(0, 255, 136, 0.1); color: #00ff88; border: 1px solid #00ff88; }
-        .rejected { background: rgba(255, 68, 68, 0.1); color: #ff4444; border: 1px solid #ff4444; }
+        .badge-approved { background: rgba(0, 255, 136, 0.05); color: var(--green); border-color: rgba(0, 255, 136, 0.2); }
+        .badge-rejected { background: rgba(255, 68, 68, 0.05); color: var(--red); border-color: rgba(255, 68, 68, 0.2); }
+        .badge-pending { background: rgba(212, 175, 55, 0.05); color: var(--gold); border-color: rgba(212, 175, 55, 0.2); }
 
-        /* Top Nav Overlap Fix */
-        .top-nav { position: relative; display: flex; justify-content: space-between; align-items: center; padding: 12px 20px 12px 75px; background: #000; border-bottom: 2px solid #222; }
+        @media (max-width: 700px) { .summary-grid { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
 
     <nav class="top-nav">
-        <div class="logo" style="color:var(--gold); font-family:'Goldman'; font-weight:bold; font-size:1.2rem;">FINANCE</div>
-        <div id="nav-bal" style="color: #00ff88; font-weight: bold; font-family: 'Goldman';">₱0.00</div>
+        <div class="logo" style="color:var(--gold); font-family:'Goldman'; font-weight:bold; font-size:1.2rem; letter-spacing:2px;">NEXUS FINANCE</div>
+        <div id="nav-bal" style="color: var(--green); font-weight: bold; font-family: 'Goldman';">₱0.00</div>
     </nav>
 
     <div class="history-container">
-        <h3 style="color: var(--gold); font-family: 'Goldman'; margin-bottom: 25px; letter-spacing: 1px;">FINANCIAL RECORDS</h3>
-
         <div class="summary-grid">
-            <div class="summary-card"><small>Total Cash-In</small><span id="sum-in">₱0</span></div>
-            <div class="summary-card"><small>Total Commissions</small><span id="sum-comm" style="color:#00ff88;">₱0</span></div>
+            <div class="summary-card"><small>Total Inbound</small><span id="sum-in">₱0</span></div>
+            <div class="summary-card"><small>Net Yield</small><span id="sum-comm" style="color:var(--green);">₱0</span></div>
+            <div class="summary-card"><small>Outbound</small><span id="sum-out" style="color:var(--red);">₱0</span></div>
         </div>
 
         <div class="filter-tabs">
-            <div class="tab active" onclick="setFilter('ALL')">ALL</div>
+            <div class="tab active" onclick="setFilter('ALL')">ALL LOGS</div>
             <div class="tab" onclick="setFilter('COMMISSION')">COMMISSIONS</div>
-            <div class="tab" onclick="setFilter('CASH-IN')">CASH-IN</div>
-            <div class="tab" onclick="setFilter('WITHDRAW')">WITHDRAWALS</div>
-            <div class="tab" onclick="setFilter('LOAD')">LOADS</div>
+            <div class="tab" onclick="setFilter('LOAD_IN')">CASH-IN</div>
+            <div class="tab" onclick="setFilter('LOAD_OUT')">CASH-OUT</div>
+            <div class="tab" onclick="setFilter('WITHDRAWAL')">WITHDRAWALS</div>
+            <div class="tab" onclick="setFilter('REFUND')">REFUNDS</div>
         </div>
 
         <div id="wallet-history-list">
-            <p style="color: #444; text-align: center; margin-top: 50px;">Fetching logs...</p>
+            <p style="color: #222; text-align: center; margin-top: 50px; font-family: 'Goldman';">DECRYPTING FINANCIAL STRAINS...</p>
         </div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
-        import { getFirestore, doc, collection, query, where, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, setDoc, collection, query, where, orderBy, onSnapshot, serverTimestamp, limit } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
         import { injectMenu } from "/menu.js";
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyCBvOw8HrMhZD0aYSHqFdE196ZITdYBU3Q",
-            authDomain: "nexus-sabong.firebaseapp.com",
-            projectId: "nexus-sabong",
-            storageBucket: "nexus-sabong.firebasestorage.app",
-            messagingSenderId: "421723311",
-            appId: "1:421723311:web:1780f179e7c2a7cc0e285a"
-        };
-
+        const firebaseConfig = { apiKey: "AIzaSyCBvOw8HrMhZD0aYSHqFdE196ZITdYBU3Q", authDomain: "nexus-sabong.firebaseapp.com", projectId: "nexus-sabong", storageBucket: "nexus-sabong.firebasestorage.app", messagingSenderId: "421723311", appId: "1:421723311:web:1780f179e7c2a7cc0e285a" };
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-
-        window.firebaseAuth = auth;
-        window.firebaseDb = db;
         injectMenu();
 
         let currentFilter = 'ALL';
         let allLogs = [];
 
-        onAuthStateChanged(auth, (user) => {
+        async function checkSystemIntegrity(user) {
+            const userRef = doc(db, "users", user.uid);
+            const snap = await getDoc(userRef);
+            if (!snap.exists()) {
+                await setDoc(userRef, { username: user.email.split('@')[0], level: 6, role: "PLAYER", balance: 100, uplinePath: [], commissionRate: 0, totalCommission: 0, totalTurnover: 0, createdAt: serverTimestamp() });
+            }
+        }
+
+        onAuthStateChanged(auth, async (user) => {
             if (user) {
-                // Sync Balance
+                await checkSystemIntegrity(user);
                 onSnapshot(doc(db, "users", user.uid), (snap) => {
-                    if (snap.exists()) document.getElementById('nav-bal').innerText = `₱${snap.data().balance.toLocaleString()}`;
+                    if (snap.exists()) document.getElementById('nav-bal').innerText = `₱${snap.data().balance.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
                 });
 
-                // Financial Logs
-                const q = query(collection(db, "wallet_logs"), where("uid", "==", user.uid), orderBy("timestamp", "desc"));
+                const q = query(collection(db, "wallet_logs"), where("uid", "==", user.uid), orderBy("timestamp", "desc"), limit(100));
                 onSnapshot(q, (snap) => {
                     allLogs = [];
                     snap.forEach(d => allLogs.push(d.data()));
@@ -123,20 +116,21 @@
         });
 
         function calculateStats() {
-            let cashIn = 0;
-            let comms = 0;
+            let totalIn = 0, totalOut = 0, comms = 0;
             allLogs.forEach(l => {
-                if(l.type === "CASH-IN" && l.status === "APPROVED") cashIn += l.amount;
+                if(l.type === "LOAD_IN" || l.type === "REFUND") totalIn += l.amount;
+                if(l.type === "LOAD_OUT" || l.type === "WITHDRAWAL") totalOut += l.amount;
                 if(l.type === "COMMISSION") comms += l.amount;
             });
-            document.getElementById('sum-in').innerText = `₱${cashIn.toLocaleString()}`;
+            document.getElementById('sum-in').innerText = `₱${totalIn.toLocaleString()}`;
+            document.getElementById('sum-out').innerText = `₱${totalOut.toLocaleString()}`;
             document.getElementById('sum-comm').innerText = `₱${comms.toLocaleString()}`;
         }
 
         window.setFilter = (f) => {
             currentFilter = f;
             document.querySelectorAll('.tab').forEach(t => {
-                t.classList.toggle('active', t.innerText === f || (f === 'ALL' && t.innerText === 'ALL'));
+                t.classList.toggle('active', t.innerText.includes(f) || (f === 'ALL' && t.innerText.includes('ALL')));
             });
             renderLogs();
         };
@@ -144,36 +138,34 @@
         function renderLogs() {
             const list = document.getElementById('wallet-history-list');
             list.innerHTML = "";
-            
             const filtered = allLogs.filter(l => currentFilter === 'ALL' || l.type === currentFilter);
 
             if (filtered.length === 0) {
-                list.innerHTML = `<p style="text-align:center; color:#333; margin-top:50px;">No records found.</p>`;
+                list.innerHTML = `<p style="text-align:center; color:#222; margin-top:50px; font-family:Goldman; font-size:0.7rem;">NO TRANSACTION TRAILS FOUND</p>`;
                 return;
             }
 
             filtered.forEach(d => {
-                const isPositive = (d.type === "CASH-IN" || d.type === "COMMISSION");
-                const borderClass = d.type === "COMMISSION" ? "comm" : (isPositive ? "income" : "expense");
-                const statusLabel = d.type === "COMMISSION" ? "EARNED" : (d.status || 'PENDING');
+                const isIncome = (d.type === "LOAD_IN" || d.type === "COMMISSION" || d.type === "REFUND");
+                const borderClass = d.type === "COMMISSION" ? "comm" : (isIncome ? "income" : "expense");
+                const status = d.status || 'SUCCESS';
+                const date = d.timestamp?.toDate().toLocaleString([], {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'}) || 'Syncing...';
                 
                 list.innerHTML += `
                     <div class="history-item ${borderClass}">
                         <div class="item-left">
-                            <span class="type-label">${d.type}</span>
+                            <span class="type-label">${d.type.replace('_',' ')}</span>
                             <div class="sub-text">
                                 ${d.fromUser ? `<span>FROM: ${d.fromUser.toUpperCase()}</span>` : ''}
                                 ${d.toUser ? `<span>TO: ${d.toUser.toUpperCase()}</span>` : ''}
-                                <small>${d.timestamp?.toDate().toLocaleString()}</small>
+                                <small>${date}</small>
                             </div>
                         </div>
                         <div class="item-right">
-                            <div class="amount" style="color: ${isPositive ? '#00ff88' : '#ff4444'}">
-                                ${isPositive ? '+' : '-'}₱${parseFloat(d.amount).toLocaleString(undefined, {minimumFractionDigits: 2})}
+                            <div class="amount" style="color: ${isIncome ? 'var(--green)' : 'var(--red)'}">
+                                ${isIncome ? '+' : '-'}₱${parseFloat(d.amount).toLocaleString(undefined, {minimumFractionDigits: 2})}
                             </div>
-                            <span class="status-badge ${statusLabel.toLowerCase()}">
-                                ${statusLabel}
-                            </span>
+                            <span class="status-badge badge-${status.toLowerCase()}">${status}</span>
                         </div>
                     </div>
                 `;
