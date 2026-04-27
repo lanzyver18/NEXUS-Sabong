@@ -3,122 +3,85 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Management Suite | NEXUS</title>
+    <title>Management Suite | NEXUS PRO</title>
     <link rel="stylesheet" href="../style.css">
     <link rel="stylesheet" href="/menu.css">
     <link href="https://fonts.googleapis.com/css2?family=Goldman:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        /* FIXED NAVIGATION FOR MENU BUTTON */
-        .top-nav {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            position: relative; 
-            padding: 12px 20px 12px 75px; 
-            background: #000;
-            border-bottom: 2px solid #222;
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-        }
-
-        .admin-grid { display: grid; grid-template-columns: 1fr 350px; gap: 20px; max-width: 1200px; margin: 20px auto; padding: 0 20px; }
-        .insight-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
-        .insight-card { background: #111; padding: 20px; border-radius: 12px; border: 1px solid #222; text-align: center; }
-        .insight-card h4 { color: #888; font-size: 0.6rem; margin: 0; text-transform: uppercase; letter-spacing: 1px; }
-        .insight-card .val { color: var(--gold); font-size: 1.4rem; font-weight: bold; margin-top: 5px; display: block; font-family: 'Goldman'; }
-
-        .panel { background: #111; border-radius: 15px; border: 1px solid #333; padding: 20px; margin-bottom: 20px; }
-        .panel-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #222; margin-bottom: 15px; padding-bottom: 10px; }
+        :root { --gold: #D4AF37; --green: #00ff88; --red: #ff4444; }
+        body { background: #000; overflow-x: hidden; color: #fff; }
         
-        /* TREND CHART */
-        .trend-container { display: flex; gap: 5px; overflow-x: auto; padding: 10px 0; scrollbar-width: none; }
-        .dot { width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0; cursor: pointer; transition: 0.2s; }
-        .dot:hover { transform: scale(1.2); filter: brightness(1.5); }
-        .dot.meron { background: #ff4444; box-shadow: 0 0 8px #ff4444; }
-        .dot.wala { background: #4444ff; box-shadow: 0 0 8px #4444ff; }
-        .dot.draw { background: #ffaa00; }
+        .top-nav { display: flex; justify-content: space-between; align-items: center; padding: 12px 20px 12px 75px; background: #000; border-bottom: 2px solid #222; position: sticky; top: 0; z-index: 1000; }
 
-        /* LIVE MONITOR */
-        .live-bets { display: flex; gap: 10px; margin-bottom: 15px; }
-        .side-monitor { flex: 1; padding: 15px; border-radius: 10px; text-align: center; border: 1px solid #222; }
-        .side-monitor.m { background: rgba(255, 68, 68, 0.1); color: #ff4444; }
-        .side-monitor.w { background: rgba(68, 68, 255, 0.1); color: #4444ff; }
+        .admin-grid { display: grid; grid-template-columns: 1fr 350px; gap: 20px; max-width: 1300px; margin: 20px auto; padding: 0 20px; }
+        .insight-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 20px; }
+        .insight-card { background: linear-gradient(145deg, #111, #080808); padding: 20px; border-radius: 12px; border: 1px solid #222; text-align: center; box-shadow: 0 10px 20px rgba(0,0,0,0.3); }
+        .insight-card h4 { color: #555; font-size: 0.6rem; margin: 0; text-transform: uppercase; letter-spacing: 2px; font-weight: bold; }
+        .insight-card .val { color: var(--gold); font-size: 1.4rem; font-weight: bold; margin-top: 8px; display: block; font-family: 'Goldman'; }
 
-        .lock-btn { width: 100%; padding: 14px; border-radius: 8px; font-weight: bold; cursor: pointer; border: none; font-family: 'Goldman'; margin-bottom: 15px; transition: 0.3s; text-transform: uppercase; letter-spacing: 1px; }
-
-        .w-request { background: #000; padding: 15px; border-radius: 10px; border-left: 4px solid var(--gold); margin-bottom: 12px; transition: 0.3s; }
-        .w-request:hover { background: #050505; }
-        .w-actions { display: flex; gap: 8px; margin-top: 10px; }
-        .btn-sm { padding: 8px 12px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 0.7rem; text-transform: uppercase; font-family: 'Goldman'; }
-        .btn-approve { background: #00ff88; color: black; }
-        .btn-reject { background: #ff4444; color: white; }
+        .panel { background: #0a0a0a; border-radius: 15px; border: 1px solid #222; padding: 20px; margin-bottom: 20px; }
+        .panel-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #1a1a1a; margin-bottom: 15px; padding-bottom: 10px; }
         
-        .log-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; color: #eee; }
-        .log-table th { text-align: left; color: #555; padding: 10px; border-bottom: 1px solid #222; text-transform: uppercase; font-size: 0.65rem; }
-        .log-table td { padding: 12px 10px; border-bottom: 1px solid #1a1a1a; }
+        .log-table { width: 100%; border-collapse: collapse; font-size: 0.75rem; }
+        .log-table th { text-align: left; color: #444; padding: 12px 10px; border-bottom: 1px solid #222; text-transform: uppercase; font-size: 0.6rem; letter-spacing: 1px; }
+        .log-table td { padding: 14px 10px; border-bottom: 1px solid #111; vertical-align: middle; }
+
+        .status-pill { padding: 4px 8px; border-radius: 4px; font-size: 0.6rem; font-weight: bold; text-transform: uppercase; }
+        .pill-in { background: rgba(0, 255, 136, 0.1); color: var(--green); border: 1px solid rgba(0, 255, 136, 0.2); }
+        .pill-out { background: rgba(255, 68, 68, 0.1); color: var(--red); border: 1px solid rgba(255, 68, 68, 0.2); }
+
+        .w-request { background: #050505; padding: 15px; border-radius: 12px; border: 1px solid #222; margin-bottom: 12px; position: relative; overflow: hidden; }
+        .w-request::before { content: ''; position: absolute; left: 0; top: 0; height: 100%; width: 4px; background: var(--gold); }
         
-        .search-box { background: #000; border: 1px solid var(--gold); padding: 15px; border-radius: 10px; }
-        input { width: 100%; padding: 12px; margin: 10px 0; background: #000; border: 1px solid #333; color: white; border-radius: 5px; box-sizing: border-box; outline: none; transition: 0.2s; }
+        input { width: 100%; padding: 14px; margin: 10px 0; background: #000; border: 1px solid #222; color: white; border-radius: 8px; box-sizing: border-box; outline: none; font-family: 'Goldman'; }
         input:focus { border-color: var(--gold); }
-        
+
+        /* SCROLLBARS */
+        .custom-scroll::-webkit-scrollbar { width: 4px; }
+        .custom-scroll::-webkit-scrollbar-track { background: #000; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #222; border-radius: 10px; }
+
         @media (max-width: 900px) { .admin-grid { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
 
     <nav class="top-nav">
-        <div class="logo" style="color:var(--gold); font-family:'Goldman'; font-weight:bold; font-size:1.2rem;">NEXUS MANAGEMENT</div>
-        <div id="session-status" style="color: #00ff88; font-size: 0.8rem; font-weight: bold;">● TIER VERIFIED</div>
+        <div class="logo" style="color:var(--gold); font-family:'Goldman'; font-weight:bold; font-size:1.3rem; letter-spacing:2px;">NEXUS SYSTEM</div>
+        <div id="session-status" style="color: var(--green); font-size: 0.75rem; font-family: 'Goldman';">SECURE NODE ACTIVE</div>
     </nav>
 
     <div class="admin-grid">
         <div class="main-admin">
             
             <div class="insight-row">
-                <div class="insight-card"><h4>System Float</h4><span class="val" id="stat-total-bank">₱0</span></div>
-                <div class="insight-card"><h4>Network Commission</h4><span class="val" id="stat-network-comm" style="color:#00ff88;">₱0</span></div>
-                <div class="insight-card"><h4>Pending Cash-Out</h4><span class="val" id="stat-pending-w" style="color:#ffaa00;">₱0</span></div>
-            </div>
-
-            <div class="panel" id="live-bet-panel" style="display:none;">
-                <div class="panel-header">
-                    <h3 style="margin:0; color: var(--gold); font-family: 'Goldman'; font-size: 0.9rem;">LIVE FIGHT MONITOR</h3>
-                    <span style="font-size: 0.6rem; color: #555;">HYPE ENGINE ACTIVE</span>
+                <div class="insight-card" id="global-liquidity-card" style="display:none;">
+                    <h4>System Liquidity</h4>
+                    <span class="val" id="stat-system-liquidity" style="color:#00ff88;">₱0</span>
                 </div>
-                <div class="live-bets">
-                    <div class="side-monitor m">
-                        <small>MERON TOTAL</small><br>
-                        <span id="live-m-total" style="font-family:'Goldman'; font-size:1.2rem;">₱0</span>
-                    </div>
-                    <div class="side-monitor w">
-                        <small>WALA TOTAL</small><br>
-                        <span id="live-w-total" style="font-family:'Goldman'; font-size:1.2rem;">₱0</span>
-                    </div>
+                <div class="insight-card">
+                    <h4>Network Float</h4>
+                    <span class="val" id="stat-total-bank">₱0</span>
                 </div>
-            </div>
-
-            <div class="panel" id="trend-panel" style="display: none;">
-                <div class="panel-header">
-                    <h3 style="margin:0; color: var(--gold); font-family: 'Goldman'; font-size: 0.9rem;">ARENA ROADMAP (LAST 50)</h3>
-                    <button class="btn-sm" style="background:#222; color:#ff4444; border: 1px solid #333;" onclick="clearRoadmap()">WIPE HISTORY</button>
+                <div class="insight-card">
+                    <h4>Pending Payouts</h4>
+                    <span class="val" id="stat-pending-w" style="color:#ffaa00;">₱0</span>
                 </div>
-                <div class="trend-container" id="roadmap-display"></div>
             </div>
 
             <div class="panel">
                 <div class="panel-header">
-                    <h3 style="margin:0; color: var(--gold); font-family: 'Goldman'; font-size: 1rem;">DOWNLINE OVERVIEW</h3>
-                    <input type="text" id="downline-search" placeholder="Search team ID..." oninput="filterDownlines()" style="width: 200px; margin: 0; padding: 8px 12px; font-size: 0.75rem;">
+                    <h3 style="margin:0; color: var(--gold); font-family: 'Goldman'; font-size: 0.9rem;">NETWORK HIERARCHY</h3>
+                    <input type="text" id="downline-search" placeholder="Search ID..." oninput="filterDownlines()" style="width: 180px; margin: 0; padding: 8px 12px; font-size: 0.7rem; border-radius: 6px;">
                 </div>
-                <div style="overflow-x: auto;">
+                <div style="max-height: 400px; overflow-y: auto;" class="custom-scroll">
                     <table class="log-table">
                         <thead>
                             <tr>
-                                <th>Username / Role</th>
-                                <th>Balance</th>
-                                <th>Earnings</th>
-                                <th>Actions</th>
+                                <th>Identity</th>
+                                <th>Wallet Balance</th>
+                                <th>Commission</th>
+                                <th>Protocol</th>
                             </tr>
                         </thead>
                         <tbody id="downline-table-body"></tbody>
@@ -126,48 +89,58 @@
                 </div>
             </div>
 
-            <div class="panel" id="withdrawal-panel">
+            <div class="panel">
                 <div class="panel-header">
-                    <h3 style="margin:0; color: var(--gold); font-family: 'Goldman'; font-size: 1rem;">WITHDRAWAL TICKETS</h3>
-                    <span id="w-count" style="color:#888; font-size: 0.7rem;">0 PENDING</span>
+                    <h3 style="margin:0; color: var(--gold); font-family: 'Goldman'; font-size: 0.9rem;">LIVE TRANSACTION AUDIT</h3>
+                    <span style="color:#444; font-size: 0.6rem;">REAL-TIME FEED</span>
                 </div>
-                <div id="withdrawal-list"></div>
+                <div style="max-height: 300px; overflow-y: auto;" class="custom-scroll">
+                    <table class="log-table">
+                        <thead>
+                            <tr>
+                                <th>Timestamp</th>
+                                <th>Event Type</th>
+                                <th>Parties</th>
+                                <th>Value</th>
+                            </tr>
+                        </thead>
+                        <tbody id="audit-log-body">
+                            <tr><td colspan="4" style="text-align:center; color:#333;">Syncing audit trails...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
         <div class="sidebar-admin">
-            <div class="panel" id="fight-control-panel" style="border: 1px solid var(--gold); display:none; margin-bottom: 20px;">
-                <h3 style="margin:0; color: var(--gold); margin-bottom:15px; font-size: 0.9rem; font-family: 'Goldman';">FIGHT CONTROL</h3>
-                
-                <button id="btn-lock-betting" onclick="toggleBettingLock()" class="lock-btn">SYNCING...</button>
-
-                <div style="display: grid; grid-template-columns: 1fr; gap: 8px;">
-                    <button onclick="settleFight('MERON')" style="background:#ff4444; color:white; padding:12px; border:none; border-radius:5px; font-weight:bold; cursor:pointer; font-family: 'Goldman';">SETTLE MERON</button>
-                    <button onclick="settleFight('WALA')" style="background:#4444ff; color:white; padding:12px; border:none; border-radius:5px; font-weight:bold; cursor:pointer; font-family: 'Goldman';">SETTLE WALA</button>
-                    <button onclick="settleFight('DRAW')" style="background:#333; color:white; padding:12px; border:none; border-radius:5px; font-weight:bold; cursor:pointer; font-family: 'Goldman';">DRAW / CANCEL</button>
+            <div class="panel" id="fight-control-panel" style="display:none; border: 1px solid var(--gold);">
+                <h3 style="margin:0; color: var(--gold); margin-bottom:15px; font-size: 0.8rem; font-family: 'Goldman';">FIGHT PROTOCOL</h3>
+                <button id="btn-lock-betting" onclick="toggleBettingLock()" class="btn-action" style="width:100%; margin-bottom:10px; background:#222; color:white; border: 1px solid #333; padding:12px; border-radius:8px; font-family:'Goldman'; cursor:pointer;">LOCKED</button>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                    <button onclick="settleFight('MERON')" style="background:var(--red); color:white; padding:10px; border:none; border-radius:6px; font-weight:bold; cursor:pointer;">MERON</button>
+                    <button onclick="settleFight('WALA')" style="background:#4444ff; color:white; padding:10px; border:none; border-radius:6px; font-weight:bold; cursor:pointer;">WALA</button>
+                    <button onclick="settleFight('DRAW')" style="background:#333; color:white; padding:10px; border:none; border-radius:6px; font-weight:bold; cursor:pointer; grid-column: span 2;">DRAW / CANCEL</button>
                 </div>
             </div>
 
-            <div class="panel search-box" id="arena-settings-panel" style="border-color: #00ff88; display: none;">
-                <h3 style="margin-top:0; font-size: 0.8rem; color: #00ff88; font-family: 'Goldman';">ARENA PAYOUT</h3>
-                <input type="number" id="payout-multiplier" step="0.01" style="margin-bottom:15px; font-family: 'Goldman';">
+            <div class="panel">
+                <h3 style="margin-top:0; font-size: 0.85rem; color: var(--gold); font-family: 'Goldman';">CREDIT DISPATCHER</h3>
+                <input type="text" id="target-username" placeholder="Target Username/ID">
+                <button onclick="checkUser()" style="width:100%; margin-bottom:10px; background:#111; color:var(--gold); padding:10px; border:1px solid #222; border-radius:6px; font-family: 'Goldman'; cursor:pointer; font-size: 0.7rem;">VERIFY TARGET</button>
                 
-                <h3 style="margin-top:0; font-size: 0.8rem; color: #00ff88; font-family: 'Goldman';">FIGHT NUMBER</h3>
-                <input type="text" id="fight-id-input" placeholder="e.g. Fight #126">
-                
-                <button onclick="updateSettings()" class="btn-sm btn-approve" style="width:100%; padding:15px; margin-top:5px;">SAVE ARENA SETTINGS</button>
+                <div id="player-preview" style="display:none; background:#000; padding:15px; border-radius:10px; margin-bottom:15px; border:1px solid var(--gold);">
+                    <div style="font-size: 0.6rem; color: #555; text-transform: uppercase;">Verified Identity</div>
+                    <div id="res-name" style="font-weight:bold; color:white; font-size: 1rem; margin: 4px 0;">---</div>
+                    <div id="res-bal" style="color:var(--green); font-weight:bold; font-family: 'Goldman'; font-size: 1.1rem;">₱0.00</div>
+                </div>
+
+                <input type="number" id="load-amt" placeholder="Value (₱)">
+                <button onclick="confirmLoad()" style="width:100%; background:var(--gold); color: black; padding:16px; border:none; border-radius:8px; font-weight:bold; font-family: 'Goldman'; cursor:pointer; letter-spacing: 1px;">EXECUTE TRANSFER</button>
             </div>
 
-            <div class="panel search-box" style="margin-top:20px;">
-                <h3 style="margin-top:0; font-size: 0.9rem; color: var(--gold); font-family: 'Goldman';">CREDIT LOADER</h3>
-                <input type="text" id="target-username" placeholder="Search ID...">
-                <button onclick="checkUser()" style="width:100%; margin-bottom:10px; background:#222; color:white; padding:10px; border:none; border-radius:5px; font-family: 'Goldman'; cursor:pointer;">FIND USER</button>
-                <div id="player-preview" style="display:none; background:#0a0a0a; padding:12px; border-radius:8px; margin-bottom:15px; border-left:3px solid var(--gold);">
-                    <span id="res-name" style="font-weight:bold; color:white; font-size: 0.8rem;">---</span><br>
-                    <span id="res-bal" style="color:#00ff88; font-weight:bold; font-family: 'Goldman';">₱0</span>
-                </div>
-                <input type="number" id="load-amt" placeholder="Amount (₱)">
-                <button onclick="confirmLoad()" style="width:100%; background:var(--gold); color: black; padding:15px; border:none; border-radius:5px; font-weight:bold; font-family: 'Goldman'; cursor:pointer;">LOAD CREDITS</button>
+            <div class="panel" id="withdrawal-panel">
+                <h3 style="margin:0; color: var(--gold); font-family: 'Goldman'; font-size: 0.85rem; margin-bottom:15px;">PAYOUT TICKETS</h3>
+                <div id="withdrawal-list"></div>
             </div>
         </div>
     </div>
@@ -175,7 +148,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc, updateDoc, increment, collection, query, where, onSnapshot, writeBatch, getDocs, addDoc } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, updateDoc, increment, collection, query, where, onSnapshot, writeBatch, getDocs, limit, orderBy, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
         import { injectMenu } from "/menu.js";
 
         const firebaseConfig = {
@@ -190,16 +163,11 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-
-        window.firebaseAuth = auth;
-        window.firebaseDb = db;
         injectMenu();
 
         let myTierData = null;
         let activePlayerId = null;
-        let arenaLocked = false;
         let allDownlines = [];
-        window.currentMultiplier = 1.90;
 
         onAuthStateChanged(auth, async (user) => {
             if (user) {
@@ -207,187 +175,78 @@
                 if (snap.exists() && snap.data().level <= 5) {
                     myTierData = snap.data();
                     initManagement();
+                    syncAuditLog();
                 } else { window.location.href = "/"; }
             } else { window.location.href = "/login/"; }
         });
 
         function initManagement() {
-            const downlineQuery = query(collection(db, "users"), where("uplineId", "==", auth.currentUser.uid));
-            onSnapshot(downlineQuery, (snap) => {
-                let totalBank = 0, networkComm = 0;
+            // DOWNLINE SYNC
+            onSnapshot(query(collection(db, "users"), where("uplineId", "==", auth.currentUser.uid)), (snap) => {
+                let totalBank = 0;
                 allDownlines = [];
                 snap.forEach(uDoc => {
-                    const u = uDoc.data();
+                    const u = { id: uDoc.id, ...uDoc.data() };
                     totalBank += (u.balance || 0);
-                    networkComm += (u.totalCommission || 0);
                     allDownlines.push(u);
                 });
                 document.getElementById('stat-total-bank').innerText = "₱" + totalBank.toLocaleString();
-                document.getElementById('stat-network-comm').innerText = "₱" + networkComm.toLocaleString();
                 renderDownlineTable(allDownlines);
             });
 
+            // SYSTEM-WIDE LIQUIDITY (Level 1 Only)
             if (myTierData.level === 1) {
-                document.getElementById('live-bet-panel').style.display = "block";
+                document.getElementById('global-liquidity-card').style.display = "block";
                 document.getElementById('fight-control-panel').style.display = "block";
-                document.getElementById('arena-settings-panel').style.display = "block";
-                document.getElementById('trend-panel').style.display = "block";
+                onSnapshot(collection(db, "users"), (snap) => {
+                    let globalCash = 0;
+                    snap.forEach(d => { globalCash += (d.data().balance || 0); });
+                    document.getElementById('stat-system-liquidity').innerText = "₱" + globalCash.toLocaleString();
+                });
                 loadWithdrawals();
-                syncArenaControl();
-                syncLiveMonitor();
             }
+        }
+
+        function syncAuditLog() {
+            // Listens for last 20 wallet events globally (if Admin) or just for self (if Agent)
+            const auditRef = collection(db, "wallet_logs");
+            const q = myTierData.level === 1 
+                ? query(auditRef, orderBy("timestamp", "desc"), limit(20))
+                : query(auditRef, where("uid", "==", auth.currentUser.uid), orderBy("timestamp", "desc"), limit(20));
+
+            onSnapshot(q, (snap) => {
+                const body = document.getElementById('audit-log-body');
+                body.innerHTML = "";
+                snap.forEach(d => {
+                    const log = d.data();
+                    const date = log.timestamp?.toDate().toLocaleTimeString() || "Pending...";
+                    const isCredit = log.type.includes("LOAD_IN") || log.type === "CRASH_WIN";
+                    
+                    body.innerHTML += `
+                        <tr>
+                            <td style="color:#555;">${date}</td>
+                            <td><span class="status-pill ${isCredit ? 'pill-in' : 'pill-out'}">${log.type.replace('_',' ')}</span></td>
+                            <td><strong style="color:var(--gold)">${log.fromUser || 'SYS'}</strong> → ${log.toUser || 'User'}</td>
+                            <td style="font-family:'Goldman'; color:${isCredit ? '#00ff88' : '#ff4444'};">₱${log.amount.toLocaleString()}</td>
+                        </tr>
+                    `;
+                });
+            });
         }
 
         function renderDownlineTable(data) {
             const table = document.getElementById('downline-table-body');
             table.innerHTML = "";
             data.forEach(u => {
-                table.innerHTML += `<tr><td><strong>${u.username}</strong><br><span style="font-size:0.6rem; color:var(--gold); border:1px solid #333; padding:2px 5px; border-radius:3px;">${u.role}</span></td><td style="color:#00ff88;">₱${(u.balance || 0).toLocaleString()}</td><td>₱${(u.totalCommission || 0).toLocaleString()}</td><td><button class="btn-sm" style="background:#222; color:var(--gold); border:1px solid var(--gold);" onclick="quickSelectUser('${u.username}')">LOAD</button></td></tr>`;
+                table.innerHTML += `
+                    <tr>
+                        <td><strong>${u.username.toUpperCase()}</strong><br><span style="font-size:0.55rem; color:#555;">${u.role}</span></td>
+                        <td style="color:#00ff88; font-family:'Goldman'; font-size:0.9rem;">₱${(u.balance || 0).toLocaleString()}</td>
+                        <td style="color:#888;">₱${(u.totalCommission || 0).toLocaleString()}</td>
+                        <td><button class="btn-sm" style="background:#111; color:var(--gold); border:1px solid #222; padding:6px 12px; cursor:pointer; font-size:0.6rem;" onclick="quickSelectUser('${u.username}')">DISPATCH</button></td>
+                    </tr>`;
             });
         }
-
-        window.filterDownlines = () => {
-            const term = document.getElementById('downline-search').value.toLowerCase();
-            const filtered = allDownlines.filter(u => u.username.toLowerCase().includes(term));
-            renderDownlineTable(filtered);
-        };
-
-        function syncLiveMonitor() {
-            const q = query(collection(db, "bets"), where("status", "==", "PENDING"));
-            onSnapshot(q, (snap) => {
-                let m = 0, w = 0;
-                snap.forEach(d => {
-                    const data = d.data();
-                    if(data.side === 'MERON') m += data.amount;
-                    else w += data.amount;
-                });
-                document.getElementById('live-m-total').innerText = "₱" + (m * 12.5).toLocaleString();
-                document.getElementById('live-w-total').innerText = "₱" + (w * 11.8).toLocaleString();
-            });
-        }
-
-        function syncArenaControl() {
-            onSnapshot(doc(db, "settings", "arena"), (docSnap) => {
-                if (docSnap.exists()) {
-                    const data = docSnap.data();
-                    arenaLocked = data.isLocked || false;
-                    const lockBtn = document.getElementById('btn-lock-betting');
-                    lockBtn.innerText = arenaLocked ? "OPEN BETTING" : "CLOSE BETTING";
-                    lockBtn.style.background = arenaLocked ? "#00ff88" : "#ff4444";
-                    lockBtn.style.color = arenaLocked ? "black" : "white";
-
-                    document.getElementById('payout-multiplier').value = data.payoutMultiplier || 1.90;
-                    document.getElementById('fight-id-input').value = data.currentFightId || "Fight #125";
-                    window.currentMultiplier = data.payoutMultiplier || 1.90;
-
-                    const roadmap = data.history || [];
-                    const roadDiv = document.getElementById('roadmap-display');
-                    roadDiv.innerHTML = "";
-                    roadmap.slice(-50).forEach(res => {
-                        const dot = document.createElement('div');
-                        dot.className = `dot ${res.toLowerCase()}`;
-                        roadDiv.appendChild(dot);
-                    });
-                }
-            });
-        }
-
-        window.clearRoadmap = async () => {
-            if(confirm("DANGER: Wiping Arena History cannot be undone. Proceed?")) {
-                await updateDoc(doc(db, "settings", "arena"), { history: [] });
-            }
-        };
-
-        window.toggleBettingLock = async () => {
-            await updateDoc(doc(db, "settings", "arena"), { isLocked: !arenaLocked });
-        };
-
-        window.updateSettings = async () => {
-            const m = parseFloat(document.getElementById('payout-multiplier').value);
-            const fid = document.getElementById('fight-id-input').value;
-            await updateDoc(doc(db, "settings", "arena"), { payoutMultiplier: m, currentFightId: fid });
-            alert("Settings Applied Successfully.");
-        };
-
-        window.settleFight = async (winner) => {
-            if (myTierData.level !== 1) return;
-            if (!confirm(`Confirm settlement: ${winner}? This will credit wins and close pending bets.`)) return;
-            
-            const batch = writeBatch(db);
-            const q = query(collection(db, "bets"), where("status", "==", "PENDING"));
-            const snap = await getDocs(q);
-            
-            snap.forEach(bDoc => {
-                const b = bDoc.data();
-                if (b.side === winner) {
-                    const win = Math.floor(b.amount * window.currentMultiplier);
-                    batch.update(doc(db, "users", b.uid), { balance: increment(win) });
-                    batch.update(doc(db, "bets", bDoc.id), { status: "WIN", payout: win });
-                } else if (winner === "DRAW") {
-                    batch.update(doc(db, "users", b.uid), { balance: increment(b.amount) });
-                    batch.update(doc(db, "bets", bDoc.id), { status: "DRAW", payout: b.amount });
-                } else {
-                    batch.update(doc(db, "bets", bDoc.id), { status: "LOSS", payout: 0 });
-                }
-            });
-
-            const arenaRef = doc(db, "settings", "arena");
-            const arenaSnap = await getDoc(arenaRef);
-            let history = arenaSnap.exists() ? (arenaSnap.data().history || []) : [];
-            history.push(winner);
-            batch.update(arenaRef, { history: history.slice(-100), isLocked: true });
-
-            await batch.commit();
-            alert("Protocol Complete: Arena results locked.");
-        };
-
-        function loadWithdrawals() {
-            onSnapshot(query(collection(db, "withdrawals"), where("status", "==", "PENDING")), (snap) => {
-                const list = document.getElementById('withdrawal-list');
-                let total = 0;
-                list.innerHTML = "";
-                document.getElementById('w-count').innerText = snap.size + " PENDING TICKETS";
-                snap.forEach(doc => {
-                    const d = doc.data();
-                    total += d.amount;
-                    list.innerHTML += `
-                        <div class="w-request">
-                            <div style="display:flex; justify-content:space-between;">
-                                <strong style="color:white;">${d.username.toUpperCase()}</strong> 
-                                <span style="color:#00ff88; font-family:'Goldman'; font-size: 0.9rem;">₱${d.amount.toLocaleString()}</span>
-                            </div>
-                            <div style="font-size:0.6rem; color:#555; margin-top:5px; background:#111; padding:5px; border-radius:4px;">
-                                <span style="color:var(--gold)">${d.bank || 'PROFILE'}:</span> ${d.accountName} <br> ${d.accountNumber}
-                            </div>
-                            <div class="w-actions">
-                                <button class="btn-sm btn-approve" onclick="handleWithdraw('${doc.id}', 'APPROVED')">PAID</button>
-                                <button class="btn-sm btn-reject" onclick="handleWithdraw('${doc.id}', 'REJECTED', '${d.uid}', ${d.amount})">REJECT / REFUND</button>
-                            </div>
-                        </div>`;
-                });
-                document.getElementById('stat-pending-w').innerText = "₱" + total.toLocaleString();
-            });
-        }
-
-        window.handleWithdraw = async (id, status, pUid, amt) => {
-            const batch = writeBatch(db);
-            const wRef = doc(db, "withdrawals", id);
-
-            if (status === 'REJECTED') {
-                if(!confirm(`REJECT PROTOCOL: Refund ₱${amt} to ${pUid}?`)) return;
-                batch.update(doc(db, "users", pUid), { balance: increment(amt) });
-                batch.update(wRef, { status: "REJECTED" });
-                batch.set(doc(collection(db, "wallet_logs")), {
-                    uid: pUid, type: "REFUND", amount: amt, timestamp: new Date()
-                });
-            } else {
-                if(!confirm(`EXECUTE PAYOUT: Mark ₱${amt} as completed?`)) return;
-                batch.update(wRef, { status: "APPROVED" });
-            }
-
-            await batch.commit();
-            alert("Protocol Synchronized.");
-        };
 
         window.checkUser = async () => {
             const username = document.getElementById('target-username').value.trim().toLowerCase();
@@ -397,30 +256,82 @@
                 const p = snap.docs[0];
                 activePlayerId = p.id;
                 document.getElementById('res-name').innerText = p.data().username.toUpperCase();
-                document.getElementById('res-bal').innerText = "₱" + (p.data().balance || 0).toLocaleString();
+                document.getElementById('res-bal').innerText = "₱" + (p.data().balance || 0).toLocaleString(undefined, {minimumFractionDigits: 2});
                 document.getElementById('player-preview').style.display = "block";
-            } else alert("Target ID not found in database.");
+            } else alert("Error: User not found in Nexus database.");
         };
 
         window.confirmLoad = async () => {
-            const amt = parseInt(document.getElementById('load-amt').value);
-            if (!activePlayerId || isNaN(amt) || amt <= 0) return;
-            if (confirm(`INITIATE LOAD: Transfer ₱${amt} to ${document.getElementById('res-name').innerText}?`)) {
+            const amt = parseFloat(document.getElementById('load-amt').value);
+            if (!activePlayerId || isNaN(amt) || amt <= 0) return alert("Invalid Amount");
+            if (amt > myTierData.balance && myTierData.level !== 1) return alert("Insufficient Floating Credits");
+
+            if (confirm(`Authorize Transfer of ₱${amt} to ${document.getElementById('res-name').innerText}?`)) {
                 const batch = writeBatch(db);
-                batch.update(doc(db, "users", activePlayerId), { balance: increment(amt) });
-                batch.set(doc(collection(db, "wallet_logs")), { 
-                    uid: auth.currentUser.uid, type: "LOAD_OUT", toUser: document.getElementById('res-name').innerText, amount: amt, timestamp: new Date() 
+                const targetRef = doc(db, "users", activePlayerId);
+                const myRef = doc(db, "users", auth.currentUser.uid);
+                const logRef = collection(db, "wallet_logs");
+
+                batch.update(targetRef, { balance: increment(amt) });
+                if(myTierData.level !== 1) batch.update(myRef, { balance: increment(-amt) });
+
+                // Receiver's Log
+                batch.set(doc(logRef), { 
+                    uid: activePlayerId, type: "LOAD_IN", fromUser: myTierData.username, toUser: document.getElementById('res-name').innerText, amount: amt, timestamp: serverTimestamp() 
                 });
-                batch.set(doc(collection(db, "wallet_logs")), { 
-                    uid: activePlayerId, type: "LOAD_IN", fromUser: myTierData.username, amount: amt, timestamp: new Date() 
+                // Sender's Log
+                batch.set(doc(logRef), { 
+                    uid: auth.currentUser.uid, type: "LOAD_OUT", fromUser: myTierData.username, toUser: document.getElementById('res-name').innerText, amount: amt, timestamp: serverTimestamp() 
                 });
+
                 await batch.commit();
-                alert("Protocol Complete: Credits Transferred.");
+                alert("Protocol Complete: Credits Dispatched.");
                 document.getElementById('player-preview').style.display = "none";
+                document.getElementById('load-amt').value = "";
             }
         };
 
+        function loadWithdrawals() {
+            onSnapshot(query(collection(db, "withdrawals"), where("status", "==", "PENDING")), (snap) => {
+                const list = document.getElementById('withdrawal-list');
+                let total = 0;
+                list.innerHTML = "";
+                snap.forEach(doc => {
+                    const d = doc.data();
+                    total += d.amount;
+                    list.innerHTML += `
+                        <div class="w-request">
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <strong style="font-size:0.8rem;">${d.username.toUpperCase()}</strong> 
+                                <span style="color:var(--green); font-family:'Goldman';">₱${d.amount.toLocaleString()}</span>
+                            </div>
+                            <div style="font-size:0.6rem; color:#444; margin-top:8px;">${d.bank}: ${d.accountNumber}</div>
+                            <div style="display:flex; gap:5px; margin-top:10px;">
+                                <button class="status-pill pill-in" style="flex:1; cursor:pointer;" onclick="handleWithdraw('${doc.id}', 'APPROVED')">PAID</button>
+                                <button class="status-pill pill-out" style="flex:1; cursor:pointer;" onclick="handleWithdraw('${doc.id}', 'REJECTED', '${d.uid}', ${d.amount})">REJECT</button>
+                            </div>
+                        </div>`;
+                });
+                document.getElementById('stat-pending-w').innerText = "₱" + total.toLocaleString();
+            });
+        }
+
+        window.handleWithdraw = async (id, status, pUid, amt) => {
+            const batch = writeBatch(db);
+            if (status === 'REJECTED') {
+                batch.update(doc(db, "users", pUid), { balance: increment(amt) });
+                batch.set(doc(collection(db, "wallet_logs")), { uid: pUid, type: "REFUND", amount: amt, timestamp: serverTimestamp() });
+            }
+            batch.update(doc(db, "withdrawals", id), { status: status });
+            await batch.commit();
+            alert("Payout record updated.");
+        };
+
         window.quickSelectUser = (u) => { document.getElementById('target-username').value = u; checkUser(); };
+        window.filterDownlines = () => {
+            const term = document.getElementById('downline-search').value.toLowerCase();
+            renderDownlineTable(allDownlines.filter(u => u.username.toLowerCase().includes(term)));
+        };
     </script>
 </body>
 </html>
