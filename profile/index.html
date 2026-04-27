@@ -9,7 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Goldman:wght@400;700&display=swap" rel="stylesheet">
     <style>
         :root { --gold: #D4AF37; --green: #00ff88; --red: #ff4444; }
-        body { background: #000; color: #fff; overflow-x: hidden; }
+        body { background: #000; color: #fff; overflow-x: hidden; padding-bottom: 80px; }
         
         .top-nav { position: relative; display: flex; justify-content: space-between; align-items: center; padding: 12px 20px 12px 75px; background: #000; border-bottom: 2px solid #222; }
 
@@ -65,7 +65,7 @@
                 <span id="level-display">NODE --</span>
             </div>
             <div class="stat-card">
-                <label>Active Bonus</label>
+                <label>Yield Rate</label>
                 <span id="bonus-rate">0.00%</span>
             </div>
         </div>
@@ -96,50 +96,32 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
-        import { getFirestore, doc, onSnapshot, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+        import { getFirestore, doc, onSnapshot, getDoc, setDoc, serverTimestamp, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
         import { injectMenu } from "/menu.js";
 
         const firebaseConfig = { apiKey: "AIzaSyCBvOw8HrMhZD0aYSHqFdE196ZITdYBU3Q", authDomain: "nexus-sabong.firebaseapp.com", projectId: "nexus-sabong", storageBucket: "nexus-sabong.firebasestorage.app", messagingSenderId: "421723311", appId: "1:421723311:web:1780f179e7c2a7cc0e285a" };
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
+
+        // PERSISTENCE ENGINE
+        enableIndexedDbPersistence(db).catch(() => {});
         injectMenu();
 
-        // NEXUS SELF-HEALING PROTOCOL
-        async function checkSystemIntegrity(user) {
-            const userRef = doc(db, "users", user.uid);
-            const snap = await getDoc(userRef);
-            
-            // If the database was wiped and user has no Firestore doc, recreate it as Level 6 (Player)
-            // If it's your Admin email, you can manually change this to level 1 in Firestore console once
-            if (!snap.exists()) {
-                console.log("Nexus: Initializing fresh node...");
-                await setDoc(userRef, {
-                    username: user.email.split('@')[0],
-                    level: 6,
-                    role: "PLAYER",
-                    balance: 100,
-                    commissionRate: 0,
-                    uplinePath: [],
-                    totalCommission: 0,
-                    totalTurnover: 0,
-                    createdAt: serverTimestamp()
-                });
-            }
-        }
-
-        onAuthStateChanged(auth, async (user) => {
+        onAuthStateChanged(auth, (user) => {
             if (user) {
-                await checkSystemIntegrity(user);
-                const userRef = doc(db, "users", user.uid);
-                
-                onSnapshot(userRef, (snapshot) => {
+                // Background Heal
+                checkSystemIntegrity(user);
+
+                // Snapshot Hydration (Reads from Cache Instantly)
+                onSnapshot(doc(db, "users", user.uid), (snapshot) => {
                     if (snapshot.exists()) {
                         const data = snapshot.data();
                         const username = data.username || "Player";
-                        const level = data.level || 7;
+                        const level = data.level || 6;
                         const role = data.role || "PLAYER";
 
+                        // DOM Update
                         document.getElementById('display-username').innerText = username.toUpperCase();
                         document.getElementById('user-initial').innerText = username.charAt(0).toUpperCase();
                         document.getElementById('level-display').innerText = `NODE ${level}`;
@@ -169,6 +151,24 @@
                 });
             } else { window.location.href = "/login/"; }
         });
+
+        async function checkSystemIntegrity(user) {
+            const userRef = doc(db, "users", user.uid);
+            const snap = await getDoc(userRef);
+            if (!snap.exists()) {
+                await setDoc(userRef, {
+                    username: user.email.split('@')[0],
+                    level: 6,
+                    role: "PLAYER",
+                    balance: 100,
+                    commissionRate: 0,
+                    uplinePath: [],
+                    totalCommission: 0,
+                    totalTurnover: 0,
+                    createdAt: serverTimestamp()
+                });
+            }
+        }
 
         document.getElementById('btn-logout').onclick = () => {
             if(confirm("TERMINATE NEXUS SESSION?")) {
