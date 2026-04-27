@@ -3,169 +3,175 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Profile | NEXUS</title>
+    <title>My Profile | NEXUS PRO</title>
     <link rel="stylesheet" href="/style.css">
     <link rel="stylesheet" href="/menu.css">
     <link href="https://fonts.googleapis.com/css2?family=Goldman:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        .profile-container { max-width: 450px; margin: 40px auto; padding: 20px; }
-        .profile-header { text-align: center; padding: 30px 0; border-bottom: 1px solid #222; margin-bottom: 25px; }
+        :root { --gold: #D4AF37; --green: #00ff88; --red: #ff4444; }
+        body { background: #000; color: #fff; overflow-x: hidden; }
         
-        .avatar-circle { 
-            width: 80px; height: 80px; background: var(--gold); color: black; 
-            border-radius: 50%; display: flex; align-items: center; justify-content: center; 
-            font-size: 2rem; font-weight: bold; margin: 0 auto 15px; 
-            box-shadow: 0 0 20px rgba(212, 175, 55, 0.3);
-        }
-        
-        .stat-row { 
-            display: flex; justify-content: space-between; background: #111; 
-            padding: 15px; border-radius: 12px; margin-bottom: 10px; border: 1px solid #222; 
-        }
-        .stat-label { color: #888; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; }
-        .stat-value { color: var(--gold); font-weight: bold; font-family: 'Goldman', sans-serif; }
+        .top-nav { position: relative; display: flex; justify-content: space-between; align-items: center; padding: 12px 20px 12px 75px; background: #000; border-bottom: 2px solid #222; }
 
-        .menu-list { margin-top: 20px; }
-        .menu-item { 
-            display: flex; align-items: center; justify-content: space-between; 
-            padding: 18px; background: #161616; border-radius: 12px; margin-bottom: 10px; 
-            text-decoration: none; color: white; transition: 0.2s; border: 1px solid #222; 
-        }
-        .menu-item:hover { border-color: var(--gold); background: #1a1a1a; padding-left: 22px; }
+        .profile-container { max-width: 480px; margin: 40px auto; padding: 0 20px 100px; }
         
-        .badge-role {
-            font-size: 0.6rem; background: #222; color: var(--gold); 
-            padding: 4px 10px; border-radius: 20px; border: 1px solid var(--gold);
-            display: inline-block; margin-top: 5px;
-        }
+        .profile-header { text-align: center; padding: 40px 0; border-radius: 24px; background: radial-gradient(circle at top, #111, #000); border: 1px solid #222; margin-bottom: 25px; position: relative; overflow: hidden; }
+        .profile-header::after { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 2px; background: var(--gold); box-shadow: 0 0 15px var(--gold); }
 
-        /* Top Nav Fix */
-        .top-nav {
-            position: relative;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px 20px 12px 75px; 
-            background: #000;
-            border-bottom: 2px solid #222;
-        }
+        .avatar-circle { width: 90px; height: 90px; background: var(--gold); color: black; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2.2rem; font-weight: bold; margin: 0 auto 15px; box-shadow: 0 0 30px rgba(212, 175, 55, 0.2); border: 4px solid #000; }
+        
+        .badge-role { font-size: 0.65rem; background: rgba(212, 175, 55, 0.1); color: var(--gold); padding: 5px 14px; border-radius: 20px; border: 1px solid rgba(212, 175, 55, 0.3); display: inline-block; font-family: 'Goldman'; letter-spacing: 1px; margin-top: 10px; }
+
+        .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 25px; }
+        .stat-card { background: #0a0a0a; border: 1px solid #1a1a1a; padding: 15px; border-radius: 14px; text-align: center; }
+        .stat-card label { display: block; font-size: 0.55rem; color: #444; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 5px; }
+        .stat-card span { font-family: 'Goldman'; color: var(--gold); font-size: 1rem; }
+
+        .menu-group-label { margin: 25px 0 10px; color: #333; font-size: 0.65rem; font-weight: bold; letter-spacing: 2px; text-transform: uppercase; padding-left: 5px; }
+        .menu-item { display: flex; align-items: center; justify-content: space-between; padding: 18px; background: #080808; border-radius: 14px; margin-bottom: 10px; text-decoration: none; color: #eee; transition: 0.3s; border: 1px solid #111; font-size: 0.85rem; }
+        .menu-item:hover { border-color: var(--gold); transform: translateX(5px); background: #0c0c0c; }
+        .menu-item span:last-child { color: var(--gold); font-family: 'Goldman'; opacity: 0.5; }
+
+        .btn-logout { width: 100%; margin-top: 40px; background: #000; color: var(--red); border: 1px solid var(--red); padding: 18px; border-radius: 14px; font-weight: bold; cursor: pointer; font-family: 'Goldman'; letter-spacing: 2px; transition: 0.3s; opacity: 0.7; }
+        .btn-logout:hover { opacity: 1; background: rgba(255, 68, 68, 0.05); }
     </style>
 </head>
 <body>
 
     <nav class="top-nav">
-        <div class="logo" style="color:var(--gold); font-family:'Goldman'; font-weight:bold; font-size:1.2rem;">NEXUS</div>
-        <div style="color: #00ff88; font-weight: bold;">₱<span id="display-balance">0.00</span></div>
+        <div class="logo" style="color:var(--gold); font-family:'Goldman'; font-weight:bold; font-size:1.2rem; letter-spacing:2px;">NEXUS</div>
+        <div style="color: var(--green); font-weight: bold; font-family: 'Goldman';">₱<span id="display-balance">0.00</span></div>
     </nav>
 
     <div class="profile-container">
         
         <div class="profile-header">
             <div class="avatar-circle" id="user-initial">-</div>
-            <h2 id="display-username" style="margin: 0; letter-spacing: 2px; font-family: 'Goldman';">LOADING...</h2>
-            <div id="role-badge-container"></div>
+            <h2 id="display-username" style="margin: 0; letter-spacing: 2px; font-family: 'Goldman';">SYNCING...</h2>
+            <div id="role-badge-container"><span class="badge-role">VERIFYING...</span></div>
         </div>
 
-        <div class="stat-row">
-            <span class="stat-label">Member Since</span>
-            <span class="stat-value" id="join-date" style="font-size: 0.8rem; color: #666;">--/--/--</span>
-        </div>
-
-        <div class="stat-row">
-            <span class="stat-label">Account Level</span>
-            <span class="stat-value" id="level-display">Tier 7</span>
+        <div class="stat-grid">
+            <div class="stat-card">
+                <label>Member Since</label>
+                <span id="join-date" style="font-size: 0.8rem;">--/--/--</span>
+            </div>
+            <div class="stat-card">
+                <label>Security Status</label>
+                <span style="color:var(--green); font-size: 0.8rem;">ENCRYPTED</span>
+            </div>
+            <div class="stat-card">
+                <label>Current Tier</label>
+                <span id="level-display">NODE --</span>
+            </div>
+            <div class="stat-card">
+                <label>Active Bonus</label>
+                <span id="bonus-rate">0.00%</span>
+            </div>
         </div>
 
         <div class="menu-list">
-            <div style="margin: 10px 0; color:#444; font-size:0.7rem; font-weight:bold; letter-spacing:1px;">WALLET</div>
+            <div class="menu-group-label">Financial Services</div>
             <a href="/wallet/" class="menu-item">
-                <span>Deposit & Withdraw</span>
-                <span style="color:var(--gold)">→</span>
+                <span>Vault & Liquidation</span>
+                <span>EXECUTE →</span>
             </a>
             <a href="/history/wallet.html" class="menu-item">
-                <span>Transaction Logs</span>
-                <span style="color:var(--gold)">→</span>
+                <span>Audit Trails</span>
+                <span>VIEW →</span>
             </a>
 
-            <div id="agent-section" style="display:none;">
-                <div style="margin: 20px 0 10px; color:#444; font-size:0.7rem; font-weight:bold; letter-spacing:1px;">PARTNER TOOLS</div>
-                <a href="/admin/agents.html" class="menu-item" style="border-color: #00ff88;">
-                    <span>Agent Manager</span>
-                    <span style="color:#00ff88">→</span>
+            <div id="management-section" style="display:none;">
+                <div class="menu-group-label">Hierarchy Protocol</div>
+                <a href="/admin/index.html" id="admin-link" class="menu-item" style="border-color: var(--gold);">
+                    <span id="mng-text">Management Console</span>
+                    <span>ACCESS →</span>
                 </a>
             </div>
 
-            <button class="logout-btn" id="btn-logout" style="width: 100%; margin-top: 30px; background: #111; color: #ff4444; border: 1px solid #333; padding: 15px; border-radius: 12px; font-weight: bold; cursor: pointer; text-transform: uppercase; letter-spacing: 1px;">Logout Session</button>
+            <button class="btn-logout" id="btn-logout">TERMINATE SESSION</button>
         </div>
-
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
-        import { getFirestore, doc, onSnapshot, getDoc } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+        import { getFirestore, doc, onSnapshot, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
         import { injectMenu } from "/menu.js";
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyCBvOw8HrMhZD0aYSHqFdE196ZITdYBU3Q",
-            authDomain: "nexus-sabong.firebaseapp.com",
-            projectId: "nexus-sabong",
-            storageBucket: "nexus-sabong.firebasestorage.app",
-            messagingSenderId: "421723311",
-            appId: "1:421723311:web:1780f179e7c2a7cc0e285a"
-        };
-
+        const firebaseConfig = { apiKey: "AIzaSyCBvOw8HrMhZD0aYSHqFdE196ZITdYBU3Q", authDomain: "nexus-sabong.firebaseapp.com", projectId: "nexus-sabong", storageBucket: "nexus-sabong.firebasestorage.app", messagingSenderId: "421723311", appId: "1:421723311:web:1780f179e7c2a7cc0e285a" };
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-
-        // Handover for menu.js
-        window.firebaseAuth = auth;
-        window.firebaseDb = db;
         injectMenu();
+
+        // NEXUS SELF-HEALING PROTOCOL
+        async function checkSystemIntegrity(user) {
+            const userRef = doc(db, "users", user.uid);
+            const snap = await getDoc(userRef);
+            
+            // If the database was wiped and user has no Firestore doc, recreate it as Level 6 (Player)
+            // If it's your Admin email, you can manually change this to level 1 in Firestore console once
+            if (!snap.exists()) {
+                console.log("Nexus: Initializing fresh node...");
+                await setDoc(userRef, {
+                    username: user.email.split('@')[0],
+                    level: 6,
+                    role: "PLAYER",
+                    balance: 100,
+                    commissionRate: 0,
+                    uplinePath: [],
+                    totalCommission: 0,
+                    totalTurnover: 0,
+                    createdAt: serverTimestamp()
+                });
+            }
+        }
 
         onAuthStateChanged(auth, async (user) => {
             if (user) {
+                await checkSystemIntegrity(user);
                 const userRef = doc(db, "users", user.uid);
                 
-                // Fetch Profile Data
-                const userSnap = await getDoc(userRef);
-                if (userSnap.exists()) {
-                    const data = userSnap.data();
-                    const username = data.username || "Player";
-                    const level = data.level || 7;
-                    const role = data.role || "PLAYER";
-
-                    document.getElementById('display-username').innerText = username.toUpperCase();
-                    document.getElementById('user-initial').innerText = username.charAt(0).toUpperCase();
-                    document.getElementById('level-display').innerText = `Tier ${level}`;
-                    document.getElementById('role-badge-container').innerHTML = `<span class="badge-role">${role.replace('_', ' ')}</span>`;
-                    
-                    if (data.createdAt) {
-                        const date = data.createdAt.toDate();
-                        document.getElementById('join-date').innerText = date.toLocaleDateString();
-                    }
-
-                    // Show Agent Tools if Level 1-6
-                    if (level <= 6) {
-                        document.getElementById('agent-section').style.display = "block";
-                    }
-                }
-
-                // Live Balance Listener
                 onSnapshot(userRef, (snapshot) => {
                     if (snapshot.exists()) {
-                        const bal = snapshot.data().balance || 0;
-                        document.getElementById('display-balance').innerText = bal.toLocaleString(undefined, {minimumFractionDigits: 2});
+                        const data = snapshot.data();
+                        const username = data.username || "Player";
+                        const level = data.level || 7;
+                        const role = data.role || "PLAYER";
+
+                        document.getElementById('display-username').innerText = username.toUpperCase();
+                        document.getElementById('user-initial').innerText = username.charAt(0).toUpperCase();
+                        document.getElementById('level-display').innerText = `NODE ${level}`;
+                        document.getElementById('bonus-rate').innerText = `${(data.commissionRate || 0).toFixed(2)}%`;
+                        document.getElementById('role-badge-container').innerHTML = `<span class="badge-role">${role.replace('_', ' ')}</span>`;
+                        document.getElementById('display-balance').innerText = (data.balance || 0).toLocaleString(undefined, {minimumFractionDigits: 2});
+                        
+                        if (data.createdAt) {
+                            document.getElementById('join-date').innerText = data.createdAt.toDate().toLocaleDateString();
+                        }
+
+                        // Hierarchy Logic
+                        if (level <= 5) {
+                            document.getElementById('management-section').style.display = "block";
+                            const mngText = document.getElementById('mng-text');
+                            const adminLink = document.getElementById('admin-link');
+                            
+                            if (level === 1) {
+                                mngText.innerText = "System Command Center";
+                                adminLink.href = "/admin/index.html";
+                            } else {
+                                mngText.innerText = "Network Manager";
+                                adminLink.href = "/admin/agents.html";
+                            }
+                        }
                     }
                 });
-            } else {
-                window.location.href = "/login/";
-            }
+            } else { window.location.href = "/login/"; }
         });
 
         document.getElementById('btn-logout').onclick = () => {
-            if(confirm("Sign out of NEXUS Arena?")) {
+            if(confirm("TERMINATE NEXUS SESSION?")) {
                 signOut(auth).then(() => window.location.href = "/login/");
             }
         };
