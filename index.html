@@ -81,11 +81,11 @@
         .stat-item span { font-family: 'Goldman'; font-size: 0.7rem; color: #eee; }
 
         .lobby-grid { 
-            padding: 20px 20px 100px; 
-            max-width: 900px; 
+            padding: 20px 20px 120px; 
+            max-width: 1000px; 
             margin: auto; 
             display: grid; 
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); 
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); 
             gap: 20px; 
         }
         
@@ -96,7 +96,7 @@
             border: 1px solid #222;
             cursor: pointer;
             position: relative;
-            min-height: 160px;
+            min-height: 180px;
             display: flex;
             align-items: flex-end;
             padding: 20px;
@@ -113,24 +113,6 @@
         .card-crash { background-image: linear-gradient(to right, rgba(0,0,0,0.9), transparent), url('https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=800&q=60'); }
         .card-mines { background-image: linear-gradient(to right, rgba(0,0,0,0.9), transparent), url('https://images.unsplash.com/photo-1614028674026-a65e31bfd27c?w=800&q=60'); }
 
-        .interstitial-ad {
-            max-width: 900px;
-            margin: 0 auto 30px;
-            padding: 0 20px;
-        }
-        .ad-box {
-            background: linear-gradient(90deg, #111, #000);
-            border: 1px dashed #333;
-            border-radius: 12px;
-            padding: 15px;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-        .ad-box img { width: 50px; height: 50px; border-radius: 8px; object-fit: cover; }
-        .ad-text h4 { margin: 0; color: var(--gold); font-size: 0.8rem; font-family: 'Goldman'; }
-        .ad-text p { margin: 2px 0 0; color: #666; font-size: 0.65rem; }
-
         .status-tag { 
             position: absolute; top: 15px; right: 15px; 
             background: #ff4444; color: white; font-size: 0.55rem; padding: 4px 10px; 
@@ -142,9 +124,11 @@
         .card-info h3 { margin: 0; color: white; font-size: 1.1rem; font-family: 'Goldman'; letter-spacing: 1px; }
         .card-info p { margin: 3px 0 0; color: var(--gold); font-size: 0.7rem; font-weight: bold; text-transform: uppercase; }
 
+        /* QUICK ACTIONS BAR FIX */
         .quick-actions { 
             display: flex; gap: 10px; padding: 15px 20px; 
-            background: #000; position: fixed; bottom: 70px; 
+            background: #000; position: fixed; 
+            bottom: 70px; /* Default for mobile with bottom nav */
             left: 0; 
             width: 100%; box-sizing: border-box; border-top: 1px solid #222; z-index: 100; 
         }
@@ -157,10 +141,16 @@
             100% { transform: translateX(-100%); }
         }
 
+        /* PC & IPAD FIX: REMOVE THE FLOAT GAP */
+        @media (min-width: 900px) {
+            .quick-actions { bottom: 0 !important; }
+            .lobby-grid { padding-bottom: 60px; }
+            .promo-container { height: 220px; }
+        }
+
         @media (max-width: 600px) { 
             .promo-container { height: 130px; } 
-            .lobby-grid { grid-template-columns: 1fr; padding-bottom: 180px; } 
-            .quick-actions { bottom: 70px; }
+            .lobby-grid { grid-template-columns: 1fr; padding-bottom: 160px; } 
         }
     </style>
 </head>
@@ -232,16 +222,6 @@
         </a>
     </main>
 
-    <div class="interstitial-ad">
-        <div class="ad-box">
-            <img src="https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=100&q=40" alt="ad">
-            <div class="ad-text">
-                <h4>SECURE AGENT NETWORK</h4>
-                <p>Become a NEXUS Agent today and earn up to 5% commission on every bet. Fast cash-ins and instant settlements.</p>
-            </div>
-        </div>
-    </div>
-
     <section class="quick-actions">
         <button id="admin-btn" class="action-btn admin-action">MANAGEMENT</button>
         <button onclick="window.location.href='/wallet/'" class="action-btn gold">DEPOSIT</button>
@@ -266,18 +246,14 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-
-        // PERSISTENCE ENGINE: Instant load from device storage
-        enableIndexedDbPersistence(db).catch((err) => {
-            console.warn("Persistence locked:", err.code);
-        });
+        
+        enableIndexedDbPersistence(db).catch(() => {});
 
         window.firebaseAuth = auth;
         window.firebaseDb = db; 
 
         injectMenu();
 
-        // Ad Carousel Logic
         let currentSlide = 0;
         const slides = document.querySelectorAll('.ad-slide');
         setInterval(() => {
@@ -288,23 +264,15 @@
             }
         }, 5000);
 
-        // FAST-HUD HYDRATION: Snapshots read from cache instantly
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 const userRef = doc(db, "users", user.uid);
-                
                 onSnapshot(userRef, (snapshot) => {
                     if (snapshot.exists()) {
                         const data = snapshot.data();
+                        document.getElementById('user-display').innerText = data.username ? data.username.toUpperCase() : "PLAYER";
+                        document.getElementById('nav-balance').innerText = (data.balance || 0).toLocaleString(undefined, {minimumFractionDigits: 2});
                         
-                        // Sync Name & Balance (Microsecond Hydration)
-                        const nameEl = document.getElementById('user-display');
-                        const balEl = document.getElementById('nav-balance');
-                        
-                        if (nameEl) nameEl.innerText = data.username ? data.username.toUpperCase() : "PLAYER";
-                        if (balEl) balEl.innerText = (data.balance || 0).toLocaleString(undefined, {minimumFractionDigits: 2});
-                        
-                        // Management visibility
                         const level = data.level || 6;
                         const adminBtn = document.getElementById('admin-btn');
                         if (adminBtn && level >= 1 && level <= 5) {
@@ -312,12 +280,8 @@
                             adminBtn.onclick = () => { window.location.href = (level === 1) ? '/admin/index.html' : '/admin/agents.html'; };
                         }
                     }
-                }, (error) => {
-                    console.error("Snapshot failed:", error);
                 });
-            } else {
-                window.location.href = "/login/";
-            }
+            } else { window.location.href = "/login/"; }
         });
     </script>
 </body>
