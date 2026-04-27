@@ -11,129 +11,139 @@
         :root { --gold: #D4AF37; --green: #00ff88; --red: #ff4444; }
         
         body { background: #000; color: #fff; overflow-x: hidden; }
+        .top-nav { position: relative; display: flex; justify-content: space-between; align-items: center; padding: 12px 20px 12px 75px; background: #000; border-bottom: 2px solid #222; }
 
-        .top-nav { display: flex; justify-content: space-between; align-items: center; padding: 12px 20px 12px 75px; background: #000; border-bottom: 2px solid #222; position: sticky; top: 0; z-index: 1000; }
-
-        .agent-container { max-width: 1200px; margin: 20px auto; padding: 0 20px; }
+        .btn-nexus { font-family: 'Goldman', sans-serif; font-weight: bold; text-transform: uppercase; border: none; border-radius: 8px; cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center; letter-spacing: 1px; height: 45px; }
+        .btn-gold { background: var(--gold); color: black; min-width: 120px; }
+        .btn-gold:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(212, 175, 55, 0.4); }
+        .btn-outline { background: transparent; border: 1px solid var(--gold); color: var(--gold); }
         
-        /* ANALYTICS GRID */
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 30px; }
-        .stat-card { background: linear-gradient(145deg, #111, #080808); padding: 25px; border-radius: 12px; border: 1px solid #222; text-align: center; box-shadow: 0 10px 20px rgba(0,0,0,0.4); }
-        .stat-card h4 { font-size: 0.6rem; color: #555; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 10px; font-weight: bold; }
-        .stat-card .val { font-family: 'Goldman'; font-size: 1.5rem; display: block; margin-top: 5px; }
-
-        /* RECRUITMENT BOX */
-        .ref-panel { background: #0a0a0a; border: 1px dashed var(--gold); border-radius: 15px; padding: 30px; margin-bottom: 30px; text-align: center; }
-        .ref-input-group { display: flex; gap: 12px; margin-top: 15px; background: #000; padding: 5px; border-radius: 10px; border: 1px solid #222; }
-        .ref-input-group input { flex: 1; background: transparent; border: none; color: var(--gold); padding: 0 15px; font-family: 'Goldman'; outline: none; }
+        .agent-container { max-width: 1200px; margin: 20px auto; padding: 20px; display: grid; grid-template-columns: 1fr 350px; gap: 20px; }
         
-        .panel { background: #0a0a0a; border-radius: 20px; border: 1px solid #1a1a1a; padding: 25px; }
-        .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; gap: 20px; }
-
-        /* TABLE STYLES */
-        .agent-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
-        .agent-table th { text-align: left; color: #444; padding: 15px; border-bottom: 1px solid #222; text-transform: uppercase; font-size: 0.6rem; letter-spacing: 1px; }
-        .agent-table td { padding: 18px 15px; border-bottom: 1px solid #111; vertical-align: middle; }
+        .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-bottom: 25px; grid-column: span 2; }
+        .stat-card { background: linear-gradient(145deg, #111, #080808); padding: 20px; border-radius: 12px; border: 1px solid #222; text-align: center; }
+        .stat-card h4 { font-size: 0.6rem; color: #555; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 1px; }
+        .stat-card .val { font-family: 'Goldman', sans-serif; font-size: 1.5rem; color: var(--gold); }
         
-        .role-badge { padding: 4px 10px; border-radius: 4px; font-size: 0.6rem; font-weight: bold; text-transform: uppercase; border: 1px solid #333; }
-        .tier-5 { color: var(--gold); border-color: rgba(212,175,55,0.3); }
-        .tier-6 { color: #888; border-color: #222; }
+        .main-column { display: flex; flex-direction: column; gap: 20px; }
+        .side-column { display: flex; flex-direction: column; gap: 20px; }
 
-        /* MODAL */
-        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: none; align-items: center; justify-content: center; z-index: 2000; backdrop-filter: blur(5px); }
-        .modal-content { background: #0f0f0f; width: 90%; max-width: 450px; padding: 35px; border-radius: 24px; border: 1px solid #333; box-shadow: 0 0 50px rgba(0,0,0,1); }
-        .modal label { font-size: 0.6rem; color: #555; text-transform: uppercase; letter-spacing: 1.5px; display: block; margin: 15px 0 8px; font-weight: bold; }
-        .modal input, .modal select { width: 100%; padding: 14px; background: #000; border: 1px solid #222; color: white; border-radius: 10px; outline: none; transition: 0.3s; }
-        .modal input:focus { border-color: var(--gold); }
+        .panel { background: #0a0a0a; border-radius: 15px; border: 1px solid #222; padding: 25px; }
+        .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #1a1a1a; padding-bottom: 15px; }
+        
+        .ref-panel { background: #050505; border: 1px dashed var(--gold); border-radius: 12px; padding: 20px; text-align: center; }
+        .ref-input-group { display: flex; gap: 10px; margin-top: 15px; }
+        .ref-input-group input { flex: 1; background: #000; border: 1px solid #333; color: var(--gold); padding: 0 15px; border-radius: 8px; height: 40px; font-size: 0.8rem; }
 
-        .btn-prime { background: var(--gold); color: #000; border: none; padding: 15px 25px; border-radius: 10px; font-family: 'Goldman'; font-weight: bold; cursor: pointer; text-transform: uppercase; transition: 0.3s; }
-        .btn-prime:hover { filter: brightness(1.2); transform: translateY(-2px); }
+        .agent-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+        .agent-table th { text-align: left; color: #444; padding: 12px; border-bottom: 1px solid #222; text-transform: uppercase; font-size: 0.6rem; }
+        .agent-table td { padding: 12px; border-bottom: 1px solid #111; }
+        
+        .role-badge { padding: 3px 6px; border-radius: 4px; font-size: 0.6rem; font-weight: bold; border: 1px solid #333; background: #000; }
+        .badge-op { color: #ffaa00; border-color: #ffaa00; }
+        .badge-agent { color: var(--gold); border-color: var(--gold); }
+        .badge-player { color: #888; border-color: #444; }
 
-        @media (max-width: 768px) { .stats-grid { grid-template-columns: 1fr 1fr; } .panel-header { flex-direction: column; align-items: flex-start; } }
+        /* LEDGER STYLES */
+        .ledger-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #111; font-size: 0.75rem; }
+        .ledger-info b { color: #eee; display: block; }
+        .ledger-info small { color: #555; }
+        .ledger-amt { color: var(--green); font-family: 'Goldman'; font-weight: bold; }
+
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); display: flex; align-items: center; justify-content: center; z-index: 2000; }
+        .modal-content { background: #0f0f0f; width: 90%; max-width: 400px; padding: 30px; border-radius: 20px; border: 1px solid var(--gold); }
+
+        @media (max-width: 900px) { 
+            .agent-container { grid-template-columns: 1fr; }
+            .stats-grid { grid-column: span 1; }
+        }
     </style>
 </head>
 <body>
 
     <nav class="top-nav">
-        <div class="logo" style="color:var(--gold); font-family:'Goldman'; font-weight:bold; font-size:1.3rem; letter-spacing:2px;">NEXUS NETWORK</div>
-        <div id="my-role-display" style="color: #444; font-size: 0.7rem; font-family: 'Goldman'; border: 1px solid #222; padding: 4px 10px; border-radius: 5px;">TIER: SYNCING...</div>
+        <div class="logo" style="color:var(--gold); font-family:'Goldman'; font-weight:bold; font-size:1.2rem;">AGENT MANAGER</div>
+        <div id="my-role-display" style="color: #666; font-size: 0.7rem; font-family: 'Goldman'; border: 1px solid #222; padding: 5px 12px; border-radius: 5px;">TIER: ---</div>
     </nav>
 
     <div class="agent-container">
         <div class="stats-grid">
-            <div class="stat-card"><h4>My Commission</h4><span class="val" id="my-comm-rate" style="color:var(--gold);">0.00%</span></div>
-            <div class="stat-card"><h4>Branch Size</h4><span class="val" id="count-downlines" style="color:#fff;">0</span></div>
-            <div class="stat-card"><h4>Team Volume</h4><span class="val" id="team-turnover" style="color:var(--green);">₱0</span></div>
-            <div class="stat-card"><h4>Net Earnings</h4><span class="val" id="total-earned" style="color:var(--gold);">₱0</span></div>
+            <div class="stat-card"><h4>Spread Rate</h4><span class="val" id="my-comm-rate">0%</span></div>
+            <div class="stat-card"><h4>Network Size</h4><span class="val" id="count-downlines">0</span></div>
+            <div class="stat-card"><h4>Team Turnover</h4><span class="val" id="team-turnover" style="color:var(--green);">₱0</span></div>
+            <div class="stat-card"><h4>Net Commission</h4><span class="val" id="total-earned">₱0</span></div>
         </div>
 
-        <div class="ref-panel">
-            <h4 style="margin:0; color: #555; font-size: 0.7rem; letter-spacing: 2px;">YOUR RECRUITMENT ENTRANCE</h4>
-            <div class="ref-input-group">
-                <input type="text" id="referral-url" readonly value="Syncing link...">
-                <button onclick="copyReferral()" class="btn-prime" style="padding: 10px 20px; font-size: 0.7rem; border-radius: 8px;">COPY ENTRY LINK</button>
-            </div>
-        </div>
-
-        <div class="panel">
-            <div class="panel-header">
-                <div>
-                    <h3 style="margin:0; color: var(--gold); font-family: 'Goldman'; font-size: 1rem;">PROTOCOL HIERARCHY</h3>
-                    <p style="margin:5px 0 0; font-size:0.6rem; color:#444;">MANAGE RATES AND TEAM PLACEMENTS</p>
+        <div class="main-column">
+            <div class="panel">
+                <div class="panel-header">
+                    <h3 style="margin:0; color: var(--gold); font-family: 'Goldman'; font-size: 1rem;">NETWORK HIERARCHY</h3>
+                    <button class="btn-nexus btn-gold" style="font-size: 0.65rem; height: 35px; padding: 0 15px;" onclick="toggleModal(true)">+ RECRUIT</button>
                 </div>
-                <button onclick="toggleModal(true)" class="btn-prime" style="font-size: 0.75rem; padding: 12px 20px;">+ INITIALIZE ACCOUNT</button>
+                <div style="overflow-x: auto;">
+                    <table class="agent-table">
+                        <thead>
+                            <tr>
+                                <th>Identity</th>
+                                <th>Role</th>
+                                <th>Rate</th>
+                                <th>Turnover</th>
+                                <th>Protocol</th>
+                            </tr>
+                        </thead>
+                        <tbody id="agent-list"></tbody>
+                    </table>
+                </div>
             </div>
-            
-            <div style="overflow-x: auto;">
-                <table class="agent-table">
-                    <thead>
-                        <tr>
-                            <th>Identity</th>
-                            <th>Role / Level</th>
-                            <th>Spread %</th>
-                            <th>Volume</th>
-                            <th>Protocol</th>
-                        </tr>
-                    </thead>
-                    <tbody id="agent-list">
-                        <tr><td colspan="5" style="text-align:center; color:#222; padding:50px;">Initializing secure connection...</td></tr>
-                    </tbody>
-                </table>
+        </div>
+
+        <div class="side-column">
+            <div class="ref-panel">
+                <h4 style="margin:0; color: var(--gold); font-size: 0.65rem; letter-spacing: 2px;">RECRUITMENT PROTOCOL</h4>
+                <div class="ref-input-group">
+                    <input type="text" id="referral-url" readonly>
+                    <button class="btn-nexus btn-gold" style="height:40px; min-width:60px;" onclick="copyReferral()">COPY</button>
+                </div>
+            </div>
+
+            <div class="panel" style="padding: 20px;">
+                <h3 style="margin:0 0 15px; color: var(--gold); font-family: 'Goldman'; font-size: 0.8rem; border-bottom: 1px solid #222; padding-bottom: 10px;">COMMISSION LOGS</h3>
+                <div id="commission-ledger" style="max-height: 400px; overflow-y: auto;">
+                    <p style="text-align:center; color:#333; font-size:0.7rem; padding:20px;">No transaction trails found.</p>
+                </div>
             </div>
         </div>
     </div>
 
-    <div id="create-modal" class="modal">
+    <div id="create-modal" class="modal" style="display:none;">
         <div class="modal-content">
-            <h3 id="modal-title" style="margin:0; color:var(--gold); font-family: 'Goldman'; text-align:center; font-size:1.1rem;">NETWORK PLACEMENT</h3>
+            <h3 id="modal-title" style="margin-top:0; color:var(--gold); font-family: 'Goldman'; text-align:center; font-size:1rem;">INITIALIZE NODE</h3>
             
-            <div id="create-fields">
-                <label>Unique Username</label>
-                <input type="text" id="new-username" placeholder="Target ID">
+            <div id="create-only-fields">
+                <label style="font-size:0.6rem; color:#555; text-transform:uppercase;">Node ID (Username)</label>
+                <input type="text" id="new-username" style="width:100%; padding:12px; background:#000; border:1px solid #333; color:white; border-radius:8px; margin-bottom:15px;">
 
-                <label>Assign Protocol Level</label>
-                <select id="new-role"></select>
+                <label style="font-size:0.6rem; color:#555; text-transform:uppercase;">Protocol Rank</label>
+                <select id="new-role" style="width:100%; padding:12px; background:#000; border:1px solid #333; color:white; border-radius:8px; margin-bottom:15px;"></select>
 
-                <label>Parent Node (Upline)</label>
-                <input type="text" id="new-upline" placeholder="Search Username..." oninput="verifyUpline(this.value)">
-                <div id="upline-status" style="font-size:0.65rem; margin-top:5px; font-weight:bold;"></div>
+                <label style="font-size:0.6rem; color:#555; text-transform:uppercase;">Parent Node (Upline)</label>
+                <input type="text" id="new-upline" oninput="verifyUpline(this.value)" style="width:100%; padding:12px; background:#000; border:1px solid #333; color:white; border-radius:8px;">
+                <div id="upline-verify-status" style="margin-bottom:15px;"></div>
             </div>
 
-            <label>Commission Percentage (%)</label>
-            <input type="number" id="new-comm" step="0.01" placeholder="0.00" oninput="validateRate()">
-            <div id="rate-error" style="color: var(--red); font-size: 0.65rem; display: none; margin-top: 10px; text-align: center;">Rate exceeds Upline spread limit!</div>
+            <label style="font-size:0.6rem; color:#555; text-transform:uppercase;">Yield Rate (%)</label>
+            <input type="number" id="new-comm" step="0.01" oninput="validateInputRate()" style="width:100%; padding:12px; background:#000; border:1px solid #333; color:white; border-radius:8px;">
+            <div id="rate-warning" style="color: var(--red); font-size: 0.65rem; display: none; margin-top: 10px; text-align: center;">Rate exceeds parent node capacity!</div>
 
-            <div style="margin-top:30px; display:flex; gap:10px;">
-                <button onclick="toggleModal(false)" style="flex:1; background:#111; color:#555; border:none; border-radius:10px; font-family:'Goldman'; cursor:pointer;">CANCEL</button>
-                <button id="btn-save" onclick="handleSave()" class="btn-prime" style="flex:2;">AUTHORIZE</button>
-            </div>
+            <button class="btn-nexus btn-gold" id="btn-save" style="width:100%; margin-top:25px;" onclick="handleSave()">AUTHORIZE NODE</button>
+            <button class="btn-nexus" style="width:100%; margin-top:10px; background:transparent; color:#444;" onclick="toggleModal(false)">ABORT</button>
         </div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
-        import { getFirestore, doc, getDoc, getDocs, updateDoc, collection, query, where, onSnapshot, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, getDocs, updateDoc, collection, query, where, onSnapshot, addDoc, orderBy, limit, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
         import { injectMenu } from "/menu.js";
 
         const firebaseConfig = { apiKey: "AIzaSyCBvOw8HrMhZD0aYSHqFdE196ZITdYBU3Q", authDomain: "nexus-sabong.firebaseapp.com", projectId: "nexus-sabong", storageBucket: "nexus-sabong.firebasestorage.app", messagingSenderId: "421723311", appId: "1:421723311:web:1780f179e7c2a7cc0e285a" };
@@ -143,13 +153,14 @@
         injectMenu();
 
         const TIERS = [
-            { r: "ADMIN", l: 1 }, { r: "OPERATOR", l: 2 }, { r: "INCO", l: 3 },
-            { r: "SUBOP", l: 4 }, { r: "AGENT", l: 5 }, { r: "PLAYER", l: 6 }
+            { role: "ADMIN", level: 1 }, { role: "OPERATOR", level: 2 }, 
+            { role: "INCO", level: 3 }, { role: "SUBOP", level: 4 }, 
+            { role: "AGENT", level: 5 }, { role: "PLAYER", level: 6 }
         ];
 
         let myData = null;
-        let editId = null;
-        let parentData = null;
+        let editingUserId = null;
+        let verifiedUplineData = null;
         let allDownlines = [];
 
         onAuthStateChanged(auth, async (user) => {
@@ -158,133 +169,168 @@
                 if(snap.exists()) {
                     myData = snap.data();
                     if(myData.level >= 6) window.location.href = "/";
-                    syncDashboard();
-                    loadNetwork();
+                    setupUI();
+                    loadDownlines();
+                    loadCommissionLogs();
                 }
             } else { window.location.href = "/login/"; }
         });
 
-        function syncDashboard() {
+        function setupUI() {
             document.getElementById('my-role-display').innerText = `TIER: ${myData.role}`;
-            document.getElementById('my-comm-rate').innerText = `${myData.commissionRate.toFixed(2)}%`;
+            document.getElementById('my-comm-rate').innerText = `${myData.commissionRate}%`;
             document.getElementById('total-earned').innerText = `₱${(myData.totalCommission || 0).toLocaleString()}`;
             document.getElementById('referral-url').value = `${window.location.origin}/register/?ref=${auth.currentUser.uid}`;
-            
-            const sel = document.getElementById('new-role');
-            sel.innerHTML = "";
-            TIERS.filter(t => t.l > myData.level).forEach(t => {
-                sel.innerHTML += `<option value="${t.r}" data-lvl="${t.l}">${t.r}</option>`;
+            document.getElementById('new-upline').value = myData.username;
+            verifyUpline(myData.username);
+
+            const select = document.getElementById('new-role');
+            select.innerHTML = "";
+            TIERS.filter(t => t.level > myData.level).forEach(t => {
+                let opt = document.createElement('option');
+                opt.value = t.role;
+                opt.dataset.level = t.level;
+                opt.innerText = t.role;
+                select.appendChild(opt);
             });
         }
 
-        window.verifyUpline = async (val) => {
-            const status = document.getElementById('upline-status');
-            if(!val) { status.innerText = ""; return; }
-            const q = query(collection(db, "users"), where("username", "==", val.toLowerCase()));
+        function loadCommissionLogs() {
+            const q = query(
+                collection(db, "wallet_logs"), 
+                where("uid", "==", auth.currentUser.uid),
+                where("type", "==", "COMMISSION"),
+                orderBy("timestamp", "desc"),
+                limit(20)
+            );
+
+            onSnapshot(q, (snap) => {
+                const ledger = document.getElementById('commission-ledger');
+                if (snap.empty) return;
+                ledger.innerHTML = "";
+                snap.forEach(d => {
+                    const log = d.data();
+                    const date = log.timestamp?.toDate().toLocaleDateString() || "Just now";
+                    ledger.innerHTML += `
+                        <div class="ledger-row">
+                            <div class="ledger-info">
+                                <b>From: ${log.fromUser || 'Anonymous'}</b>
+                                <small>${date} • Bet: ₱${log.betAmount || 0}</small>
+                            </div>
+                            <div class="ledger-amt">+₱${log.amount.toFixed(2)}</div>
+                        </div>
+                    `;
+                });
+            });
+        }
+
+        window.verifyUpline = async (username) => {
+            const status = document.getElementById('upline-verify-status');
+            if(!username) return status.innerText = "";
+            const q = query(collection(db, "users"), where("username", "==", username.toLowerCase()));
             const snap = await getDocs(q);
             if(!snap.empty) {
-                const d = snap.docs[0].data();
-                if(d.level >= 6) { status.innerText = "❌ PLAYER CANNOT BE UPLINE"; status.style.color = var(--red); parentData = null; }
-                else {
-                    parentData = { id: snap.docs[0].id, ...d };
-                    status.innerText = `✅ ${d.role} (${d.commissionRate.toFixed(2)}% MAX)`;
-                    status.style.color = var(--green);
+                const data = snap.docs[0].data();
+                if (data.level >= 6) {
+                    verifiedUplineData = null;
+                    status.innerHTML = `<small style="color:var(--red)">❌ CANNOT PLACE UNDER PLAYER</small>`;
+                } else {
+                    verifiedUplineData = { id: snap.docs[0].id, ...data };
+                    status.innerHTML = `<small style="color:var(--green)">✅ ${data.role} (Max ${data.commissionRate}%)</small>`;
                 }
-            } else { status.innerText = "❌ UNKNOWN IDENTITY"; status.style.color = var(--red); parentData = null; }
+            } else {
+                verifiedUplineData = null;
+                status.innerHTML = `<small style="color:var(--red)">❌ ID NOT FOUND</small>`;
+            }
         };
 
-        function loadNetwork() {
-            // New logic: Listen to anyone where YOU are in the upline path (total branch visibility)
-            const q = query(collection(db, "users"), where("uplineId", "==", auth.currentUser.uid));
-            onSnapshot(q, (snap) => {
+        function loadDownlines() {
+            onSnapshot(query(collection(db, "users"), where("uplineId", "==", auth.currentUser.uid)), (snap) => {
                 allDownlines = [];
-                let vol = 0;
-                snap.forEach(d => {
-                    const u = { id: d.id, ...d.data() };
-                    allDownlines.push(u);
-                    vol += (u.totalTurnover || 0);
+                let teamT = 0;
+                snap.forEach(doc => {
+                    const d = doc.data();
+                    d.id = doc.id;
+                    allDownlines.push(d);
+                    teamT += (d.totalTurnover || 0);
                 });
                 document.getElementById('count-downlines').innerText = snap.size;
-                document.getElementById('team-turnover').innerText = `₱${vol.toLocaleString()}`;
-                renderTable();
+                document.getElementById('team-turnover').innerText = `₱${teamT.toLocaleString()}`;
+                renderTable(allDownlines);
             });
         }
 
-        function renderTable() {
+        function renderTable(data) {
             const list = document.getElementById('agent-list');
-            list.innerHTML = allDownlines.length ? "" : '<tr><td colspan="5" style="text-align:center; padding:40px; color:#333;">No subordinates detected.</td></tr>';
-            allDownlines.forEach(u => {
+            list.innerHTML = data.length ? "" : '<tr><td colspan="5" style="text-align:center; padding:30px; color:#333;">No nodes found.</td></tr>';
+            data.forEach(u => {
+                const badgeClass = u.level < 5 ? 'badge-op' : (u.level === 5 ? 'badge-agent' : 'badge-player');
                 list.innerHTML += `
                     <tr>
-                        <td><strong style="color:white;">${u.username.toUpperCase()}</strong></td>
-                        <td><span class="role-badge tier-${u.level}">${u.role}</span></td>
-                        <td style="font-family:'Goldman'; color:var(--gold);">${u.commissionRate.toFixed(2)}%</td>
+                        <td><b style="color:#fff;">${u.username}</b></td>
+                        <td><span class="role-badge ${badgeClass}">${u.role}</span></td>
+                        <td style="color:var(--gold); font-family:Goldman;">${u.commissionRate}%</td>
                         <td style="color:var(--green);">₱${(u.totalTurnover || 0).toLocaleString()}</td>
-                        <td><button style="color:var(--gold); background:none; border:none; cursor:pointer; font-size:0.65rem; font-weight:bold; letter-spacing:1px;" onclick="openEdit('${u.id}', '${u.username}', ${u.commissionRate})">RE-RATE</button></td>
+                        <td><button style="background:none; border:none; color:#555; cursor:pointer; font-size:0.6rem;" onclick="openEdit('${u.id}', '${u.username}', ${u.commissionRate})">ADJUST</button></td>
                     </tr>
                 `;
             });
         }
 
-        window.validateRate = () => {
-            const val = parseFloat(document.getElementById('new-comm').value);
-            const limit = parentData ? parentData.commissionRate : myData.commissionRate;
-            const err = document.getElementById('rate-error');
-            const btn = document.getElementById('btn-save');
-            if (val > limit) { err.style.display = "block"; btn.disabled = true; btn.style.opacity = "0.3"; }
-            else { err.style.display = "none"; btn.disabled = false; btn.style.opacity = "1"; }
-        };
-
         window.handleSave = async () => {
             const comm = parseFloat(document.getElementById('new-comm').value);
+            if (!verifiedUplineData && !editingUserId) return;
+            if (isNaN(comm) || comm > verifiedUplineData.commissionRate) return alert("Spread error: Rate too high.");
+
             const btn = document.getElementById('btn-save');
-            btn.innerText = "AUTHORIZING...";
-            
+            btn.innerText = "SYNCING...";
             try {
-                if(editId) {
-                    await updateDoc(doc(db, "users", editId), { commissionRate: comm });
+                if (editingUserId) {
+                    await updateDoc(doc(db, "users", editingUserId), { commissionRate: comm });
                 } else {
                     const user = document.getElementById('new-username').value.trim().toLowerCase();
-                    const roleSel = document.getElementById('new-role');
-                    const role = roleSel.value;
-                    const level = parseInt(roleSel.options[roleSel.selectedIndex].dataset.lvl);
-                    
-                    if(!parentData) return alert("Verify Upline First");
-
+                    const roleSelect = document.getElementById('new-role');
                     await addDoc(collection(db, "users"), {
-                        username: user, role, level, commissionRate: comm,
-                        uplineId: parentData.id,
-                        uplinePath: [...(parentData.uplinePath || []), parentData.id],
+                        username: user, role: roleSelect.value, 
+                        level: parseInt(roleSelect.options[roleSelect.selectedIndex].dataset.level),
+                        commissionRate: comm, uplineId: verifiedUplineData.id,
+                        uplinePath: [...(verifiedUplineData.uplinePath || []), verifiedUplineData.id],
                         balance: 0, totalTurnover: 0, totalCommission: 0, createdAt: serverTimestamp()
                     });
                 }
                 toggleModal(false);
-            } catch(e) { alert("Access Denied: " + e.message); }
-            finally { btn.innerText = "AUTHORIZE"; }
-        };
-
-        window.openEdit = (id, user, rate) => {
-            editId = id;
-            document.getElementById('modal-title').innerText = `ADJUST RATE: ${user.toUpperCase()}`;
-            document.getElementById('create-fields').style.display = "none";
-            document.getElementById('new-comm').value = rate;
-            toggleModal(true);
-        };
-
-        window.toggleModal = (s) => {
-            if(!s) editId = null;
-            document.getElementById('create-modal').style.display = s ? 'flex' : 'none';
-            if(s && !editId) {
-                document.getElementById('modal-title').innerText = "NETWORK PLACEMENT";
-                document.getElementById('create-fields').style.display = "block";
-                document.getElementById('new-upline').value = myData.username;
-                verifyUpline(myData.username);
-            }
+            } catch (e) { alert(e.message); }
+            finally { btn.innerText = "AUTHORIZE NODE"; }
         };
 
         window.copyReferral = () => {
             navigator.clipboard.writeText(document.getElementById("referral-url").value);
-            alert("Protocol: Recrutiment Link Copied.");
+            alert("Recruitment Link Copied to Clipboard.");
+        };
+
+        window.openEdit = (uid, username, rate) => {
+            editingUserId = uid;
+            document.getElementById('modal-title').innerText = `ADJUST NODE: ${username.toUpperCase()}`;
+            document.getElementById('create-only-fields').style.display = "none";
+            document.getElementById('new-comm').value = rate;
+            toggleModal(true);
+        };
+
+        window.toggleModal = (show) => {
+            if(!show) editingUserId = null;
+            document.getElementById('create-modal').style.display = show ? 'flex' : 'none';
+            if(show && !editingUserId) {
+                document.getElementById('modal-title').innerText = "INITIALIZE NODE";
+                document.getElementById('create-only-fields').style.display = "block";
+                setupUI();
+            }
+        };
+
+        window.validateInputRate = () => {
+            const val = parseFloat(document.getElementById('new-comm').value);
+            const max = verifiedUplineData ? verifiedUplineData.commissionRate : myData.commissionRate;
+            document.getElementById('rate-warning').style.display = val > max ? "block" : "none";
+            document.getElementById('btn-save').disabled = val > max;
         };
     </script>
 </body>
