@@ -9,8 +9,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Goldman:wght@400;700&display=swap" rel="stylesheet">
     <style>
         :root { --gold: #D4AF37; --green: #00ff88; --red: #ff4444; }
-        body { background: #000; color: #fff; overflow-x: hidden; padding-bottom: 80px; }
-        .top-nav { position: relative; display: flex; justify-content: space-between; align-items: center; padding: 12px 20px 12px 75px; background: #000; border-bottom: 2px solid #222; position: sticky; top: 0; z-index: 1000; }
+        body { background: #000; color: #fff; overflow-x: hidden; padding-bottom: 100px; }
+        .top-nav { position: sticky; top: 0; z-index: 1000; display: flex; justify-content: space-between; align-items: center; padding: 12px 20px; background: #000; border-bottom: 2px solid #222; }
         .btn-nexus { font-family: 'Goldman', sans-serif; font-weight: bold; text-transform: uppercase; border: none; border-radius: 8px; cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center; letter-spacing: 1px; height: 45px; }
         .btn-gold { background: var(--gold); color: black; min-width: 120px; }
         .btn-gold:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(212, 175, 55, 0.4); }
@@ -44,7 +44,10 @@
 
     <nav class="top-nav">
         <div class="logo" style="color:var(--gold); font-family:'Goldman'; font-weight:bold; font-size:1.2rem;">AGENT MANAGER</div>
-        <div id="my-role-display" style="color: #666; font-size: 0.7rem; font-family: 'Goldman'; border: 1px solid #222; padding: 5px 12px; border-radius: 5px;">TIER: ---</div>
+        <div style="text-align: right;">
+            <div id="nav-bal" style="color: var(--green); font-weight: bold; font-family: 'Goldman'; font-size: 1rem;">₱0.00</div>
+            <div id="my-role-display" style="color: #444; font-size: 0.5rem; text-transform: uppercase;">TIER: ---</div>
+        </div>
     </nav>
 
     <div class="agent-container">
@@ -87,7 +90,7 @@
                 </div>
             </div>
 
-            <div class="panel" style="padding: 20px;">
+            <div class="panel" style="padding: 20px; margin-top: 20px;">
                 <h3 style="margin:0 0 15px; color: var(--gold); font-family: 'Goldman'; font-size: 0.8rem; border-bottom: 1px solid #222; padding-bottom: 10px;">COMMISSION LOGS</h3>
                 <div id="commission-ledger" style="max-height: 400px; overflow-y: auto;">
                     <p style="text-align:center; color:#333; font-size:0.7rem; padding:20px;">No transaction trails found.</p>
@@ -128,6 +131,9 @@
         const db = getFirestore(app);
 
         enableIndexedDbPersistence(db).catch(() => {});
+        
+        window.firebaseAuth = auth;
+        window.firebaseDb = db;
         injectMenu();
 
         const TIERS = [
@@ -144,10 +150,17 @@
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 checkSystemIntegrity(user);
+                // SNAPSHOT SYNC: Load immediately from cache
                 onSnapshot(doc(db, "users", user.uid), (snap) => {
                     if(snap.exists()) {
                         myData = snap.data();
                         if(myData.level >= 6) window.location.href = "/";
+                        
+                        // Sync UI & Sidebar Global Elements
+                        document.getElementById('nav-bal').innerText = `₱${(myData.balance || 0).toLocaleString(undefined, {minimumFractionDigits: 2})}`;
+                        const sidebarBal = document.getElementById('sidebar-balance');
+                        if(sidebarBal) sidebarBal.innerText = `₱${(myData.balance || 0).toLocaleString(undefined, {minimumFractionDigits: 2})}`;
+                        
                         setupUI();
                         loadDownlines();
                         loadCommissionLogs();
@@ -169,9 +182,7 @@
             document.getElementById('my-comm-rate').innerText = `${myData.commissionRate}%`;
             document.getElementById('total-earned').innerText = `₱${(myData.totalCommission || 0).toLocaleString()}`;
             document.getElementById('referral-url').value = `${window.location.origin}/register/?ref=${auth.currentUser.uid}`;
-            document.getElementById('new-upline').value = myData.username;
-            verifyUpline(myData.username);
-
+            
             const select = document.getElementById('new-role');
             select.innerHTML = "";
             TIERS.filter(t => t.level > myData.level).forEach(t => {
@@ -188,18 +199,17 @@
             onSnapshot(q, (snap) => {
                 const ledger = document.getElementById('commission-ledger');
                 if (snap.empty) {
-                    ledger.innerHTML = '<p style="text-align:center; color:#333; font-size:0.7rem; padding:20px;">No transaction trails found.</p>';
+                    ledger.innerHTML = '<p style="text-align:center; color:#333; font-size:0.7rem; padding:20px;">No trails found.</p>';
                     return;
                 }
                 ledger.innerHTML = "";
                 snap.forEach(d => {
                     const log = d.data();
-                    const date = log.timestamp?.toDate().toLocaleDateString() || "Just now";
                     ledger.innerHTML += `
                         <div class="ledger-row">
                             <div class="ledger-info">
-                                <b>From: ${log.fromUser || 'Anonymous'}</b>
-                                <small>${date} • Bet: ₱${log.betAmount || 0}</small>
+                                <b>From: ${log.fromUser || 'Node'}</b>
+                                <small>${log.timestamp?.toDate().toLocaleDateString()} • Bet: ₱${log.betAmount || 0}</small>
                             </div>
                             <div class="ledger-amt">+₱${log.amount.toFixed(2)}</div>
                         </div>`;
@@ -219,7 +229,7 @@
                     status.innerHTML = `<small style="color:var(--red)">❌ CANNOT PLACE UNDER PLAYER</small>`;
                 } else {
                     verifiedUplineData = { id: snap.docs[0].id, ...data };
-                    status.innerHTML = `<small style="color:var(--green)">✅ ${data.role} (Max ${data.commissionRate}%)</small>`;
+                    status.innerHTML = `<small style="color:var(--green)">✅ ${data.role} (${data.commissionRate}%)</small>`;
                 }
             } else {
                 verifiedUplineData = null;
@@ -232,8 +242,7 @@
                 allDownlines = [];
                 let teamT = 0;
                 snap.forEach(doc => {
-                    const d = doc.data();
-                    d.id = doc.id;
+                    const d = doc.data(); d.id = doc.id;
                     allDownlines.push(d);
                     teamT += (d.totalTurnover || 0);
                 });
@@ -245,12 +254,12 @@
 
         function renderTable(data) {
             const list = document.getElementById('agent-list');
-            list.innerHTML = data.length ? "" : '<tr><td colspan="5" style="text-align:center; padding:30px; color:#333;">No nodes found.</td></tr>';
+            list.innerHTML = data.length ? "" : '<tr><td colspan="5" style="text-align:center; padding:30px; color:#333;">No nodes.</td></tr>';
             data.forEach(u => {
                 const badgeClass = u.level < 5 ? 'badge-op' : (u.level === 5 ? 'badge-agent' : 'badge-player');
                 list.innerHTML += `
                     <tr>
-                        <td><b style="color:#fff;">${u.username}</b></td>
+                        <td><b style="color:#fff;">${u.username.toUpperCase()}</b></td>
                         <td><span class="role-badge ${badgeClass}">${u.role}</span></td>
                         <td style="color:var(--gold); font-family:Goldman;">${u.commissionRate}%</td>
                         <td style="color:var(--green);">₱${(u.totalTurnover || 0).toLocaleString()}</td>
@@ -262,7 +271,7 @@
         window.handleSave = async () => {
             const comm = parseFloat(document.getElementById('new-comm').value);
             if (!verifiedUplineData && !editingUserId) return;
-            if (isNaN(comm) || comm > (verifiedUplineData ? verifiedUplineData.commissionRate : myData.commissionRate)) return alert("Spread error: Rate too high.");
+            if (isNaN(comm) || comm > (verifiedUplineData ? verifiedUplineData.commissionRate : myData.commissionRate)) return alert("Spread error.");
 
             const btn = document.getElementById('btn-save');
             btn.innerText = "SYNCING...";
@@ -287,12 +296,12 @@
 
         window.copyReferral = () => {
             navigator.clipboard.writeText(document.getElementById("referral-url").value);
-            alert("Recruitment Link Copied to Clipboard.");
+            alert("Copied.");
         };
 
         window.openEdit = (uid, username, rate) => {
             editingUserId = uid;
-            document.getElementById('modal-title').innerText = `ADJUST NODE: ${username.toUpperCase()}`;
+            document.getElementById('modal-title').innerText = `ADJUST: ${username.toUpperCase()}`;
             document.getElementById('create-only-fields').style.display = "none";
             document.getElementById('new-comm').value = rate;
             toggleModal(true);
@@ -302,8 +311,8 @@
             if(!show) editingUserId = null;
             document.getElementById('create-modal').style.display = show ? 'flex' : 'none';
             if(show && !editingUserId) {
-                document.getElementById('modal-title').innerText = "INITIALIZE NODE";
-                document.getElementById('create-only-fields').style.display = "block";
+                document.getElementById('new-upline').value = myData.username;
+                verifyUpline(myData.username);
                 setupUI();
             }
         };
