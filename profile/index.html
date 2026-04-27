@@ -3,89 +3,131 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Profile | NEXUS PRO</title>
+    <title>Identity HUD | NEXUS PRO</title>
     <link rel="stylesheet" href="/style.css">
     <link rel="stylesheet" href="/menu.css">
     <link href="https://fonts.googleapis.com/css2?family=Goldman:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        :root { --gold: #D4AF37; --green: #00ff88; --red: #ff4444; }
-        body { background: #000; color: #fff; overflow-x: hidden; padding-bottom: 80px; }
+        :root { --gold: #D4AF37; --green: #00ff88; --red: #ff4444; --panel: #0a0a0a; }
+        body { background: #000; color: #fff; overflow-x: hidden; padding-bottom: 100px; }
         
-        .top-nav { position: relative; display: flex; justify-content: space-between; align-items: center; padding: 12px 20px 12px 75px; background: #000; border-bottom: 2px solid #222; }
+        .top-nav { position: sticky; top: 0; z-index: 1000; display: flex; justify-content: space-between; align-items: center; padding: 12px 20px; background: #000; border-bottom: 1px solid #222; }
 
-        .profile-container { max-width: 480px; margin: 40px auto; padding: 0 20px 100px; }
+        .profile-container { max-width: 500px; margin: 20px auto; padding: 0 15px; }
         
-        .profile-header { text-align: center; padding: 40px 0; border-radius: 24px; background: radial-gradient(circle at top, #111, #000); border: 1px solid #222; margin-bottom: 25px; position: relative; overflow: hidden; }
-        .profile-header::after { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 2px; background: var(--gold); box-shadow: 0 0 15px var(--gold); }
+        /* HEADER HUD */
+        .profile-header { text-align: center; padding: 45px 20px; border-radius: 28px; background: linear-gradient(180deg, #111, #000); border: 1px solid #222; margin-bottom: 20px; position: relative; overflow: hidden; }
+        .profile-header::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 3px; background: var(--gold); box-shadow: 0 0 20px var(--gold); }
 
-        .avatar-circle { width: 90px; height: 90px; background: var(--gold); color: black; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2.2rem; font-weight: bold; margin: 0 auto 15px; box-shadow: 0 0 30px rgba(212, 175, 55, 0.2); border: 4px solid #000; }
+        .avatar-zone { position: relative; width: 100px; height: 100px; margin: 0 auto 15px; }
+        .avatar-circle { width: 100%; height: 100%; background: var(--gold); color: black; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; font-weight: bold; border: 4px solid #000; box-shadow: 0 0 30px rgba(212,175,55,0.2); }
+        .status-dot { position: absolute; bottom: 5px; right: 5px; width: 18px; height: 18px; background: var(--green); border: 3px solid #000; border-radius: 50%; box-shadow: 0 0 10px var(--green); }
         
-        .badge-role { font-size: 0.65rem; background: rgba(212, 175, 55, 0.1); color: var(--gold); padding: 5px 14px; border-radius: 20px; border: 1px solid rgba(212, 175, 55, 0.3); display: inline-block; font-family: 'Goldman'; letter-spacing: 1px; margin-top: 10px; }
+        .badge-role { font-size: 0.6rem; background: rgba(212,175,55,0.1); color: var(--gold); padding: 6px 16px; border-radius: 20px; border: 1px solid rgba(212,175,55,0.3); display: inline-block; font-family: 'Goldman'; letter-spacing: 2px; margin-top: 10px; text-transform: uppercase; }
 
-        .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 25px; }
-        .stat-card { background: #0a0a0a; border: 1px solid #1a1a1a; padding: 15px; border-radius: 14px; text-align: center; }
-        .stat-card label { display: block; font-size: 0.55rem; color: #444; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 5px; }
-        .stat-card span { font-family: 'Goldman'; color: var(--gold); font-size: 1rem; }
+        /* DATA GRID */
+        .hud-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+        .hud-card { background: var(--panel); border: 1px solid #1a1a1a; padding: 18px; border-radius: 18px; transition: 0.3s; }
+        .hud-card label { display: block; font-size: 0.5rem; color: #444; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 6px; }
+        .hud-card span { font-family: 'Goldman'; color: #eee; font-size: 0.9rem; display: block; }
+        .hud-card.highlight span { color: var(--gold); }
 
-        .menu-group-label { margin: 25px 0 10px; color: #333; font-size: 0.65rem; font-weight: bold; letter-spacing: 2px; text-transform: uppercase; padding-left: 5px; }
-        .menu-item { display: flex; align-items: center; justify-content: space-between; padding: 18px; background: #080808; border-radius: 14px; margin-bottom: 10px; text-decoration: none; color: #eee; transition: 0.3s; border: 1px solid #111; font-size: 0.85rem; }
-        .menu-item:hover { border-color: var(--gold); transform: translateX(5px); background: #0c0c0c; }
-        .menu-item span:last-child { color: var(--gold); font-family: 'Goldman'; opacity: 0.5; }
+        /* PERFORMANCE SECTION */
+        .section-label { color: #333; font-size: 0.6rem; font-weight: bold; letter-spacing: 3px; text-transform: uppercase; margin: 25px 0 12px 10px; }
+        
+        .performance-panel { background: #050505; border: 1px solid #111; border-radius: 20px; padding: 20px; margin-bottom: 20px; }
+        .perf-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #111; }
+        .perf-row:last-child { border: none; }
+        .perf-row small { color: #555; font-size: 0.65rem; }
+        .perf-row b { font-family: 'Goldman'; font-size: 0.8rem; color: var(--gold); }
 
-        .btn-logout { width: 100%; margin-top: 40px; background: #000; color: var(--red); border: 1px solid var(--red); padding: 18px; border-radius: 14px; font-weight: bold; cursor: pointer; font-family: 'Goldman'; letter-spacing: 2px; transition: 0.3s; opacity: 0.7; }
-        .btn-logout:hover { opacity: 1; background: rgba(255, 68, 68, 0.05); }
+        /* MENU LIST */
+        .menu-item { display: flex; align-items: center; justify-content: space-between; padding: 20px; background: #080808; border-radius: 18px; margin-bottom: 10px; text-decoration: none; color: #eee; transition: 0.3s; border: 1px solid #111; font-size: 0.85rem; }
+        .menu-item:hover { border-color: var(--gold); background: #0c0c0c; padding-left: 25px; }
+        .menu-item .icon-box { width: 35px; height: 35px; background: #111; border-radius: 10px; display: flex; align-items: center; justify-content: center; margin-right: 15px; color: var(--gold); font-size: 1rem; }
+        
+        .btn-logout { width: 100%; margin: 30px 0; background: rgba(255,68,68,0.03); color: var(--red); border: 1px solid rgba(255,68,68,0.1); padding: 20px; border-radius: 18px; font-weight: bold; cursor: pointer; font-family: 'Goldman'; letter-spacing: 3px; transition: 0.3s; text-transform: uppercase; }
+        .btn-logout:hover { background: rgba(255,68,68,0.1); border-color: var(--red); }
     </style>
 </head>
 <body>
 
     <nav class="top-nav">
-        <div class="logo" style="color:var(--gold); font-family:'Goldman'; font-weight:bold; font-size:1.2rem; letter-spacing:2px;">NEXUS</div>
-        <div style="color: var(--green); font-weight: bold; font-family: 'Goldman';">₱<span id="display-balance">0.00</span></div>
+        <div class="logo" style="color:var(--gold); font-family:'Goldman'; font-weight:bold; font-size:1.2rem;">NEXUS</div>
+        <div style="color: var(--green); font-weight: bold; font-family: 'Goldman';" id="nav-bal">₱0.00</div>
     </nav>
 
     <div class="profile-container">
         
         <div class="profile-header">
-            <div class="avatar-circle" id="user-initial">-</div>
+            <div class="avatar-zone">
+                <div class="avatar-circle" id="user-initial">-</div>
+                <div class="status-dot"></div>
+            </div>
             <h2 id="display-username" style="margin: 0; letter-spacing: 2px; font-family: 'Goldman';">SYNCING...</h2>
             <div id="role-badge-container"><span class="badge-role">VERIFYING...</span></div>
         </div>
 
-        <div class="stat-grid">
-            <div class="stat-card">
+        <div class="hud-grid">
+            <div class="hud-card">
+                <label>Security Level</label>
+                <span style="color:var(--green)">ENCRYPTED</span>
+            </div>
+            <div class="hud-card highlight">
+                <label>Current Node</label>
+                <span id="level-display">SYNC...</span>
+            </div>
+            <div class="hud-card">
                 <label>Member Since</label>
-                <span id="join-date" style="font-size: 0.8rem;">--/--/--</span>
+                <span id="join-date">--/--/--</span>
             </div>
-            <div class="stat-card">
-                <label>Security Status</label>
-                <span style="color:var(--green); font-size: 0.8rem;">ENCRYPTED</span>
-            </div>
-            <div class="stat-card">
-                <label>Current Tier</label>
-                <span id="level-display">NODE --</span>
-            </div>
-            <div class="stat-card">
+            <div class="hud-card highlight">
                 <label>Yield Rate</label>
                 <span id="bonus-rate">0.00%</span>
             </div>
         </div>
 
+        <div class="section-label">Performance Metrics</div>
+        <div class="performance-panel">
+            <div class="perf-row">
+                <small>Total Net Profit</small>
+                <b id="stat-commission" style="color:var(--green);">₱0.00</b>
+            </div>
+            <div class="perf-row">
+                <small>Network Turnover</small>
+                <b id="stat-turnover">₱0.00</b>
+            </div>
+            <div class="perf-row">
+                <small>Protocol Status</small>
+                <b style="color:var(--green);">ACTIVE</b>
+            </div>
+        </div>
+
+        <div class="section-label">Account Protocols</div>
         <div class="menu-list">
-            <div class="menu-group-label">Financial Services</div>
             <a href="/wallet/" class="menu-item">
-                <span>Vault & Liquidation</span>
-                <span>EXECUTE →</span>
+                <div style="display:flex; align-items:center;">
+                    <div class="icon-box">💰</div>
+                    <span>Nexus Wallet & Vault</span>
+                </div>
+                <span style="color:var(--gold); opacity:0.3;">→</span>
             </a>
             <a href="/history/wallet.html" class="menu-item">
-                <span>Audit Trails</span>
-                <span>VIEW →</span>
+                <div style="display:flex; align-items:center;">
+                    <div class="icon-box">📜</div>
+                    <span>Transaction History</span>
+                </div>
+                <span style="color:var(--gold); opacity:0.3;">→</span>
             </a>
 
             <div id="management-section" style="display:none;">
-                <div class="menu-group-label">Hierarchy Protocol</div>
-                <a href="/admin/index.html" id="admin-link" class="menu-item" style="border-color: var(--gold);">
-                    <span id="mng-text">Management Console</span>
-                    <span>ACCESS →</span>
+                <div class="section-label">Hierarchy Access</div>
+                <a href="/admin/index.html" id="admin-link" class="menu-item" style="border-color: rgba(212,175,55,0.2);">
+                    <div style="display:flex; align-items:center;">
+                        <div class="icon-box" style="background:rgba(212,175,55,0.1);">⚡</div>
+                        <span id="mng-text" style="color:var(--gold); font-weight:bold;">Management Console</span>
+                    </div>
+                    <span>PRO →</span>
                 </a>
             </div>
 
@@ -96,7 +138,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
-        import { getFirestore, doc, onSnapshot, getDoc, setDoc, serverTimestamp, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+        import { getFirestore, doc, onSnapshot, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
         import { injectMenu } from "/menu.js";
 
         const firebaseConfig = { apiKey: "AIzaSyCBvOw8HrMhZD0aYSHqFdE196ZITdYBU3Q", authDomain: "nexus-sabong.firebaseapp.com", projectId: "nexus-sabong", storageBucket: "nexus-sabong.firebasestorage.app", messagingSenderId: "421723311", appId: "1:421723311:web:1780f179e7c2a7cc0e285a" };
@@ -104,43 +146,47 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // PERSISTENCE ENGINE
+        // PERSISTENCE ENGINE: Instant load from device memory
         enableIndexedDbPersistence(db).catch(() => {});
         injectMenu();
 
         onAuthStateChanged(auth, (user) => {
             if (user) {
-                // Background Heal
-                checkSystemIntegrity(user);
-
-                // Snapshot Hydration (Reads from Cache Instantly)
-                onSnapshot(doc(db, "users", user.uid), (snapshot) => {
-                    if (snapshot.exists()) {
-                        const data = snapshot.data();
-                        const username = data.username || "Player";
+                const userRef = doc(db, "users", user.uid);
+                
+                // SNAPSHOT SYNC: Non-blocking, instant UI population
+                onSnapshot(userRef, (snap) => {
+                    if (snap.exists()) {
+                        const data = snap.data();
+                        const username = data.username || "User";
                         const level = data.level || 6;
                         const role = data.role || "PLAYER";
 
-                        // DOM Update
+                        // Profile Core
                         document.getElementById('display-username').innerText = username.toUpperCase();
                         document.getElementById('user-initial').innerText = username.charAt(0).toUpperCase();
                         document.getElementById('level-display').innerText = `NODE ${level}`;
                         document.getElementById('bonus-rate').innerText = `${(data.commissionRate || 0).toFixed(2)}%`;
                         document.getElementById('role-badge-container').innerHTML = `<span class="badge-role">${role.replace('_', ' ')}</span>`;
-                        document.getElementById('display-balance').innerText = (data.balance || 0).toLocaleString(undefined, {minimumFractionDigits: 2});
+                        document.getElementById('nav-bal').innerText = `₱${(data.balance || 0).toLocaleString(undefined, {minimumFractionDigits: 2})}`;
+                        
+                        // Performance Stats
+                        document.getElementById('stat-commission').innerText = `₱${(data.totalCommission || 0).toLocaleString(undefined, {minimumFractionDigits: 2})}`;
+                        document.getElementById('stat-turnover').innerText = `₱${(data.totalTurnover || 0).toLocaleString()}`;
                         
                         if (data.createdAt) {
-                            document.getElementById('join-date').innerText = data.createdAt.toDate().toLocaleDateString();
+                            const dateStr = data.createdAt.toDate ? data.createdAt.toDate().toLocaleDateString() : 'Active';
+                            document.getElementById('join-date').innerText = dateStr;
                         }
 
-                        // Hierarchy Logic
+                        // Hierarchy Logic Visibility
                         if (level <= 5) {
                             document.getElementById('management-section').style.display = "block";
                             const mngText = document.getElementById('mng-text');
                             const adminLink = document.getElementById('admin-link');
                             
                             if (level === 1) {
-                                mngText.innerText = "System Command Center";
+                                mngText.innerText = "Command Center";
                                 adminLink.href = "/admin/index.html";
                             } else {
                                 mngText.innerText = "Network Manager";
@@ -149,26 +195,10 @@
                         }
                     }
                 });
-            } else { window.location.href = "/login/"; }
-        });
-
-        async function checkSystemIntegrity(user) {
-            const userRef = doc(db, "users", user.uid);
-            const snap = await getDoc(userRef);
-            if (!snap.exists()) {
-                await setDoc(userRef, {
-                    username: user.email.split('@')[0],
-                    level: 6,
-                    role: "PLAYER",
-                    balance: 100,
-                    commissionRate: 0,
-                    uplinePath: [],
-                    totalCommission: 0,
-                    totalTurnover: 0,
-                    createdAt: serverTimestamp()
-                });
+            } else { 
+                window.location.href = "/login/"; 
             }
-        }
+        });
 
         document.getElementById('btn-logout').onclick = () => {
             if(confirm("TERMINATE NEXUS SESSION?")) {
