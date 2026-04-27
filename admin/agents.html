@@ -3,174 +3,153 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Agent Manager | NEXUS</title>
+    <title>Agent Manager | NEXUS PRO</title>
     <link rel="stylesheet" href="../style.css">
     <link rel="stylesheet" href="../menu.css">
     <link href="https://fonts.googleapis.com/css2?family=Goldman:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        :root { --gold: #D4AF37; }
+        :root { --gold: #D4AF37; --green: #00ff88; --red: #ff4444; }
         
-        .btn-nexus {
-            font-family: 'Goldman', sans-serif;
-            font-weight: bold;
-            text-transform: uppercase;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: 0.3s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            letter-spacing: 1px;
-            height: 45px;
-        }
+        body { background: #000; color: #fff; overflow-x: hidden; }
 
-        .btn-gold { background: var(--gold); color: black; min-width: 120px; }
-        .btn-gold:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(212, 175, 55, 0.4); }
-        .btn-outline { background: transparent; border: 1px solid var(--gold); color: var(--gold); }
-        
-        .agent-container { max-width: 1100px; margin: 20px auto; padding: 20px; }
-        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 25px; }
-        .stat-card { background: #111; padding: 20px; border-radius: 12px; border: 1px solid #222; text-align: center; }
-        .stat-card h4 { font-size: 0.6rem; color: #555; text-transform: uppercase; margin-bottom: 8px; }
-        .stat-card .val { font-family: 'Goldman', sans-serif; font-size: 1.3rem; }
-        
-        .ref-panel { background: #0a0a0a; border: 1px dashed var(--gold); border-radius: 12px; padding: 25px; margin-bottom: 25px; text-align: center; }
-        .ref-input-group { display: flex; gap: 12px; margin: 15px auto 0; max-width: 600px; }
-        .ref-input-group input { flex: 1; background: #000; border: 1px solid #333; color: var(--gold); padding: 0 15px; border-radius: 8px; height: 45px; }
+        .top-nav { display: flex; justify-content: space-between; align-items: center; padding: 12px 20px 12px 75px; background: #000; border-bottom: 2px solid #222; position: sticky; top: 0; z-index: 1000; }
 
-        .panel { background: #111; border-radius: 15px; border: 1px solid #333; padding: 25px; }
-        .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #222; padding-bottom: 15px; gap: 15px; }
+        .agent-container { max-width: 1200px; margin: 20px auto; padding: 0 20px; }
         
-        /* SEARCH FILTER */
-        .search-wrapper { position: relative; flex: 1; max-width: 300px; }
-        .search-wrapper input { width: 100%; background: #000; border: 1px solid #333; color: white; padding: 10px 15px; border-radius: 8px; font-size: 0.8rem; outline: none; }
-        .search-wrapper input:focus { border-color: var(--gold); }
+        /* ANALYTICS GRID */
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 30px; }
+        .stat-card { background: linear-gradient(145deg, #111, #080808); padding: 25px; border-radius: 12px; border: 1px solid #222; text-align: center; box-shadow: 0 10px 20px rgba(0,0,0,0.4); }
+        .stat-card h4 { font-size: 0.6rem; color: #555; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 10px; font-weight: bold; }
+        .stat-card .val { font-family: 'Goldman'; font-size: 1.5rem; display: block; margin-top: 5px; }
 
+        /* RECRUITMENT BOX */
+        .ref-panel { background: #0a0a0a; border: 1px dashed var(--gold); border-radius: 15px; padding: 30px; margin-bottom: 30px; text-align: center; }
+        .ref-input-group { display: flex; gap: 12px; margin-top: 15px; background: #000; padding: 5px; border-radius: 10px; border: 1px solid #222; }
+        .ref-input-group input { flex: 1; background: transparent; border: none; color: var(--gold); padding: 0 15px; font-family: 'Goldman'; outline: none; }
+        
+        .panel { background: #0a0a0a; border-radius: 20px; border: 1px solid #1a1a1a; padding: 25px; }
+        .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; gap: 20px; }
+
+        /* TABLE STYLES */
         .agent-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
-        .agent-table th { text-align: left; color: #555; padding: 12px; border-bottom: 1px solid #222; text-transform: uppercase; font-size: 0.65rem; }
-        .agent-table td { padding: 15px 12px; border-bottom: 1px solid #1a1a1a; }
+        .agent-table th { text-align: left; color: #444; padding: 15px; border-bottom: 1px solid #222; text-transform: uppercase; font-size: 0.6rem; letter-spacing: 1px; }
+        .agent-table td { padding: 18px 15px; border-bottom: 1px solid #111; vertical-align: middle; }
         
-        .role-badge { background: #000; padding: 4px 8px; border-radius: 4px; font-size: 0.65rem; color: var(--gold); text-transform: uppercase; border: 1px solid #333; }
+        .role-badge { padding: 4px 10px; border-radius: 4px; font-size: 0.6rem; font-weight: bold; text-transform: uppercase; border: 1px solid #333; }
+        .tier-5 { color: var(--gold); border-color: rgba(212,175,55,0.3); }
+        .tier-6 { color: #888; border-color: #222; }
 
-        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); display: flex; align-items: center; justify-content: center; z-index: 2000; }
-        .modal-content { background: #0f0f0f; width: 90%; max-width: 420px; padding: 30px; border-radius: 20px; border: 1px solid var(--gold); }
-        .modal label { font-size: 0.65rem; color: #666; text-transform: uppercase; display: block; margin-top: 15px; margin-bottom: 5px; }
-        .modal input, .modal select { width: 100%; padding: 12px; background: #000; border: 1px solid #333; color: white; border-radius: 8px; box-sizing: border-box; }
-        
-        #upline-verify-status { font-size: 0.7rem; margin-top: 5px; font-weight: bold; min-height: 1em; }
+        /* MODAL */
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: none; align-items: center; justify-content: center; z-index: 2000; backdrop-filter: blur(5px); }
+        .modal-content { background: #0f0f0f; width: 90%; max-width: 450px; padding: 35px; border-radius: 24px; border: 1px solid #333; box-shadow: 0 0 50px rgba(0,0,0,1); }
+        .modal label { font-size: 0.6rem; color: #555; text-transform: uppercase; letter-spacing: 1.5px; display: block; margin: 15px 0 8px; font-weight: bold; }
+        .modal input, .modal select { width: 100%; padding: 14px; background: #000; border: 1px solid #222; color: white; border-radius: 10px; outline: none; transition: 0.3s; }
+        .modal input:focus { border-color: var(--gold); }
 
-        .top-nav { position: relative; display: flex; justify-content: space-between; align-items: center; padding: 12px 20px 12px 75px; background: #000; border-bottom: 2px solid #222; }
+        .btn-prime { background: var(--gold); color: #000; border: none; padding: 15px 25px; border-radius: 10px; font-family: 'Goldman'; font-weight: bold; cursor: pointer; text-transform: uppercase; transition: 0.3s; }
+        .btn-prime:hover { filter: brightness(1.2); transform: translateY(-2px); }
+
+        @media (max-width: 768px) { .stats-grid { grid-template-columns: 1fr 1fr; } .panel-header { flex-direction: column; align-items: flex-start; } }
     </style>
 </head>
 <body>
 
     <nav class="top-nav">
-        <div class="logo" style="color:var(--gold); font-family:'Goldman'; font-weight:bold; font-size:1.2rem;">AGENT CENTER</div>
-        <div id="my-role-display" style="color: #888; font-size: 0.7rem; font-family: 'Goldman';">TIER: ---</div>
+        <div class="logo" style="color:var(--gold); font-family:'Goldman'; font-weight:bold; font-size:1.3rem; letter-spacing:2px;">NEXUS NETWORK</div>
+        <div id="my-role-display" style="color: #444; font-size: 0.7rem; font-family: 'Goldman'; border: 1px solid #222; padding: 4px 10px; border-radius: 5px;">TIER: SYNCING...</div>
     </nav>
 
     <div class="agent-container">
-        <div class="ref-panel">
-            <h4 style="margin:0; color: var(--gold); font-size: 0.8rem; letter-spacing: 2px; font-family: 'Goldman';">NETWORK RECRUITMENT LINK</h4>
-            <div class="ref-input-group">
-                <input type="text" id="referral-url" readonly>
-                <button class="btn-nexus btn-gold" onclick="copyReferral()">COPY LINK</button>
-            </div>
+        <div class="stats-grid">
+            <div class="stat-card"><h4>My Commission</h4><span class="val" id="my-comm-rate" style="color:var(--gold);">0.00%</span></div>
+            <div class="stat-card"><h4>Branch Size</h4><span class="val" id="count-downlines" style="color:#fff;">0</span></div>
+            <div class="stat-card"><h4>Team Volume</h4><span class="val" id="team-turnover" style="color:var(--green);">₱0</span></div>
+            <div class="stat-card"><h4>Net Earnings</h4><span class="val" id="total-earned" style="color:var(--gold);">₱0</span></div>
         </div>
 
-        <div class="stats-grid">
-            <div class="stat-card"><h4>Personal Rate</h4><span class="val" id="my-comm-rate" style="color:var(--gold);">0%</span></div>
-            <div class="stat-card"><h4>Team Size</h4><span class="val" id="count-downlines" style="color:white;">0</span></div>
-            <div class="stat-card"><h4>Team Turnover</h4><span class="val" id="team-turnover" style="color:#00ff88;">₱0</span></div>
-            <div class="stat-card"><h4>Total Earnings</h4><span class="val" id="total-earned" style="color:var(--gold);">₱0</span></div>
+        <div class="ref-panel">
+            <h4 style="margin:0; color: #555; font-size: 0.7rem; letter-spacing: 2px;">YOUR RECRUITMENT ENTRANCE</h4>
+            <div class="ref-input-group">
+                <input type="text" id="referral-url" readonly value="Syncing link...">
+                <button onclick="copyReferral()" class="btn-prime" style="padding: 10px 20px; font-size: 0.7rem; border-radius: 8px;">COPY ENTRY LINK</button>
+            </div>
         </div>
 
         <div class="panel">
             <div class="panel-header">
-                <h3 style="margin:0; color: var(--gold); font-family: 'Goldman'; font-size: 1rem;">DOWNLINE MANAGEMENT</h3>
-                <div class="search-wrapper">
-                    <input type="text" id="table-search" placeholder="Search downline ID..." oninput="filterDownlineTable()">
+                <div>
+                    <h3 style="margin:0; color: var(--gold); font-family: 'Goldman'; font-size: 1rem;">PROTOCOL HIERARCHY</h3>
+                    <p style="margin:5px 0 0; font-size:0.6rem; color:#444;">MANAGE RATES AND TEAM PLACEMENTS</p>
                 </div>
-                <button class="btn-nexus btn-gold" style="font-size: 0.7rem; height: 38px;" onclick="toggleModal(true)">+ New Account</button>
+                <button onclick="toggleModal(true)" class="btn-prime" style="font-size: 0.75rem; padding: 12px 20px;">+ INITIALIZE ACCOUNT</button>
             </div>
+            
             <div style="overflow-x: auto;">
                 <table class="agent-table">
                     <thead>
                         <tr>
-                            <th>Username</th>
-                            <th>Role</th>
-                            <th>Comm %</th>
-                            <th>Turnover</th>
-                            <th>Actions</th>
+                            <th>Identity</th>
+                            <th>Role / Level</th>
+                            <th>Spread %</th>
+                            <th>Volume</th>
+                            <th>Protocol</th>
                         </tr>
                     </thead>
-                    <tbody id="agent-list"></tbody>
+                    <tbody id="agent-list">
+                        <tr><td colspan="5" style="text-align:center; color:#222; padding:50px;">Initializing secure connection...</td></tr>
+                    </tbody>
                 </table>
             </div>
         </div>
     </div>
 
-    <div id="create-modal" class="modal" style="display:none;">
+    <div id="create-modal" class="modal">
         <div class="modal-content">
-            <h3 id="modal-title" style="margin-top:0; color:var(--gold); font-family: 'Goldman'; text-align:center;">NETWORK PLACEMENT</h3>
+            <h3 id="modal-title" style="margin:0; color:var(--gold); font-family: 'Goldman'; text-align:center; font-size:1.1rem;">NETWORK PLACEMENT</h3>
             
-            <div id="create-only-fields">
-                <label>Target Username</label>
-                <input type="text" id="new-username" placeholder="Enter ID">
+            <div id="create-fields">
+                <label>Unique Username</label>
+                <input type="text" id="new-username" placeholder="Target ID">
 
-                <label>Assigned Role</label>
+                <label>Assign Protocol Level</label>
                 <select id="new-role"></select>
 
-                <label>Placement (Upline ID)</label>
-                <input type="text" id="new-upline" placeholder="Search Upline Username..." oninput="verifyUpline(this.value)">
-                <div id="upline-verify-status"></div>
+                <label>Parent Node (Upline)</label>
+                <input type="text" id="new-upline" placeholder="Search Username..." oninput="verifyUpline(this.value)">
+                <div id="upline-status" style="font-size:0.65rem; margin-top:5px; font-weight:bold;"></div>
             </div>
 
-            <label>Commission Rate (%)</label>
-            <input type="number" id="new-comm" step="0.01" oninput="validateInputRate()">
-            <div id="rate-warning" style="color: #ff4444; font-size: 0.7rem; display: none; margin: 10px 0; text-align: center;">Rate exceeds Upline's spread!</div>
+            <label>Commission Percentage (%)</label>
+            <input type="number" id="new-comm" step="0.01" placeholder="0.00" oninput="validateRate()">
+            <div id="rate-error" style="color: var(--red); font-size: 0.65rem; display: none; margin-top: 10px; text-align: center;">Rate exceeds Upline spread limit!</div>
 
-            <button class="btn-nexus btn-gold" id="btn-save" style="width:100%; margin-top:20px;" onclick="handleSave()">Confirm Placement</button>
-            <button class="btn-nexus btn-outline" style="width:100%; margin-top:10px; border:none; color:#555;" onclick="toggleModal(false)">Cancel</button>
+            <div style="margin-top:30px; display:flex; gap:10px;">
+                <button onclick="toggleModal(false)" style="flex:1; background:#111; color:#555; border:none; border-radius:10px; font-family:'Goldman'; cursor:pointer;">CANCEL</button>
+                <button id="btn-save" onclick="handleSave()" class="btn-prime" style="flex:2;">AUTHORIZE</button>
+            </div>
         </div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
-        import { getFirestore, doc, getDoc, getDocs, updateDoc, collection, query, where, onSnapshot, addDoc } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, getDocs, updateDoc, collection, query, where, onSnapshot, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
         import { injectMenu } from "/menu.js";
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyCBvOw8HrMhZD0aYSHqFdE196ZITdYBU3Q",
-            authDomain: "nexus-sabong.firebaseapp.com",
-            projectId: "nexus-sabong",
-            storageBucket: "nexus-sabong.firebasestorage.app",
-            messagingSenderId: "421723311",
-            appId: "1:421723311:web:1780f179e7c2a7cc0e285a"
-        };
+        const firebaseConfig = { apiKey: "AIzaSyCBvOw8HrMhZD0aYSHqFdE196ZITdYBU3Q", authDomain: "nexus-sabong.firebaseapp.com", projectId: "nexus-sabong", storageBucket: "nexus-sabong.firebasestorage.app", messagingSenderId: "421723311", appId: "1:421723311:web:1780f179e7c2a7cc0e285a" };
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-
-        window.firebaseAuth = auth;
-        window.firebaseDb = db;
         injectMenu();
 
-        // UPDATED 6-TIER STRUCTURE
         const TIERS = [
-            { role: "ADMIN", level: 1 }, 
-            { role: "OPERATOR", level: 2 }, 
-            { role: "INCO", level: 3 },
-            { role: "SUBOP", level: 4 }, 
-            { role: "AGENT", level: 5 }, 
-            { role: "PLAYER", level: 6 }
+            { r: "ADMIN", l: 1 }, { r: "OPERATOR", l: 2 }, { r: "INCO", l: 3 },
+            { r: "SUBOP", l: 4 }, { r: "AGENT", l: 5 }, { r: "PLAYER", l: 6 }
         ];
 
         let myData = null;
-        let editingUserId = null;
-        let verifiedUplineData = null;
+        let editId = null;
+        let parentData = null;
         let allDownlines = [];
 
         onAuthStateChanged(auth, async (user) => {
@@ -178,157 +157,134 @@
                 const snap = await getDoc(doc(db, "users", user.uid));
                 if(snap.exists()) {
                     myData = snap.data();
-                    if(myData.level >= 6) window.location.href = "/"; // Player redirect
-                    setupUI();
-                    loadDownlines();
+                    if(myData.level >= 6) window.location.href = "/";
+                    syncDashboard();
+                    loadNetwork();
                 }
             } else { window.location.href = "/login/"; }
         });
 
-        function setupUI() {
+        function syncDashboard() {
             document.getElementById('my-role-display').innerText = `TIER: ${myData.role}`;
-            document.getElementById('my-comm-rate').innerText = `${myData.commissionRate}%`;
+            document.getElementById('my-comm-rate').innerText = `${myData.commissionRate.toFixed(2)}%`;
             document.getElementById('total-earned').innerText = `₱${(myData.totalCommission || 0).toLocaleString()}`;
             document.getElementById('referral-url').value = `${window.location.origin}/register/?ref=${auth.currentUser.uid}`;
-            document.getElementById('new-upline').value = myData.username;
-            verifyUpline(myData.username);
-
-            const select = document.getElementById('new-role');
-            select.innerHTML = "";
-            TIERS.forEach(t => {
-                if (t.level > myData.level) {
-                    let opt = document.createElement('option');
-                    opt.value = t.role;
-                    opt.dataset.level = t.level;
-                    opt.innerText = t.role.replace("_", " ");
-                    select.appendChild(opt);
-                }
+            
+            const sel = document.getElementById('new-role');
+            sel.innerHTML = "";
+            TIERS.filter(t => t.l > myData.level).forEach(t => {
+                sel.innerHTML += `<option value="${t.r}" data-lvl="${t.l}">${t.r}</option>`;
             });
         }
 
-        window.verifyUpline = async (username) => {
-            const status = document.getElementById('upline-verify-status');
-            if(!username) return status.innerText = "";
-            
-            const q = query(collection(db, "users"), where("username", "==", username.toLowerCase()));
+        window.verifyUpline = async (val) => {
+            const status = document.getElementById('upline-status');
+            if(!val) { status.innerText = ""; return; }
+            const q = query(collection(db, "users"), where("username", "==", val.toLowerCase()));
             const snap = await getDocs(q);
-            
             if(!snap.empty) {
-                const data = snap.docs[0].data();
-                if (data.level >= 6) { // Can't place under a player
-                    verifiedUplineData = null;
-                    status.innerText = "❌ Cannot place under a PLAYER";
-                    status.style.color = "#ff4444";
-                    return;
+                const d = snap.docs[0].data();
+                if(d.level >= 6) { status.innerText = "❌ PLAYER CANNOT BE UPLINE"; status.style.color = var(--red); parentData = null; }
+                else {
+                    parentData = { id: snap.docs[0].id, ...d };
+                    status.innerText = `✅ ${d.role} (${d.commissionRate.toFixed(2)}% MAX)`;
+                    status.style.color = var(--green);
                 }
-                verifiedUplineData = { id: snap.docs[0].id, ...data };
-                status.innerText = `✅ ${verifiedUplineData.role} (${verifiedUplineData.commissionRate}% max)`;
-                status.style.color = "#00ff88";
-            } else {
-                verifiedUplineData = null;
-                status.innerText = "❌ User not found";
-                status.style.color = "#ff4444";
-            }
+            } else { status.innerText = "❌ UNKNOWN IDENTITY"; status.style.color = var(--red); parentData = null; }
         };
 
-        function loadDownlines() {
+        function loadNetwork() {
+            // New logic: Listen to anyone where YOU are in the upline path (total branch visibility)
             const q = query(collection(db, "users"), where("uplineId", "==", auth.currentUser.uid));
             onSnapshot(q, (snap) => {
                 allDownlines = [];
-                let teamT = 0;
-                snap.forEach(doc => {
-                    const d = doc.data();
-                    d.id = doc.id;
-                    allDownlines.push(d);
-                    teamT += (d.totalTurnover || 0);
+                let vol = 0;
+                snap.forEach(d => {
+                    const u = { id: d.id, ...d.data() };
+                    allDownlines.push(u);
+                    vol += (u.totalTurnover || 0);
                 });
                 document.getElementById('count-downlines').innerText = snap.size;
-                document.getElementById('team-turnover').innerText = `₱${teamT.toLocaleString()}`;
-                renderTable(allDownlines);
+                document.getElementById('team-turnover').innerText = `₱${vol.toLocaleString()}`;
+                renderTable();
             });
         }
 
-        function renderTable(data) {
+        function renderTable() {
             const list = document.getElementById('agent-list');
-            list.innerHTML = data.length ? "" : '<tr><td colspan="5" style="text-align:center; padding:40px; color:#333;">No direct downlines found.</td></tr>';
-            
-            data.forEach(u => {
+            list.innerHTML = allDownlines.length ? "" : '<tr><td colspan="5" style="text-align:center; padding:40px; color:#333;">No subordinates detected.</td></tr>';
+            allDownlines.forEach(u => {
                 list.innerHTML += `
                     <tr>
-                        <td><strong style="color:white;">${u.username}</strong></td>
-                        <td><span class="role-badge">${u.role}</span></td>
-                        <td>${u.commissionRate}%</td>
-                        <td style="color:#00ff88;">₱${(u.totalTurnover || 0).toLocaleString()}</td>
-                        <td><button class="btn-edit" style="color:var(--gold); border:none; background:none; cursor:pointer;" onclick="openEdit('${u.id}', '${u.username}', ${u.commissionRate})">EDIT RATE</button></td>
+                        <td><strong style="color:white;">${u.username.toUpperCase()}</strong></td>
+                        <td><span class="role-badge tier-${u.level}">${u.role}</span></td>
+                        <td style="font-family:'Goldman'; color:var(--gold);">${u.commissionRate.toFixed(2)}%</td>
+                        <td style="color:var(--green);">₱${(u.totalTurnover || 0).toLocaleString()}</td>
+                        <td><button style="color:var(--gold); background:none; border:none; cursor:pointer; font-size:0.65rem; font-weight:bold; letter-spacing:1px;" onclick="openEdit('${u.id}', '${u.username}', ${u.commissionRate})">RE-RATE</button></td>
                     </tr>
                 `;
             });
         }
 
-        window.filterDownlineTable = () => {
-            const term = document.getElementById('table-search').value.toLowerCase();
-            const filtered = allDownlines.filter(u => u.username.includes(term));
-            renderTable(filtered);
+        window.validateRate = () => {
+            const val = parseFloat(document.getElementById('new-comm').value);
+            const limit = parentData ? parentData.commissionRate : myData.commissionRate;
+            const err = document.getElementById('rate-error');
+            const btn = document.getElementById('btn-save');
+            if (val > limit) { err.style.display = "block"; btn.disabled = true; btn.style.opacity = "0.3"; }
+            else { err.style.display = "none"; btn.disabled = false; btn.style.opacity = "1"; }
         };
 
         window.handleSave = async () => {
             const comm = parseFloat(document.getElementById('new-comm').value);
-            if (!verifiedUplineData && !editingUserId) return alert("Select a valid Upline.");
-            if (isNaN(comm) || comm > verifiedUplineData.commissionRate) return alert("Rate exceeds Upline limit.");
-
-            const saveBtn = document.getElementById('btn-save');
-            saveBtn.disabled = true;
-            saveBtn.innerText = "PROCESSING...";
-
+            const btn = document.getElementById('btn-save');
+            btn.innerText = "AUTHORIZING...";
+            
             try {
-                if (editingUserId) {
-                    await updateDoc(doc(db, "users", editingUserId), { commissionRate: comm });
+                if(editId) {
+                    await updateDoc(doc(db, "users", editId), { commissionRate: comm });
                 } else {
                     const user = document.getElementById('new-username').value.trim().toLowerCase();
-                    const roleSelect = document.getElementById('new-role');
-                    const role = roleSelect.value;
-                    const level = parseInt(roleSelect.options[roleSelect.selectedIndex].dataset.level);
+                    const roleSel = document.getElementById('new-role');
+                    const role = roleSel.value;
+                    const level = parseInt(roleSel.options[roleSel.selectedIndex].dataset.lvl);
+                    
+                    if(!parentData) return alert("Verify Upline First");
 
                     await addDoc(collection(db, "users"), {
                         username: user, role, level, commissionRate: comm,
-                        uplineId: verifiedUplineData.id,
-                        uplinePath: [...(verifiedUplineData.uplinePath || []), verifiedUplineData.id],
-                        balance: 0, totalTurnover: 0, totalCommission: 0, createdAt: new Date()
+                        uplineId: parentData.id,
+                        uplinePath: [...(parentData.uplinePath || []), parentData.id],
+                        balance: 0, totalTurnover: 0, totalCommission: 0, createdAt: serverTimestamp()
                     });
                 }
                 toggleModal(false);
-            } catch (e) { alert(e.message); }
-            finally { saveBtn.disabled = false; saveBtn.innerText = "Confirm Placement"; }
+            } catch(e) { alert("Access Denied: " + e.message); }
+            finally { btn.innerText = "AUTHORIZE"; }
+        };
+
+        window.openEdit = (id, user, rate) => {
+            editId = id;
+            document.getElementById('modal-title').innerText = `ADJUST RATE: ${user.toUpperCase()}`;
+            document.getElementById('create-fields').style.display = "none";
+            document.getElementById('new-comm').value = rate;
+            toggleModal(true);
+        };
+
+        window.toggleModal = (s) => {
+            if(!s) editId = null;
+            document.getElementById('create-modal').style.display = s ? 'flex' : 'none';
+            if(s && !editId) {
+                document.getElementById('modal-title').innerText = "NETWORK PLACEMENT";
+                document.getElementById('create-fields').style.display = "block";
+                document.getElementById('new-upline').value = myData.username;
+                verifyUpline(myData.username);
+            }
         };
 
         window.copyReferral = () => {
             navigator.clipboard.writeText(document.getElementById("referral-url").value);
-            alert("Referral Link Copied!");
-        };
-
-        window.openEdit = (uid, username, currentRate) => {
-            editingUserId = uid;
-            document.getElementById('modal-title').innerText = `EDIT: ${username.toUpperCase()}`;
-            document.getElementById('create-only-fields').style.display = "none";
-            document.getElementById('new-comm').value = currentRate;
-            toggleModal(true);
-        };
-
-        window.toggleModal = (show) => {
-            if(!show) editingUserId = null;
-            document.getElementById('create-modal').style.display = show ? 'flex' : 'none';
-            if(show && !editingUserId) {
-                document.getElementById('modal-title').innerText = "NETWORK PLACEMENT";
-                document.getElementById('create-only-fields').style.display = "block";
-                setupUI();
-            }
-        };
-
-        window.validateInputRate = () => {
-            const val = parseFloat(document.getElementById('new-comm').value);
-            const max = verifiedUplineData ? verifiedUplineData.commissionRate : 0;
-            document.getElementById('rate-warning').style.display = val > max ? "block" : "none";
-            document.getElementById('btn-save').disabled = val > max;
+            alert("Protocol: Recrutiment Link Copied.");
         };
     </script>
 </body>
