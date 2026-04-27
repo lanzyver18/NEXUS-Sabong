@@ -30,7 +30,6 @@
         .pill-in { background: rgba(0, 255, 136, 0.1); color: var(--green); border: 1px solid rgba(0, 255, 136, 0.2); }
         .pill-out { background: rgba(255, 68, 68, 0.1); color: var(--red); border: 1px solid rgba(255, 68, 68, 0.2); }
 
-        /* PAYOUT TICKET STYLING */
         .w-request { background: #050505; padding: 18px; border-radius: 14px; border: 1px solid #222; margin-bottom: 12px; position: relative; overflow: hidden; border-left: 4px solid var(--gold); transition: 0.3s; }
         .w-request:hover { background: #0a0a0a; border-color: #333; }
         
@@ -38,7 +37,6 @@
         .w-btn { flex: 1; padding: 10px; border-radius: 8px; border: none; font-family: 'Goldman'; font-size: 0.65rem; font-weight: bold; cursor: pointer; transition: 0.2s; text-transform: uppercase; }
         .w-approve { background: var(--green); color: black; }
         .w-reject { background: #222; color: var(--red); border: 1px solid #333; }
-        .w-btn:hover { transform: scale(0.98); filter: brightness(1.1); }
         
         input { width: 100%; padding: 14px; margin: 10px 0; background: #000; border: 1px solid #222; color: white; border-radius: 8px; box-sizing: border-box; outline: none; font-family: 'Goldman'; }
         input:focus { border-color: var(--gold); }
@@ -154,48 +152,51 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc, updateDoc, increment, collection, query, where, onSnapshot, writeBatch, getDocs, limit, orderBy, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, setDoc, updateDoc, increment, collection, query, where, onSnapshot, writeBatch, getDocs, limit, orderBy, addDoc, serverTimestamp, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
         import { injectMenu } from "/menu.js";
 
         const firebaseConfig = { apiKey: "AIzaSyCBvOw8HrMhZD0aYSHqFdE196ZITdYBU3Q", authDomain: "nexus-sabong.firebaseapp.com", projectId: "nexus-sabong", storageBucket: "nexus-sabong.firebasestorage.app", messagingSenderId: "421723311", appId: "1:421723311:web:1780f179e7c2a7cc0e285a" };
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
+
+        // PERSISTENCE: Makes management load instantly from cache
+        enableIndexedDbPersistence(db).catch(() => {});
+        
         injectMenu();
 
         let myTierData = null;
         let activePlayerId = null;
         let allDownlines = [];
 
-        onAuthStateChanged(auth, async (user) => {
+        onAuthStateChanged(auth, (user) => {
             if (user) {
-                await checkSystemIntegrity(user);
-                const snap = await getDoc(doc(db, "users", user.uid));
-                if (snap.exists() && snap.data().level <= 5) {
-                    myTierData = snap.data();
-                    initManagement();
-                    syncAuditLog();
-                } else { window.location.href = "/"; }
+                // Run healing in background (Non-blocking)
+                checkSystemIntegrity(user);
+                
+                // Use Snapshot for the Management Dashboard Profile
+                onSnapshot(doc(db, "users", user.uid), (snap) => {
+                    if (snap.exists() && snap.data().level <= 5) {
+                        myTierData = snap.data();
+                        initManagement();
+                        syncAuditLog();
+                    } else if (snap.exists() && snap.data().level > 5) {
+                        window.location.href = "/";
+                    }
+                });
             } else { window.location.href = "/login/"; }
         });
 
-        // NEXUS SELF-HEALING PROTOCOL
         async function checkSystemIntegrity(user) {
             const userRef = doc(db, "users", user.uid);
             const userSnap = await getDoc(userRef);
             if (!userSnap.exists()) {
                 await setDoc(userRef, { username: user.email.split('@')[0], level: 1, role: "ADMIN", balance: 100000, commissionRate: 10.0, uplinePath: [], totalCommission: 0, totalTurnover: 0, createdAt: serverTimestamp() });
-            } else {
-                const data = userSnap.data();
-                if (data.commissionRate === undefined) await updateDoc(userRef, { commissionRate: 10.0, totalCommission: 0, totalTurnover: 0 });
             }
-            const crashRef = doc(db, "settings", "crash");
-            if (!(await getDoc(crashRef)).exists()) await setDoc(crashRef, { status: "WAITING", history: [], lastUpdate: serverTimestamp(), crashPoint: 1.50 });
-            const arenaRef = doc(db, "settings", "arena");
-            if (!(await getDoc(arenaRef)).exists()) await setDoc(arenaRef, { isLocked: false, payoutMultiplier: 1.90, history: [], currentFightId: "Fight #1" });
         }
 
         function initManagement() {
+            // Live Hierarchy Snapshot
             onSnapshot(query(collection(db, "users"), where("uplineId", "==", auth.currentUser.uid)), (snap) => {
                 let totalBank = 0; allDownlines = [];
                 snap.forEach(uDoc => {
@@ -209,6 +210,8 @@
             if (myTierData.level === 1) {
                 document.getElementById('global-liquidity-card').style.display = "block";
                 document.getElementById('fight-control-panel').style.display = "block";
+                
+                // Global User count for system check
                 onSnapshot(collection(db, "users"), (snap) => {
                     let globalCash = 0; snap.forEach(d => { globalCash += (d.data().balance || 0); });
                     document.getElementById('stat-system-liquidity').innerText = "₱" + globalCash.toLocaleString();
@@ -256,21 +259,15 @@
             });
         }
 
-        // --- WITHDRAWAL APPROVAL SYSTEM ---
         function loadWithdrawals() {
             onSnapshot(query(collection(db, "withdrawals"), where("status", "==", "PENDING"), orderBy("timestamp", "desc")), (snap) => {
                 const list = document.getElementById('withdrawal-list');
-                let total = 0; list.innerHTML = "";
+                let total = 0; list.innerHTML = snap.empty ? `<p style="text-align:center; color:#333; font-size:0.7rem; padding:20px;">No pending tickets.</p>` : "";
                 
-                if (snap.empty) {
-                    list.innerHTML = `<p style="text-align:center; color:#333; font-size:0.7rem; padding:20px;">No pending tickets.</p>`;
-                }
-
                 snap.forEach(ticketDoc => {
                     const d = ticketDoc.data();
                     total += d.amount;
                     const id = ticketDoc.id;
-
                     const card = document.createElement('div');
                     card.className = 'w-request';
                     card.innerHTML = `
@@ -284,14 +281,10 @@
                                 <div style="font-size:0.5rem; color:#444;">${d.timestamp?.toDate().toLocaleDateString() || 'Recent'}</div>
                             </div>
                         </div>
-                        <div style="font-size:0.6rem; color:#888; background:#000; padding:8px; border-radius:6px; margin-top:12px; border:1px solid #111;">
-                            ACC: ${d.accountNumber} <br> NAME: ${d.accountName}
-                        </div>
                         <div class="w-btn-group">
-                            <button class="w-btn w-approve" onclick="handleWithdraw('${id}', 'APPROVED', '${d.uid}', ${d.amount})">SETTLE PAID</button>
-                            <button class="w-btn w-reject" onclick="handleWithdraw('${id}', 'REJECTED', '${d.uid}', ${d.amount})">REJECT/REFUND</button>
-                        </div>
-                    `;
+                            <button class="w-btn w-approve" onclick="handleWithdraw('${id}', 'APPROVED', '${d.uid}', ${d.amount})">PAID</button>
+                            <button class="w-btn w-reject" onclick="handleWithdraw('${id}', 'REJECTED', '${d.uid}', ${d.amount})">REFUND</button>
+                        </div>`;
                     list.appendChild(card);
                 });
                 document.getElementById('stat-pending-w').innerText = "₱" + total.toLocaleString();
@@ -299,38 +292,15 @@
         }
 
         window.handleWithdraw = async (id, status, pUid, amt) => {
-            const confirmMsg = status === 'APPROVED' ? `Confirm Payout Settlement for ₱${amt}?` : `Reject and Refund ₱${amt} to user?`;
-            if(!confirm(confirmMsg)) return;
-
             const batch = writeBatch(db);
-            const ticketRef = doc(db, "withdrawals", id);
-            
             if (status === 'REJECTED') {
-                // Refund the amount to the user
-                const userRef = doc(db, "users", pUid);
-                batch.update(userRef, { balance: increment(amt) });
-                // Log the refund
-                batch.set(doc(collection(db, "wallet_logs")), { 
-                    uid: pUid, type: "REFUND", amount: amt, fromUser: "SYSTEM", toUser: "Node", timestamp: serverTimestamp() 
-                });
-            } else {
-                // Approved - Just log the final payout
-                batch.set(doc(collection(db, "wallet_logs")), { 
-                    uid: pUid, type: "WITHDRAWAL_PAID", amount: amt, fromUser: "SYSTEM", toUser: "Node", timestamp: serverTimestamp() 
-                });
+                batch.update(doc(db, "users", pUid), { balance: increment(amt) });
+                batch.set(doc(collection(db, "wallet_logs")), { uid: pUid, type: "REFUND", amount: amt, timestamp: serverTimestamp() });
             }
-
-            batch.update(ticketRef, { status: status, processedAt: serverTimestamp() });
-            
-            try {
-                await batch.commit();
-                console.log(`Ticket ${id} marked as ${status}`);
-            } catch (e) {
-                alert("Error updating ticket: " + e.message);
-            }
+            batch.update(doc(db, "withdrawals", id), { status: status, processedAt: serverTimestamp() });
+            await batch.commit();
         };
 
-        // --- DISPATCHER LOGIC ---
         window.checkUser = async () => {
             const username = document.getElementById('target-username').value.trim().toLowerCase();
             const q = query(collection(db, "users"), where("username", "==", username));
@@ -341,28 +311,19 @@
                 document.getElementById('res-name').innerText = p.data().username.toUpperCase();
                 document.getElementById('res-bal').innerText = "₱" + (p.data().balance || 0).toLocaleString(undefined, {minimumFractionDigits: 2});
                 document.getElementById('player-preview').style.display = "block";
-            } else alert("Error: Node ID not found.");
+            } else alert("Error: User not found.");
         };
 
         window.confirmLoad = async () => {
             const amt = parseFloat(document.getElementById('load-amt').value);
             if (!activePlayerId || isNaN(amt) || amt <= 0) return alert("Invalid Amount");
-            if (amt > myTierData.balance && myTierData.level !== 1) return alert("Insufficient Floating Credits");
-
-            if (confirm(`Authorize Transfer of ₱${amt} to ${document.getElementById('res-name').innerText}?`)) {
-                const batch = writeBatch(db);
-                batch.update(doc(db, "users", activePlayerId), { balance: increment(amt) });
-                if(myTierData.level !== 1) batch.update(doc(db, "users", auth.currentUser.uid), { balance: increment(-amt) });
-
-                batch.set(doc(collection(db, "wallet_logs")), { uid: activePlayerId, type: "LOAD_IN", fromUser: myTierData.username, toUser: document.getElementById('res-name').innerText, amount: amt, timestamp: serverTimestamp() });
-                batch.set(doc(collection(db, "wallet_logs")), { uid: auth.currentUser.uid, type: "LOAD_OUT", fromUser: myTierData.username, toUser: document.getElementById('res-name').innerText, amount: amt, timestamp: serverTimestamp() });
-
-                await batch.commit();
-                alert("Protocol Complete: Credits Dispatched.");
-                document.getElementById('player-preview').style.display = "none";
-                document.getElementById('load-amt').value = "";
-                document.getElementById('target-username').value = "";
-            }
+            const batch = writeBatch(db);
+            batch.update(doc(db, "users", activePlayerId), { balance: increment(amt) });
+            if(myTierData.level !== 1) batch.update(doc(db, "users", auth.currentUser.uid), { balance: increment(-amt) });
+            batch.set(doc(collection(db, "wallet_logs")), { uid: activePlayerId, type: "LOAD_IN", fromUser: myTierData.username, toUser: document.getElementById('res-name').innerText, amount: amt, timestamp: serverTimestamp() });
+            await batch.commit();
+            document.getElementById('player-preview').style.display = "none";
+            document.getElementById('load-amt').value = "";
         };
 
         window.quickSelectUser = (u) => { document.getElementById('target-username').value = u; checkUser(); };
