@@ -9,9 +9,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Goldman:wght@400;700&display=swap" rel="stylesheet">
     <style>
         :root { --gold: #D4AF37; --green: #00ff88; --red: #ff4444; }
-        body { background: #000; overflow-x: hidden; color: #fff; }
+        body { background: #000; overflow-x: hidden; color: #fff; padding-bottom: 100px; }
         
-        .top-nav { display: flex; justify-content: space-between; align-items: center; padding: 12px 20px 12px 75px; background: #000; border-bottom: 2px solid #222; position: sticky; top: 0; z-index: 1000; }
+        .top-nav { display: flex; justify-content: space-between; align-items: center; padding: 12px 20px; background: #000; border-bottom: 2px solid #222; position: sticky; top: 0; z-index: 1000; }
 
         .admin-grid { display: grid; grid-template-columns: 1fr 350px; gap: 20px; max-width: 1300px; margin: 20px auto; padding: 0 20px; }
         .insight-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 20px; }
@@ -52,7 +52,10 @@
 
     <nav class="top-nav">
         <div class="logo" style="color:var(--gold); font-family:'Goldman'; font-weight:bold; font-size:1.3rem; letter-spacing:2px;">NEXUS SYSTEM</div>
-        <div id="session-status" style="color: var(--green); font-size: 0.75rem; font-family: 'Goldman';">SECURE NODE ACTIVE</div>
+        <div style="text-align: right;">
+            <div id="nav-bal" style="color: var(--green); font-weight: bold; font-family: 'Goldman'; font-size: 1rem;">₱0.00</div>
+            <div style="color: var(--green); font-size: 0.5rem; font-family: 'Goldman';">SECURE NODE ACTIVE</div>
+        </div>
     </nav>
 
     <div class="admin-grid">
@@ -163,6 +166,8 @@
         // PERSISTENCE: Makes management load instantly from cache
         enableIndexedDbPersistence(db).catch(() => {});
         
+        window.firebaseAuth = auth;
+        window.firebaseDb = db;
         injectMenu();
 
         let myTierData = null;
@@ -171,17 +176,27 @@
 
         onAuthStateChanged(auth, (user) => {
             if (user) {
-                // Run healing in background (Non-blocking)
                 checkSystemIntegrity(user);
-                
-                // Use Snapshot for the Management Dashboard Profile
+                // SNAPSHOT SYNC: Manual push to global UI elements for sidebar and topnav
                 onSnapshot(doc(db, "users", user.uid), (snap) => {
-                    if (snap.exists() && snap.data().level <= 5) {
+                    if (snap.exists()) {
                         myTierData = snap.data();
-                        initManagement();
-                        syncAuditLog();
-                    } else if (snap.exists() && snap.data().level > 5) {
-                        window.location.href = "/";
+                        
+                        // Force UI Update for Nav/Sidebar
+                        const navBal = document.getElementById('nav-bal');
+                        const sidebarBal = document.getElementById('sidebar-balance');
+                        const sidebarId = document.getElementById('sidebar-id');
+
+                        if(navBal) navBal.innerText = `₱${(myTierData.balance || 0).toLocaleString(undefined, {minimumFractionDigits: 2})}`;
+                        if(sidebarBal) sidebarBal.innerText = `₱${(myTierData.balance || 0).toLocaleString(undefined, {minimumFractionDigits: 2})}`;
+                        if(sidebarId) sidebarId.innerText = `ID: ${myTierData.username.toUpperCase()}`;
+
+                        if (myTierData.level <= 5) {
+                            initManagement();
+                            syncAuditLog();
+                        } else {
+                            window.location.href = "/";
+                        }
                     }
                 });
             } else { window.location.href = "/login/"; }
@@ -196,7 +211,6 @@
         }
 
         function initManagement() {
-            // Live Hierarchy Snapshot
             onSnapshot(query(collection(db, "users"), where("uplineId", "==", auth.currentUser.uid)), (snap) => {
                 let totalBank = 0; allDownlines = [];
                 snap.forEach(uDoc => {
@@ -210,8 +224,6 @@
             if (myTierData.level === 1) {
                 document.getElementById('global-liquidity-card').style.display = "block";
                 document.getElementById('fight-control-panel').style.display = "block";
-                
-                // Global User count for system check
                 onSnapshot(collection(db, "users"), (snap) => {
                     let globalCash = 0; snap.forEach(d => { globalCash += (d.data().balance || 0); });
                     document.getElementById('stat-system-liquidity').innerText = "₱" + globalCash.toLocaleString();
