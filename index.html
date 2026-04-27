@@ -16,8 +16,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            position: relative; 
-            padding: 12px 20px 12px 75px; 
+            padding: 12px 20px; 
             background: #000;
             border-bottom: 2px solid #222;
             position: sticky;
@@ -28,9 +27,8 @@
         .user-controls { display: flex; align-items: center; gap: 15px; }
         .balance-display { text-align: right; display: flex; flex-direction: column; }
         .balance-display small { color: #888; font-size: 0.6rem; letter-spacing: 1px; }
-        .balance-display span { color: var(--green); font-weight: bold; font-size: 1.1rem; }
+        .balance-display span { color: var(--green); font-weight: bold; font-size: 1.1rem; transition: opacity 0.2s; }
         
-        /* TICKER AD */
         .news-ticker {
             background: #D4AF37;
             color: #000;
@@ -46,7 +44,6 @@
             animation: ticker 30s linear infinite;
         }
 
-        /* ADS CAROUSEL STYLING - MOBILE OPTIMIZED */
         .promo-container {
             width: 100%;
             height: 160px;
@@ -72,7 +69,6 @@
         .ad-content h2 { font-family: 'Goldman'; color: var(--gold); margin: 0; font-size: 1.2rem; text-shadow: 0 0 10px rgba(0,0,0,0.8); }
         .ad-content p { color: #fff; font-size: 0.75rem; margin: 5px 0 10px; max-width: 250px; }
 
-        /* SERVER STATS BAR */
         .stats-bar {
             background: #080808;
             padding: 10px 20px;
@@ -84,9 +80,8 @@
         .stat-item small { display: block; font-size: 0.5rem; color: #444; text-transform: uppercase; letter-spacing: 1px; }
         .stat-item span { font-family: 'Goldman'; font-size: 0.7rem; color: #eee; }
 
-        /* LOBBY GRID */
         .lobby-grid { 
-            padding: 20px 20px 40px; 
+            padding: 20px 20px 100px; 
             max-width: 900px; 
             margin: auto; 
             display: grid; 
@@ -118,7 +113,6 @@
         .card-crash { background-image: linear-gradient(to right, rgba(0,0,0,0.9), transparent), url('https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=800&q=60'); }
         .card-mines { background-image: linear-gradient(to right, rgba(0,0,0,0.9), transparent), url('https://images.unsplash.com/photo-1614028674026-a65e31bfd27c?w=800&q=60'); }
 
-        /* IN-FEED AD BANNER */
         .interstitial-ad {
             max-width: 900px;
             margin: 0 auto 30px;
@@ -148,10 +142,9 @@
         .card-info h3 { margin: 0; color: white; font-size: 1.1rem; font-family: 'Goldman'; letter-spacing: 1px; }
         .card-info p { margin: 3px 0 0; color: var(--gold); font-size: 0.7rem; font-weight: bold; text-transform: uppercase; }
 
-        /* QUICK ACTIONS */
         .quick-actions { 
             display: flex; gap: 10px; padding: 15px 20px; 
-            background: #000; position: fixed; bottom: 70px; /* Adjusting for Casino-Plus Bottom Nav height */
+            background: #000; position: fixed; bottom: 70px; 
             left: 0; 
             width: 100%; box-sizing: border-box; border-top: 1px solid #222; z-index: 100; 
         }
@@ -166,8 +159,8 @@
 
         @media (max-width: 600px) { 
             .promo-container { height: 130px; } 
-            .lobby-grid { grid-template-columns: 1fr; padding-bottom: 160px; } 
-            .quick-actions { bottom: 70px; } /* Sits above the Casino Bottom Bar */
+            .lobby-grid { grid-template-columns: 1fr; padding-bottom: 180px; } 
+            .quick-actions { bottom: 70px; }
         }
     </style>
 </head>
@@ -177,7 +170,7 @@
         <div class="logo" style="color:var(--gold); font-family:'Goldman'; font-weight:bold; font-size:1.4rem;">NEXUS</div>
         <div class="user-controls">
             <div class="balance-display">
-                <small id="user-display">LOADING...</small>
+                <small id="user-display">SYNCING...</small>
                 <span>₱<span id="nav-balance">0.00</span></span>
             </div>
             <button class="nav-profile-btn" style="border:1px solid #333; color:#888; padding:8px 12px; border-radius:8px; background:transparent; font-size:0.6rem; cursor:pointer;" onclick="window.location.href='/profile/'">ID</button>
@@ -273,10 +266,10 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        
-        // PERSISTENCE PROTOCOL: Enables Instant Loading
+
+        // PERSISTENCE ENGINE: Instant load from device storage
         enableIndexedDbPersistence(db).catch((err) => {
-            console.warn("Persistence Status:", err.code);
+            console.warn("Persistence locked:", err.code);
         });
 
         window.firebaseAuth = auth;
@@ -284,6 +277,7 @@
 
         injectMenu();
 
+        // Ad Carousel Logic
         let currentSlide = 0;
         const slides = document.querySelectorAll('.ad-slide');
         setInterval(() => {
@@ -294,27 +288,36 @@
             }
         }, 5000);
 
-        // INSTANT-LOAD AUTH SNAPSHOT
+        // FAST-HUD HYDRATION: Snapshots read from cache instantly
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 const userRef = doc(db, "users", user.uid);
                 
-                // Using non-blocking onSnapshot for instant UI hydration
                 onSnapshot(userRef, (snapshot) => {
                     if (snapshot.exists()) {
                         const data = snapshot.data();
-                        document.getElementById('user-display').innerText = data.username ? data.username.toUpperCase() : "PLAYER";
-                        document.getElementById('nav-balance').innerText = (data.balance || 0).toLocaleString(undefined, {minimumFractionDigits: 2});
                         
+                        // Sync Name & Balance (Microsecond Hydration)
+                        const nameEl = document.getElementById('user-display');
+                        const balEl = document.getElementById('nav-balance');
+                        
+                        if (nameEl) nameEl.innerText = data.username ? data.username.toUpperCase() : "PLAYER";
+                        if (balEl) balEl.innerText = (data.balance || 0).toLocaleString(undefined, {minimumFractionDigits: 2});
+                        
+                        // Management visibility
                         const level = data.level || 6;
                         const adminBtn = document.getElementById('admin-btn');
-                        if (level >= 1 && level <= 5) {
+                        if (adminBtn && level >= 1 && level <= 5) {
                             adminBtn.style.display = "block";
                             adminBtn.onclick = () => { window.location.href = (level === 1) ? '/admin/index.html' : '/admin/agents.html'; };
                         }
                     }
+                }, (error) => {
+                    console.error("Snapshot failed:", error);
                 });
-            } else { window.location.href = "/login/"; }
+            } else {
+                window.location.href = "/login/";
+            }
         });
     </script>
 </body>
