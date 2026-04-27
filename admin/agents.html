@@ -9,12 +9,12 @@
     <link href="https://fonts.googleapis.com/css2?family=Goldman:wght@400;700&display=swap" rel="stylesheet">
     <style>
         :root { --gold: #D4AF37; --green: #00ff88; --red: #ff4444; }
-        body { background: #000; color: #fff; overflow-x: hidden; }
-        .top-nav { position: relative; display: flex; justify-content: space-between; align-items: center; padding: 12px 20px 12px 75px; background: #000; border-bottom: 2px solid #222; }
+        body { background: #000; color: #fff; overflow-x: hidden; padding-bottom: 80px; }
+        .top-nav { position: relative; display: flex; justify-content: space-between; align-items: center; padding: 12px 20px 12px 75px; background: #000; border-bottom: 2px solid #222; position: sticky; top: 0; z-index: 1000; }
         .btn-nexus { font-family: 'Goldman', sans-serif; font-weight: bold; text-transform: uppercase; border: none; border-radius: 8px; cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center; letter-spacing: 1px; height: 45px; }
         .btn-gold { background: var(--gold); color: black; min-width: 120px; }
         .btn-gold:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(212, 175, 55, 0.4); }
-        .agent-container { max-width: 1200px; margin: 20px auto; padding: 20px; display: grid; grid-template-columns: 1fr 350px; gap: 20px; }
+        .agent-container { max-width: 1200px; margin: 20px auto; padding: 0 20px; display: grid; grid-template-columns: 1fr 350px; gap: 20px; }
         .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-bottom: 25px; grid-column: span 2; }
         .stat-card { background: linear-gradient(145deg, #111, #080808); padding: 20px; border-radius: 12px; border: 1px solid #222; text-align: center; }
         .stat-card h4 { font-size: 0.6rem; color: #555; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 1px; }
@@ -119,13 +119,15 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
-        import { getFirestore, doc, getDoc, getDocs, setDoc, updateDoc, collection, query, where, onSnapshot, addDoc, orderBy, limit, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, getDocs, setDoc, updateDoc, collection, query, where, onSnapshot, addDoc, orderBy, limit, serverTimestamp, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
         import { injectMenu } from "/menu.js";
 
         const firebaseConfig = { apiKey: "AIzaSyCBvOw8HrMhZD0aYSHqFdE196ZITdYBU3Q", authDomain: "nexus-sabong.firebaseapp.com", projectId: "nexus-sabong", storageBucket: "nexus-sabong.firebasestorage.app", messagingSenderId: "421723311", appId: "1:421723311:web:1780f179e7c2a7cc0e285a" };
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
+
+        enableIndexedDbPersistence(db).catch(() => {});
         injectMenu();
 
         const TIERS = [
@@ -139,57 +141,26 @@
         let verifiedUplineData = null;
         let allDownlines = [];
 
-        onAuthStateChanged(auth, async (user) => {
+        onAuthStateChanged(auth, (user) => {
             if (user) {
-                await checkSystemIntegrity(user); // SELF-HEALING TRIGGER
-                const snap = await getDoc(doc(db, "users", user.uid));
-                if(snap.exists()) {
-                    myData = snap.data();
-                    if(myData.level >= 6) window.location.href = "/";
-                    setupUI();
-                    loadDownlines();
-                    loadCommissionLogs();
-                }
+                checkSystemIntegrity(user);
+                onSnapshot(doc(db, "users", user.uid), (snap) => {
+                    if(snap.exists()) {
+                        myData = snap.data();
+                        if(myData.level >= 6) window.location.href = "/";
+                        setupUI();
+                        loadDownlines();
+                        loadCommissionLogs();
+                    }
+                });
             } else { window.location.href = "/login/"; }
         });
 
-        // NEXUS SELF-HEALING PROTOCOL
         async function checkSystemIntegrity(user) {
             const userRef = doc(db, "users", user.uid);
             const userSnap = await getDoc(userRef);
-
-            // 1. If Admin document was deleted, reconstruct it
             if (!userSnap.exists()) {
-                console.log("Nexus: Reconstruction Mode Active...");
-                await setDoc(userRef, {
-                    username: user.email.split('@')[0],
-                    level: 1,
-                    role: "ADMIN",
-                    balance: 10000,
-                    commissionRate: 10,
-                    uplinePath: [],
-                    totalCommission: 0,
-                    totalTurnover: 0,
-                    createdAt: serverTimestamp()
-                });
-            } else {
-                // 2. Ensure missing fields (like commissionRate) are patched
-                const data = userSnap.data();
-                if (data.commissionRate === undefined) {
-                    await updateDoc(userRef, { commissionRate: 10, totalCommission: 0, totalTurnover: 0 });
-                }
-            }
-
-            // 3. Ensure global settings exist
-            const crashRef = doc(db, "settings", "crash");
-            const crashSnap = await getDoc(crashRef);
-            if (!crashSnap.exists()) {
-                await setDoc(crashRef, { status: "WAITING", history: [], lastUpdate: serverTimestamp(), crashPoint: 1.50 });
-            }
-
-            const arenaRef = doc(db, "settings", "arena");
-            if (!(await getDoc(arenaRef)).exists()) {
-                await setDoc(arenaRef, { isLocked: false, payoutMultiplier: 1.90, history: [] });
+                await setDoc(userRef, { username: user.email.split('@')[0], level: 1, role: "ADMIN", balance: 10000, commissionRate: 10, uplinePath: [], totalCommission: 0, totalTurnover: 0, createdAt: serverTimestamp() });
             }
         }
 
@@ -213,21 +184,14 @@
         }
 
         function loadCommissionLogs() {
-            const q = query(
-                collection(db, "wallet_logs"), 
-                where("uid", "==", auth.currentUser.uid),
-                where("type", "==", "COMMISSION"),
-                orderBy("timestamp", "desc"),
-                limit(20)
-            );
-
+            const q = query(collection(db, "wallet_logs"), where("uid", "==", auth.currentUser.uid), where("type", "==", "COMMISSION"), orderBy("timestamp", "desc"), limit(20));
             onSnapshot(q, (snap) => {
                 const ledger = document.getElementById('commission-ledger');
-                ledger.innerHTML = "";
                 if (snap.empty) {
                     ledger.innerHTML = '<p style="text-align:center; color:#333; font-size:0.7rem; padding:20px;">No transaction trails found.</p>';
                     return;
                 }
+                ledger.innerHTML = "";
                 snap.forEach(d => {
                     const log = d.data();
                     const date = log.timestamp?.toDate().toLocaleDateString() || "Just now";
@@ -238,8 +202,7 @@
                                 <small>${date} • Bet: ₱${log.betAmount || 0}</small>
                             </div>
                             <div class="ledger-amt">+₱${log.amount.toFixed(2)}</div>
-                        </div>
-                    `;
+                        </div>`;
                 });
             });
         }
@@ -292,8 +255,7 @@
                         <td style="color:var(--gold); font-family:Goldman;">${u.commissionRate}%</td>
                         <td style="color:var(--green);">₱${(u.totalTurnover || 0).toLocaleString()}</td>
                         <td><button style="background:none; border:none; color:#555; cursor:pointer; font-size:0.6rem;" onclick="openEdit('${u.id}', '${u.username}', ${u.commissionRate})">ADJUST</button></td>
-                    </tr>
-                `;
+                    </tr>`;
             });
         }
 
