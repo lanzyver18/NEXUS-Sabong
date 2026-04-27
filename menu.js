@@ -5,7 +5,6 @@ export function injectMenu() {
 
     const currentPath = window.location.pathname;
 
-    // Create the navigation content
     const menuHTML = `
         <div class="bottom-nav" id="nexus-bottom-nav">
             <a href="/" class="nav-item ${currentPath === '/' ? 'active' : ''}"><svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg><span>HOME</span></a>
@@ -25,7 +24,10 @@ export function injectMenu() {
                 <div style="background: #0a0a0a; border: 1px solid #1a1a1a; padding: 15px; border-radius: 12px;">
                     <small style="color: #444; font-size: 0.5rem; text-transform: uppercase; letter-spacing: 1px;">AVAILABLE BALANCE</small>
                     <div id="sidebar-balance" style="color: #00ff88; font-family: 'Goldman'; font-size: 1.4rem;">₱0.00</div>
-                    <div style="display:flex; justify-content:space-between; margin-top:10px; font-size:0.6rem; color:#444;"><span id="sidebar-id">ID: ---</span><span id="sidebar-role-badge" style="color:var(--gold);">PLAYER</span></div>
+                    <div style="display:flex; justify-content:space-between; margin-top:10px; font-size:0.6rem; color:#444;">
+                        <span id="sidebar-id">ID: LOADING...</span>
+                        <span id="sidebar-role-badge" style="color:var(--gold);">PLAYER</span>
+                    </div>
                 </div>
             </div>
             <div class="sidebar-links" style="padding: 0 25px;">
@@ -41,22 +43,22 @@ export function injectMenu() {
 
     document.body.insertAdjacentHTML('beforeend', menuHTML);
 
-    // Inject Desktop Links into Top Nav
     const nav = document.querySelector('.top-nav');
-    if (nav) {
+    if (nav && !document.getElementById('nexus-desktop-links')) {
         const desktopLinksHTML = `
-            <div class="desktop-links">
+            <div class="desktop-links" id="nexus-desktop-links">
                 <a href="/" class="${currentPath === '/' ? 'active' : ''}">Dashboard</a>
                 <a href="/games/" class="${currentPath.includes('/games/') ? 'active' : ''}">Arena</a>
                 <a href="/wallet/" class="${currentPath.includes('/wallet/') ? 'active' : ''}">Wallet</a>
                 <a href="/profile/" class="${currentPath.includes('/profile/') ? 'active' : ''}">Profile</a>
-                <span id="menu-open-btn-desktop" style="color:#444; cursor:pointer; font-family:'Goldman'; font-size:0.8rem;">MORE</span>
+                <span id="menu-open-btn-desktop" style="color:#444; cursor:pointer; font-family:'Goldman'; font-size:0.8rem; margin-left:15px;">MORE</span>
             </div>
         `;
         const logo = nav.querySelector('.logo');
         if (logo) logo.insertAdjacentHTML('afterend', desktopLinksHTML);
     }
 
+    // Toggle Logic
     const menu = document.getElementById('nexus-side-menu');
     const overlay = document.getElementById('nexus-menu-overlay');
     const closeBtn = document.getElementById('menu-close-btn');
@@ -64,23 +66,17 @@ export function injectMenu() {
     const toggleMenu = (isOpen) => {
         menu.classList.toggle('active', isOpen);
         overlay.classList.toggle('active', isOpen);
-        document.body.style.overflow = isOpen ? 'hidden' : ''; 
     };
 
-    // Attach listeners to both mobile and desktop "More" buttons
     document.addEventListener('click', (e) => {
-        if (e.target.closest('#menu-open-btn-mobile') || e.target.closest('#menu-open-btn-desktop')) {
-            toggleMenu(true);
-        }
+        if (e.target.closest('#menu-open-btn-mobile') || e.target.closest('#menu-open-btn-desktop')) toggleMenu(true);
     });
 
-    closeBtn.onclick = () => toggleMenu(false);
-    overlay.onclick = () => toggleMenu(false);
+    if (closeBtn) closeBtn.onclick = () => toggleMenu(false);
+    if (overlay) overlay.onclick = () => toggleMenu(false);
 
     document.getElementById('nexus-logout').onclick = () => {
-        if (confirm("Terminate Nexus Session?")) {
-            if (window.firebaseAuth) window.firebaseAuth.signOut().then(() => window.location.href = "/login/");
-        }
+        if (confirm("Terminate Session?") && window.firebaseAuth) window.firebaseAuth.signOut().then(() => window.location.href = "/login/");
     };
 
     syncSidebarData();
@@ -96,10 +92,33 @@ async function syncSidebarData() {
             onSnapshot(doc(db, "users", user.uid), (snap) => {
                 if (snap.exists()) {
                     const data = snap.data();
-                    document.getElementById('sidebar-balance').innerText = `₱${(data.balance || 0).toLocaleString(undefined, {minimumFractionDigits: 2})}`;
-                    document.getElementById('sidebar-id').innerText = `ID: ${data.username.toUpperCase()}`;
-                    document.getElementById('sidebar-role-badge').innerText = data.role.replace("_", " ");
-                    
+                    const formattedBal = `₱${(data.balance || 0).toLocaleString(undefined, {minimumFractionDigits: 2})}`;
+                    const username = data.username.toUpperCase();
+
+                    // 1. Update Sidebar HUD
+                    const sbBal = document.getElementById('sidebar-balance');
+                    const sbId = document.getElementById('sidebar-id');
+                    const sbRole = document.getElementById('sidebar-role-badge');
+                    if (sbBal) sbBal.innerText = formattedBal;
+                    if (sbId) sbId.innerText = `ID: ${username}`;
+                    if (sbRole) sbRole.innerText = data.role.replace("_", " ");
+
+                    // 2. Update Top Navigation (For ALL pages)
+                    // Targets nav-bal (wallet), nav-balance (home), nav-bal (admin)
+                    const navElements = ['nav-bal', 'nav-balance', 'display-balance'];
+                    navElements.forEach(id => {
+                        const el = document.getElementById(id);
+                        if (el) el.innerText = id.includes('display') ? (data.balance || 0).toLocaleString(undefined, {minimumFractionDigits: 2}) : formattedBal;
+                    });
+
+                    // 3. Update User Display Names (home, profile)
+                    const nameElements = ['user-display', 'display-username'];
+                    nameElements.forEach(id => {
+                        const el = document.getElementById(id);
+                        if (el) el.innerText = username;
+                    });
+
+                    // 4. Update Agent Section
                     const container = document.getElementById('agent-manager-section');
                     if (container && data.level <= 5) {
                         container.innerHTML = `
