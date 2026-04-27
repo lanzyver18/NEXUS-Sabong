@@ -9,57 +9,33 @@
     <link href="https://fonts.googleapis.com/css2?family=Goldman:wght@400;700&display=swap" rel="stylesheet">
     <style>
         :root { --gold: #D4AF37; --green: #00ff88; --red: #ff4444; --panel-bg: #0f0f0f; }
-        
-        .top-nav { 
-            position: sticky; top: 0; z-index: 1000;
-            display: flex; justify-content: space-between; align-items: center; 
-            padding: 12px 20px 12px 75px;
-            background: #000; border-bottom: 2px solid #222; 
-        }
-
+        .top-nav { position: sticky; top: 0; z-index: 1000; display: flex; justify-content: space-between; align-items: center; padding: 12px 20px 12px 75px; background: #000; border-bottom: 2px solid #222; }
         .mines-wrapper { max-width: 900px; margin: 30px auto; display: grid; grid-template-columns: 320px 1fr; gap: 25px; padding: 0 15px; }
-
         .control-panel { background: var(--panel-bg); padding: 25px; border-radius: 24px; border: 1px solid #222; display: flex; flex-direction: column; gap: 18px; box-shadow: 0 15px 35px rgba(0,0,0,0.5); height: fit-content; }
-        
         .stat-box { background: #000; padding: 15px; border-radius: 12px; border: 1px solid #222; text-align: center; position: relative; overflow: hidden; }
         .stat-box label { font-size: 0.55rem; color: #555; text-transform: uppercase; letter-spacing: 2px; display: block; margin-bottom: 5px; }
         .stat-box span { font-family: 'Goldman'; font-size: 1.8rem; color: var(--gold); text-shadow: 0 0 10px rgba(212, 175, 55, 0.3); }
-
         .input-group label { display: block; font-size: 0.6rem; color: #666; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
-        
-        /* QUANTUM STEPPER STYLING */
         .stepper-container { display: flex; align-items: center; background: #000; border: 1px solid #333; border-radius: 10px; overflow: hidden; height: 45px; }
         .step-btn { background: #111; border: none; color: var(--gold); width: 50px; height: 100%; font-size: 1.2rem; cursor: pointer; transition: 0.2s; font-family: 'Goldman'; }
         .step-btn:hover:not(:disabled) { background: #222; color: white; }
         .step-btn:disabled { opacity: 0.2; cursor: not-allowed; }
         .stepper-val { flex: 1; text-align: center; font-family: 'Goldman'; color: white; font-size: 1rem; border: none; background: transparent; pointer-events: none; }
-
         input[type="number"] { width: 100%; padding: 12px; background: #000; border: 1px solid #333; color: white; border-radius: 10px; outline: none; transition: 0.3s; font-family: 'Goldman'; box-sizing: border-box; }
         input:focus { border-color: var(--gold); background: #050505; }
-
         .btn-action { width: 100%; padding: 18px; border-radius: 12px; border: none; font-weight: bold; font-family: 'Goldman'; cursor: pointer; text-transform: uppercase; transition: 0.3s; }
         .btn-play { background: var(--gold); color: black; }
         .btn-cashout { background: var(--green); color: black; display: none; }
         .btn-action:hover:not(:disabled) { transform: translateY(-2px); filter: brightness(1.1); }
         .btn-action:disabled { opacity: 0.2; cursor: not-allowed; }
-
         .board-container { background: #080808; padding: 20px; border-radius: 28px; border: 1px solid #222; }
         .grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; aspect-ratio: 1/1; }
-        
-        .cell { 
-            background: linear-gradient(145deg, #1a1a1a, #111); 
-            border-radius: 14px; border: 1px solid #252525; cursor: pointer; 
-            transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1); 
-            display: flex; align-items: center; justify-content: center; font-size: 1.8rem;
-            box-shadow: inset 0 2px 5px rgba(255,255,255,0.05);
-        }
+        .cell { background: linear-gradient(145deg, #1a1a1a, #111); border-radius: 14px; border: 1px solid #252525; cursor: pointer; transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1); display: flex; align-items: center; justify-content: center; font-size: 1.8rem; box-shadow: inset 0 2px 5px rgba(255,255,255,0.05); }
         .cell:hover:not(.revealed):not(.disabled) { background: #222; transform: scale(1.03); border-color: var(--gold); }
         .cell.revealed.safe { background: rgba(0, 255, 136, 0.08); border-color: var(--green); color: var(--green); cursor: default; animation: popIn 0.3s ease; }
         .cell.revealed.mine { background: rgba(255, 68, 68, 0.08); border-color: var(--red); color: var(--red); cursor: default; animation: shake 0.4s; }
-
         @keyframes popIn { 0% { transform: scale(0.8); } 100% { transform: scale(1); } }
         @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
-        
         @media (max-width: 750px) { .mines-wrapper { grid-template-columns: 1fr; } .board-container { order: -1; } }
     </style>
 </head>
@@ -76,12 +52,10 @@
                 <label id="mult-label">Current Multiplier</label>
                 <span id="current-mult">1.00x</span>
             </div>
-
             <div class="input-group">
                 <label>Bet Amount</label>
                 <input type="number" id="bet-amount" value="100" min="10">
             </div>
-
             <div class="input-group">
                 <label>Number of Mines</label>
                 <div class="stepper-container">
@@ -90,13 +64,10 @@
                     <button class="step-btn" id="mine-plus" onclick="adjustMines(1)">+</button>
                 </div>
             </div>
-
             <button id="btn-start" class="btn-action btn-play" onclick="startGame()">Start Protocol</button>
             <button id="btn-cashout" class="btn-action btn-cashout" onclick="cashout()">Secure ₱0.00</button>
-            
             <div style="font-size: 0.5rem; color: #333; text-align: center; margin-top: 10px; text-transform: uppercase; letter-spacing: 1px;">Provably Fair Protocol v2.2</div>
         </div>
-
         <div class="board-container">
             <div class="grid" id="grid"></div>
         </div>
@@ -105,32 +76,28 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
-        import { getFirestore, doc, onSnapshot, updateDoc, increment, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, setDoc, onSnapshot, updateDoc, increment, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
         import { injectMenu } from "/menu.js";
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyCBvOw8HrMhZD0aYSHqFdE196ZITdYBU3Q",
-            authDomain: "nexus-sabong.firebaseapp.com",
-            projectId: "nexus-sabong",
-            storageBucket: "nexus-sabong.firebasestorage.app",
-            messagingSenderId: "421723311",
-            appId: "1:421723311:web:1780f179e7c2a7cc0e285a"
-        };
-
+        const firebaseConfig = { apiKey: "AIzaSyCBvOw8HrMhZD0aYSHqFdE196ZITdYBU3Q", authDomain: "nexus-sabong.firebaseapp.com", projectId: "nexus-sabong", storageBucket: "nexus-sabong.firebasestorage.app", messagingSenderId: "421723311", appId: "1:421723311:web:1780f179e7c2a7cc0e285a" };
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
         injectMenu();
 
-        let balance = 0;
-        let gameActive = false;
-        let mines = [];
-        let revealedCount = 0;
-        let currentBet = 0;
-        let currentMineSetting = 3;
+        let balance = 0, gameActive = false, mines = [], revealedCount = 0, currentBet = 0, currentMineSetting = 3;
 
-        onAuthStateChanged(auth, user => {
+        async function checkSystemIntegrity(user) {
+            const userRef = doc(db, "users", user.uid);
+            const snap = await getDoc(userRef);
+            if (!snap.exists()) {
+                await setDoc(userRef, { username: user.email.split('@')[0], level: 6, role: "PLAYER", balance: 100, uplinePath: [], commissionRate: 0, totalCommission: 0, totalTurnover: 0, createdAt: serverTimestamp() });
+            }
+        }
+
+        onAuthStateChanged(auth, async user => {
             if (user) {
+                await checkSystemIntegrity(user);
                 onSnapshot(doc(db, "users", user.uid), snap => {
                     if (snap.exists()) {
                         balance = snap.data().balance;
@@ -140,7 +107,6 @@
             } else { window.location.href = "/login/"; }
         });
 
-        // Probabilistic Multiplier Function (nCr Probability)
         function nCr(n, r) {
             if (r < 0 || r > n) return 0;
             if (r === 0 || r === n) return 1;
@@ -159,8 +125,7 @@
         window.adjustMines = (val) => {
             if (gameActive) return;
             const display = document.getElementById('mine-count-display');
-            let current = parseInt(display.value);
-            let next = current + val;
+            let next = parseInt(display.value) + val;
             if (next >= 1 && next <= 24) {
                 display.value = next;
                 currentMineSetting = next;
@@ -178,20 +143,16 @@
         window.startGame = async () => {
             const bet = parseInt(document.getElementById('bet-amount').value);
             if (bet > balance || bet < 10) return alert("Check balance.");
-
             try {
                 await updateDoc(doc(db, "users", auth.currentUser.uid), { balance: increment(-bet) });
-                gameActive = true;
-                currentBet = bet;
-                revealedCount = 0;
+                gameActive = true; currentBet = bet; revealedCount = 0;
                 mines = Array(25).fill(false);
                 let placed = 0;
                 while (placed < currentMineSetting) {
                     let idx = Math.floor(Math.random() * 25);
                     if (!mines[idx]) { mines[idx] = true; placed++; }
                 }
-                renderGrid();
-                updateUI(true);
+                renderGrid(); updateUI(true);
                 document.getElementById('mult-label').innerText = "Current Multiplier";
                 document.getElementById('current-mult').innerText = "1.00x";
             } catch (e) { console.error(e); }
@@ -211,14 +172,11 @@
         window.revealCell = (idx, el) => {
             if (!gameActive || el.classList.contains('revealed')) return;
             el.classList.add('revealed');
-
             if (mines[idx]) {
-                el.classList.add('mine');
-                el.innerText = "💣";
+                el.classList.add('mine'); el.innerText = "💣";
                 gameOver(false);
             } else {
-                el.classList.add('safe');
-                el.innerText = "💎";
+                el.classList.add('safe'); el.innerText = "💎";
                 revealedCount++;
                 const newMult = getMultiplier(currentMineSetting, revealedCount);
                 document.getElementById('current-mult').innerText = newMult.toFixed(2) + "x";
@@ -230,19 +188,15 @@
             if (!gameActive || revealedCount === 0) return;
             const mult = getMultiplier(currentMineSetting, revealedCount);
             const win = Math.floor(currentBet * mult);
-            
             try {
                 await updateDoc(doc(db, "users", auth.currentUser.uid), { balance: increment(win) });
-                await addDoc(collection(db, "wallet_logs"), {
-                    uid: auth.currentUser.uid, type: "MINES_WIN", amount: win, timestamp: new Date()
-                });
+                await addDoc(collection(db, "wallet_logs"), { uid: auth.currentUser.uid, type: "MINES_WIN", amount: win, timestamp: serverTimestamp() });
                 gameOver(true);
             } catch (e) { alert("Error."); }
         };
 
         function gameOver(win) {
-            gameActive = false;
-            updateUI(false);
+            gameActive = false; updateUI(false);
             const cells = document.querySelectorAll('.cell');
             mines.forEach((isMine, idx) => {
                 if (isMine) {
