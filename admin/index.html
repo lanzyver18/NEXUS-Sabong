@@ -30,8 +30,15 @@
         .pill-in { background: rgba(0, 255, 136, 0.1); color: var(--green); border: 1px solid rgba(0, 255, 136, 0.2); }
         .pill-out { background: rgba(255, 68, 68, 0.1); color: var(--red); border: 1px solid rgba(255, 68, 68, 0.2); }
 
-        .w-request { background: #050505; padding: 15px; border-radius: 12px; border: 1px solid #222; margin-bottom: 12px; position: relative; overflow: hidden; }
-        .w-request::before { content: ''; position: absolute; left: 0; top: 0; height: 100%; width: 4px; background: var(--gold); }
+        /* PAYOUT TICKET STYLING */
+        .w-request { background: #050505; padding: 18px; border-radius: 14px; border: 1px solid #222; margin-bottom: 12px; position: relative; overflow: hidden; border-left: 4px solid var(--gold); transition: 0.3s; }
+        .w-request:hover { background: #0a0a0a; border-color: #333; }
+        
+        .w-btn-group { display: flex; gap: 8px; margin-top: 15px; }
+        .w-btn { flex: 1; padding: 10px; border-radius: 8px; border: none; font-family: 'Goldman'; font-size: 0.65rem; font-weight: bold; cursor: pointer; transition: 0.2s; text-transform: uppercase; }
+        .w-approve { background: var(--green); color: black; }
+        .w-reject { background: #222; color: var(--red); border: 1px solid #333; }
+        .w-btn:hover { transform: scale(0.98); filter: brightness(1.1); }
         
         input { width: 100%; padding: 14px; margin: 10px 0; background: #000; border: 1px solid #222; color: white; border-radius: 8px; box-sizing: border-box; outline: none; font-family: 'Goldman'; }
         input:focus { border-color: var(--gold); }
@@ -162,7 +169,7 @@
 
         onAuthStateChanged(auth, async (user) => {
             if (user) {
-                await checkSystemIntegrity(user); // SELF-HEALING TRIGGER
+                await checkSystemIntegrity(user);
                 const snap = await getDoc(doc(db, "users", user.uid));
                 if (snap.exists() && snap.data().level <= 5) {
                     myTierData = snap.data();
@@ -176,49 +183,24 @@
         async function checkSystemIntegrity(user) {
             const userRef = doc(db, "users", user.uid);
             const userSnap = await getDoc(userRef);
-
-            // 1. Reconstruct Admin if deleted
             if (!userSnap.exists()) {
-                console.warn("Nexus: Reconstruction Mode Active...");
-                await setDoc(userRef, {
-                    username: user.email.split('@')[0],
-                    level: 1,
-                    role: "ADMIN",
-                    balance: 100000,
-                    commissionRate: 10.0,
-                    uplinePath: [],
-                    totalCommission: 0,
-                    totalTurnover: 0,
-                    createdAt: serverTimestamp()
-                });
+                await setDoc(userRef, { username: user.email.split('@')[0], level: 1, role: "ADMIN", balance: 100000, commissionRate: 10.0, uplinePath: [], totalCommission: 0, totalTurnover: 0, createdAt: serverTimestamp() });
             } else {
-                // 2. Patch missing fields in the hierarchy
                 const data = userSnap.data();
-                if (data.commissionRate === undefined) {
-                    await updateDoc(userRef, { commissionRate: 10.0, totalCommission: 0, totalTurnover: 0 });
-                }
+                if (data.commissionRate === undefined) await updateDoc(userRef, { commissionRate: 10.0, totalCommission: 0, totalTurnover: 0 });
             }
-
-            // 3. Reconstruct Global Settings
             const crashRef = doc(db, "settings", "crash");
-            if (!(await getDoc(crashRef)).exists()) {
-                await setDoc(crashRef, { status: "WAITING", history: [], lastUpdate: serverTimestamp(), crashPoint: 1.50 });
-            }
-
+            if (!(await getDoc(crashRef)).exists()) await setDoc(crashRef, { status: "WAITING", history: [], lastUpdate: serverTimestamp(), crashPoint: 1.50 });
             const arenaRef = doc(db, "settings", "arena");
-            if (!(await getDoc(arenaRef)).exists()) {
-                await setDoc(arenaRef, { isLocked: false, payoutMultiplier: 1.90, history: [], currentFightId: "Fight #1" });
-            }
+            if (!(await getDoc(arenaRef)).exists()) await setDoc(arenaRef, { isLocked: false, payoutMultiplier: 1.90, history: [], currentFightId: "Fight #1" });
         }
 
         function initManagement() {
             onSnapshot(query(collection(db, "users"), where("uplineId", "==", auth.currentUser.uid)), (snap) => {
-                let totalBank = 0;
-                allDownlines = [];
+                let totalBank = 0; allDownlines = [];
                 snap.forEach(uDoc => {
                     const u = { id: uDoc.id, ...uDoc.data() };
-                    totalBank += (u.balance || 0);
-                    allDownlines.push(u);
+                    totalBank += (u.balance || 0); allDownlines.push(u);
                 });
                 document.getElementById('stat-total-bank').innerText = "₱" + totalBank.toLocaleString();
                 renderDownlineTable(allDownlines);
@@ -228,8 +210,7 @@
                 document.getElementById('global-liquidity-card').style.display = "block";
                 document.getElementById('fight-control-panel').style.display = "block";
                 onSnapshot(collection(db, "users"), (snap) => {
-                    let globalCash = 0;
-                    snap.forEach(d => { globalCash += (d.data().balance || 0); });
+                    let globalCash = 0; snap.forEach(d => { globalCash += (d.data().balance || 0); });
                     document.getElementById('stat-system-liquidity').innerText = "₱" + globalCash.toLocaleString();
                 });
                 loadWithdrawals();
@@ -247,13 +228,13 @@
                 body.innerHTML = "";
                 snap.forEach(d => {
                     const log = d.data();
-                    const date = log.timestamp?.toDate().toLocaleTimeString() || "Pending...";
-                    const isCredit = log.type.includes("LOAD_IN") || log.type === "CRASH_WIN";
+                    const date = log.timestamp?.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) || "Pending...";
+                    const isCredit = ["LOAD_IN", "CRASH_WIN", "REFUND"].includes(log.type);
                     body.innerHTML += `
                         <tr>
                             <td style="color:#555;">${date}</td>
                             <td><span class="status-pill ${isCredit ? 'pill-in' : 'pill-out'}">${log.type.replace('_',' ')}</span></td>
-                            <td><strong style="color:var(--gold)">${log.fromUser || 'SYS'}</strong> → ${log.toUser || 'User'}</td>
+                            <td><strong style="color:var(--gold)">${log.fromUser || 'SYS'}</strong> → ${log.toUser || 'Node'}</td>
                             <td style="font-family:'Goldman'; color:${isCredit ? '#00ff88' : '#ff4444'};">₱${log.amount.toLocaleString()}</td>
                         </tr>
                     `;
@@ -275,6 +256,81 @@
             });
         }
 
+        // --- WITHDRAWAL APPROVAL SYSTEM ---
+        function loadWithdrawals() {
+            onSnapshot(query(collection(db, "withdrawals"), where("status", "==", "PENDING"), orderBy("timestamp", "desc")), (snap) => {
+                const list = document.getElementById('withdrawal-list');
+                let total = 0; list.innerHTML = "";
+                
+                if (snap.empty) {
+                    list.innerHTML = `<p style="text-align:center; color:#333; font-size:0.7rem; padding:20px;">No pending tickets.</p>`;
+                }
+
+                snap.forEach(ticketDoc => {
+                    const d = ticketDoc.data();
+                    total += d.amount;
+                    const id = ticketDoc.id;
+
+                    const card = document.createElement('div');
+                    card.className = 'w-request';
+                    card.innerHTML = `
+                        <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                            <div>
+                                <strong style="font-size:0.8rem; color:#fff;">${d.username.toUpperCase()}</strong>
+                                <div style="font-size:0.55rem; color:var(--gold); margin-top:2px; font-family:'Goldman';">${d.bank}</div>
+                            </div>
+                            <div style="text-align:right;">
+                                <div style="color:var(--green); font-family:'Goldman'; font-size:1rem;">₱${d.amount.toLocaleString()}</div>
+                                <div style="font-size:0.5rem; color:#444;">${d.timestamp?.toDate().toLocaleDateString() || 'Recent'}</div>
+                            </div>
+                        </div>
+                        <div style="font-size:0.6rem; color:#888; background:#000; padding:8px; border-radius:6px; margin-top:12px; border:1px solid #111;">
+                            ACC: ${d.accountNumber} <br> NAME: ${d.accountName}
+                        </div>
+                        <div class="w-btn-group">
+                            <button class="w-btn w-approve" onclick="handleWithdraw('${id}', 'APPROVED', '${d.uid}', ${d.amount})">SETTLE PAID</button>
+                            <button class="w-btn w-reject" onclick="handleWithdraw('${id}', 'REJECTED', '${d.uid}', ${d.amount})">REJECT/REFUND</button>
+                        </div>
+                    `;
+                    list.appendChild(card);
+                });
+                document.getElementById('stat-pending-w').innerText = "₱" + total.toLocaleString();
+            });
+        }
+
+        window.handleWithdraw = async (id, status, pUid, amt) => {
+            const confirmMsg = status === 'APPROVED' ? `Confirm Payout Settlement for ₱${amt}?` : `Reject and Refund ₱${amt} to user?`;
+            if(!confirm(confirmMsg)) return;
+
+            const batch = writeBatch(db);
+            const ticketRef = doc(db, "withdrawals", id);
+            
+            if (status === 'REJECTED') {
+                // Refund the amount to the user
+                const userRef = doc(db, "users", pUid);
+                batch.update(userRef, { balance: increment(amt) });
+                // Log the refund
+                batch.set(doc(collection(db, "wallet_logs")), { 
+                    uid: pUid, type: "REFUND", amount: amt, fromUser: "SYSTEM", toUser: "Node", timestamp: serverTimestamp() 
+                });
+            } else {
+                // Approved - Just log the final payout
+                batch.set(doc(collection(db, "wallet_logs")), { 
+                    uid: pUid, type: "WITHDRAWAL_PAID", amount: amt, fromUser: "SYSTEM", toUser: "Node", timestamp: serverTimestamp() 
+                });
+            }
+
+            batch.update(ticketRef, { status: status, processedAt: serverTimestamp() });
+            
+            try {
+                await batch.commit();
+                console.log(`Ticket ${id} marked as ${status}`);
+            } catch (e) {
+                alert("Error updating ticket: " + e.message);
+            }
+        };
+
+        // --- DISPATCHER LOGIC ---
         window.checkUser = async () => {
             const username = document.getElementById('target-username').value.trim().toLowerCase();
             const q = query(collection(db, "users"), where("username", "==", username));
@@ -285,7 +341,7 @@
                 document.getElementById('res-name').innerText = p.data().username.toUpperCase();
                 document.getElementById('res-bal').innerText = "₱" + (p.data().balance || 0).toLocaleString(undefined, {minimumFractionDigits: 2});
                 document.getElementById('player-preview').style.display = "block";
-            } else alert("Error: User not found in Nexus database.");
+            } else alert("Error: Node ID not found.");
         };
 
         window.confirmLoad = async () => {
@@ -304,41 +360,9 @@
                 await batch.commit();
                 alert("Protocol Complete: Credits Dispatched.");
                 document.getElementById('player-preview').style.display = "none";
+                document.getElementById('load-amt').value = "";
+                document.getElementById('target-username').value = "";
             }
-        };
-
-        function loadWithdrawals() {
-            onSnapshot(query(collection(db, "withdrawals"), where("status", "==", "PENDING")), (snap) => {
-                const list = document.getElementById('withdrawal-list');
-                let total = 0; list.innerHTML = "";
-                snap.forEach(doc => {
-                    const d = doc.data(); total += d.amount;
-                    list.innerHTML += `
-                        <div class="w-request">
-                            <div style="display:flex; justify-content:space-between; align-items:center;">
-                                <strong style="font-size:0.8rem;">${d.username.toUpperCase()}</strong> 
-                                <span style="color:var(--green); font-family:'Goldman';">₱${d.amount.toLocaleString()}</span>
-                            </div>
-                            <div style="font-size:0.6rem; color:#444; margin-top:8px;">${d.bank}: ${d.accountNumber}</div>
-                            <div style="display:flex; gap:5px; margin-top:10px;">
-                                <button class="status-pill pill-in" style="flex:1; cursor:pointer;" onclick="handleWithdraw('${doc.id}', 'APPROVED')">PAID</button>
-                                <button class="status-pill pill-out" style="flex:1; cursor:pointer;" onclick="handleWithdraw('${doc.id}', 'REJECTED', '${d.uid}', ${d.amount})">REJECT</button>
-                            </div>
-                        </div>`;
-                });
-                document.getElementById('stat-pending-w').innerText = "₱" + total.toLocaleString();
-            });
-        }
-
-        window.handleWithdraw = async (id, status, pUid, amt) => {
-            const batch = writeBatch(db);
-            if (status === 'REJECTED') {
-                batch.update(doc(db, "users", pUid), { balance: increment(amt) });
-                batch.set(doc(collection(db, "wallet_logs")), { uid: pUid, type: "REFUND", amount: amt, timestamp: serverTimestamp() });
-            }
-            batch.update(doc(db, "withdrawals", id), { status: status });
-            await batch.commit();
-            alert("Payout record updated.");
         };
 
         window.quickSelectUser = (u) => { document.getElementById('target-username').value = u; checkUser(); };
