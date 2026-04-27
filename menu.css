@@ -1,10 +1,11 @@
-/* --- NEXUS CASINO-STYLE NAV --- */
+/* --- NEXUS RESPONSIVE NAVIGATION --- */
 :root {
     --nav-bottom-height: 70px;
+    --nav-top-height: 70px;
     --gold: #D4AF37;
 }
 
-/* Bottom Bar Container */
+/* MOBILE BOTTOM BAR (Hidden on Desktop) */
 .bottom-nav {
     position: fixed;
     bottom: 0;
@@ -17,7 +18,30 @@
     justify-content: space-around;
     align-items: center;
     z-index: 10005;
-    padding-bottom: env(safe-area-inset-bottom); /* Fix for iPhone notches */
+    padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* DESKTOP TOP LINKS (Hidden on Mobile) */
+.desktop-links {
+    display: none; /* Hidden by default */
+    gap: 30px;
+    margin-left: 40px;
+    flex-grow: 1;
+}
+
+.desktop-links a {
+    color: #888;
+    text-decoration: none;
+    font-family: 'Goldman', sans-serif;
+    font-size: 0.8rem;
+    letter-spacing: 1px;
+    transition: 0.3s;
+    text-transform: uppercase;
+}
+
+.desktop-links a:hover, .desktop-links a.active {
+    color: var(--gold);
+    text-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
 }
 
 .nav-item {
@@ -36,13 +60,12 @@
 
 .nav-item svg { width: 22px; height: 22px; fill: currentColor; }
 .nav-item.active { color: var(--gold); }
-.nav-item.active svg { filter: drop-shadow(0 0 5px var(--gold)); }
 
-/* Specialized Sidebar for "More" */
+/* SIDEBAR CORE */
 .sidebar {
     position: fixed;
     top: 0;
-    right: -320px; /* Slides from right for better thumb reach */
+    right: -320px;
     width: 300px;
     height: 100vh;
     background: #050505;
@@ -69,7 +92,9 @@
 
 .menu-overlay.active { display: block; }
 
-/* Desktop Hide */
+/* LARGE SCREEN ADJUSTMENTS */
 @media (min-width: 900px) {
-    .bottom-nav { display: none; }
+    .bottom-nav { display: none !important; }
+    .desktop-links { display: flex; }
+    .top-nav { padding-left: 20px !important; } /* Center the nav since there's no mobile burger */
 }
