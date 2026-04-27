@@ -36,7 +36,6 @@
         input { width: 100%; padding: 14px; margin: 10px 0; background: #000; border: 1px solid #222; color: white; border-radius: 8px; box-sizing: border-box; outline: none; font-family: 'Goldman'; }
         input:focus { border-color: var(--gold); }
 
-        /* SCROLLBARS */
         .custom-scroll::-webkit-scrollbar { width: 4px; }
         .custom-scroll::-webkit-scrollbar-track { background: #000; }
         .custom-scroll::-webkit-scrollbar-thumb { background: #222; border-radius: 10px; }
@@ -148,18 +147,10 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
-        import { getFirestore, doc, getDoc, updateDoc, increment, collection, query, where, onSnapshot, writeBatch, getDocs, limit, orderBy, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, setDoc, updateDoc, increment, collection, query, where, onSnapshot, writeBatch, getDocs, limit, orderBy, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
         import { injectMenu } from "/menu.js";
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyCBvOw8HrMhZD0aYSHqFdE196ZITdYBU3Q",
-            authDomain: "nexus-sabong.firebaseapp.com",
-            projectId: "nexus-sabong",
-            storageBucket: "nexus-sabong.firebasestorage.app",
-            messagingSenderId: "421723311",
-            appId: "1:421723311:web:1780f179e7c2a7cc0e285a"
-        };
-
+        const firebaseConfig = { apiKey: "AIzaSyCBvOw8HrMhZD0aYSHqFdE196ZITdYBU3Q", authDomain: "nexus-sabong.firebaseapp.com", projectId: "nexus-sabong", storageBucket: "nexus-sabong.firebasestorage.app", messagingSenderId: "421723311", appId: "1:421723311:web:1780f179e7c2a7cc0e285a" };
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
@@ -171,6 +162,7 @@
 
         onAuthStateChanged(auth, async (user) => {
             if (user) {
+                await checkSystemIntegrity(user); // SELF-HEALING TRIGGER
                 const snap = await getDoc(doc(db, "users", user.uid));
                 if (snap.exists() && snap.data().level <= 5) {
                     myTierData = snap.data();
@@ -180,8 +172,46 @@
             } else { window.location.href = "/login/"; }
         });
 
+        // NEXUS SELF-HEALING PROTOCOL
+        async function checkSystemIntegrity(user) {
+            const userRef = doc(db, "users", user.uid);
+            const userSnap = await getDoc(userRef);
+
+            // 1. Reconstruct Admin if deleted
+            if (!userSnap.exists()) {
+                console.warn("Nexus: Reconstruction Mode Active...");
+                await setDoc(userRef, {
+                    username: user.email.split('@')[0],
+                    level: 1,
+                    role: "ADMIN",
+                    balance: 100000,
+                    commissionRate: 10.0,
+                    uplinePath: [],
+                    totalCommission: 0,
+                    totalTurnover: 0,
+                    createdAt: serverTimestamp()
+                });
+            } else {
+                // 2. Patch missing fields in the hierarchy
+                const data = userSnap.data();
+                if (data.commissionRate === undefined) {
+                    await updateDoc(userRef, { commissionRate: 10.0, totalCommission: 0, totalTurnover: 0 });
+                }
+            }
+
+            // 3. Reconstruct Global Settings
+            const crashRef = doc(db, "settings", "crash");
+            if (!(await getDoc(crashRef)).exists()) {
+                await setDoc(crashRef, { status: "WAITING", history: [], lastUpdate: serverTimestamp(), crashPoint: 1.50 });
+            }
+
+            const arenaRef = doc(db, "settings", "arena");
+            if (!(await getDoc(arenaRef)).exists()) {
+                await setDoc(arenaRef, { isLocked: false, payoutMultiplier: 1.90, history: [], currentFightId: "Fight #1" });
+            }
+        }
+
         function initManagement() {
-            // DOWNLINE SYNC
             onSnapshot(query(collection(db, "users"), where("uplineId", "==", auth.currentUser.uid)), (snap) => {
                 let totalBank = 0;
                 allDownlines = [];
@@ -194,7 +224,6 @@
                 renderDownlineTable(allDownlines);
             });
 
-            // SYSTEM-WIDE LIQUIDITY (Level 1 Only)
             if (myTierData.level === 1) {
                 document.getElementById('global-liquidity-card').style.display = "block";
                 document.getElementById('fight-control-panel').style.display = "block";
@@ -208,7 +237,6 @@
         }
 
         function syncAuditLog() {
-            // Listens for last 20 wallet events globally (if Admin) or just for self (if Agent)
             const auditRef = collection(db, "wallet_logs");
             const q = myTierData.level === 1 
                 ? query(auditRef, orderBy("timestamp", "desc"), limit(20))
@@ -221,7 +249,6 @@
                     const log = d.data();
                     const date = log.timestamp?.toDate().toLocaleTimeString() || "Pending...";
                     const isCredit = log.type.includes("LOAD_IN") || log.type === "CRASH_WIN";
-                    
                     body.innerHTML += `
                         <tr>
                             <td style="color:#555;">${date}</td>
@@ -268,37 +295,24 @@
 
             if (confirm(`Authorize Transfer of ₱${amt} to ${document.getElementById('res-name').innerText}?`)) {
                 const batch = writeBatch(db);
-                const targetRef = doc(db, "users", activePlayerId);
-                const myRef = doc(db, "users", auth.currentUser.uid);
-                const logRef = collection(db, "wallet_logs");
+                batch.update(doc(db, "users", activePlayerId), { balance: increment(amt) });
+                if(myTierData.level !== 1) batch.update(doc(db, "users", auth.currentUser.uid), { balance: increment(-amt) });
 
-                batch.update(targetRef, { balance: increment(amt) });
-                if(myTierData.level !== 1) batch.update(myRef, { balance: increment(-amt) });
-
-                // Receiver's Log
-                batch.set(doc(logRef), { 
-                    uid: activePlayerId, type: "LOAD_IN", fromUser: myTierData.username, toUser: document.getElementById('res-name').innerText, amount: amt, timestamp: serverTimestamp() 
-                });
-                // Sender's Log
-                batch.set(doc(logRef), { 
-                    uid: auth.currentUser.uid, type: "LOAD_OUT", fromUser: myTierData.username, toUser: document.getElementById('res-name').innerText, amount: amt, timestamp: serverTimestamp() 
-                });
+                batch.set(doc(collection(db, "wallet_logs")), { uid: activePlayerId, type: "LOAD_IN", fromUser: myTierData.username, toUser: document.getElementById('res-name').innerText, amount: amt, timestamp: serverTimestamp() });
+                batch.set(doc(collection(db, "wallet_logs")), { uid: auth.currentUser.uid, type: "LOAD_OUT", fromUser: myTierData.username, toUser: document.getElementById('res-name').innerText, amount: amt, timestamp: serverTimestamp() });
 
                 await batch.commit();
                 alert("Protocol Complete: Credits Dispatched.");
                 document.getElementById('player-preview').style.display = "none";
-                document.getElementById('load-amt').value = "";
             }
         };
 
         function loadWithdrawals() {
             onSnapshot(query(collection(db, "withdrawals"), where("status", "==", "PENDING")), (snap) => {
                 const list = document.getElementById('withdrawal-list');
-                let total = 0;
-                list.innerHTML = "";
+                let total = 0; list.innerHTML = "";
                 snap.forEach(doc => {
-                    const d = doc.data();
-                    total += d.amount;
+                    const d = doc.data(); total += d.amount;
                     list.innerHTML += `
                         <div class="w-request">
                             <div style="display:flex; justify-content:space-between; align-items:center;">
