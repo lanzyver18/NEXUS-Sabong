@@ -110,12 +110,10 @@
             background-size: cover;
             background-position: center;
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            /* Optimization: Low-quality placeholder color */
             background-color: #0a0a0a;
         }
         .game-card:hover { border-color: var(--gold); transform: translateY(-4px); box-shadow: 0 15px 40px rgba(212, 175, 55, 0.15); }
 
-        /* Optimized Image URL parameters (?w=800&q=60) for faster mobile loading */
         .card-sabong { background-image: linear-gradient(to right, rgba(0,0,0,0.9), transparent), url('https://images.unsplash.com/photo-1596727147705-61a532a655bd?w=800&q=60'); }
         .card-crash { background-image: linear-gradient(to right, rgba(0,0,0,0.9), transparent), url('https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=800&q=60'); }
         .card-mines { background-image: linear-gradient(to right, rgba(0,0,0,0.9), transparent), url('https://images.unsplash.com/photo-1614028674026-a65e31bfd27c?w=800&q=60'); }
@@ -153,7 +151,8 @@
         /* QUICK ACTIONS */
         .quick-actions { 
             display: flex; gap: 10px; padding: 15px 20px; 
-            background: #000; position: fixed; bottom: 0; left: 0; 
+            background: #000; position: fixed; bottom: 70px; /* Adjusting for Casino-Plus Bottom Nav height */
+            left: 0; 
             width: 100%; box-sizing: border-box; border-top: 1px solid #222; z-index: 100; 
         }
         .action-btn { flex: 1; padding: 16px; border: 1px solid var(--gold); background: transparent; color: var(--gold); border-radius: 12px; font-weight: bold; text-transform: uppercase; cursor: pointer; font-size: 0.75rem; font-family: 'Goldman'; transition: 0.3s; }
@@ -165,7 +164,11 @@
             100% { transform: translateX(-100%); }
         }
 
-        @media (max-width: 600px) { .promo-container { height: 130px; } .lobby-grid { grid-template-columns: 1fr; } }
+        @media (max-width: 600px) { 
+            .promo-container { height: 130px; } 
+            .lobby-grid { grid-template-columns: 1fr; padding-bottom: 160px; } 
+            .quick-actions { bottom: 70px; } /* Sits above the Casino Bottom Bar */
+        }
     </style>
 </head>
 <body>
@@ -255,7 +258,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
-        import { getFirestore, doc, onSnapshot, getDoc } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+        import { getFirestore, doc, onSnapshot, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
         import { injectMenu } from "/menu.js"; 
 
         const firebaseConfig = {
@@ -270,6 +273,12 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
+        
+        // PERSISTENCE PROTOCOL: Enables Instant Loading
+        enableIndexedDbPersistence(db).catch((err) => {
+            console.warn("Persistence Status:", err.code);
+        });
+
         window.firebaseAuth = auth;
         window.firebaseDb = db; 
 
@@ -285,23 +294,24 @@
             }
         }, 5000);
 
-        onAuthStateChanged(auth, async (user) => {
+        // INSTANT-LOAD AUTH SNAPSHOT
+        onAuthStateChanged(auth, (user) => {
             if (user) {
                 const userRef = doc(db, "users", user.uid);
-                const snap = await getDoc(userRef);
-                if (snap.exists()) {
-                    const data = snap.data();
-                    document.getElementById('user-display').innerText = data.username ? data.username.toUpperCase() : "PLAYER";
-                    const level = data.level || 6;
-                    const adminBtn = document.getElementById('admin-btn');
-                    if (level >= 1 && level <= 5) {
-                        adminBtn.style.display = "block";
-                        adminBtn.onclick = () => { window.location.href = (level === 1) ? '/admin/index.html' : '/admin/agents.html'; };
-                    }
-                }
-                onSnapshot(userRef, (doc) => {
-                    if (doc.exists()) {
-                        document.getElementById('nav-balance').innerText = doc.data().balance.toLocaleString(undefined, {minimumFractionDigits: 2});
+                
+                // Using non-blocking onSnapshot for instant UI hydration
+                onSnapshot(userRef, (snapshot) => {
+                    if (snapshot.exists()) {
+                        const data = snapshot.data();
+                        document.getElementById('user-display').innerText = data.username ? data.username.toUpperCase() : "PLAYER";
+                        document.getElementById('nav-balance').innerText = (data.balance || 0).toLocaleString(undefined, {minimumFractionDigits: 2});
+                        
+                        const level = data.level || 6;
+                        const adminBtn = document.getElementById('admin-btn');
+                        if (level >= 1 && level <= 5) {
+                            adminBtn.style.display = "block";
+                            adminBtn.onclick = () => { window.location.href = (level === 1) ? '/admin/index.html' : '/admin/agents.html'; };
+                        }
                     }
                 });
             } else { window.location.href = "/login/"; }
