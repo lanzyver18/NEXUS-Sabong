@@ -12,7 +12,7 @@
         
         .top-nav { position: sticky; top: 0; z-index: 1000; display: flex; justify-content: space-between; align-items: center; padding: 12px 20px 12px 75px; background: #000; border-bottom: 2px solid #222; }
 
-        .wallet-wrapper { max-width: 500px; margin: 20px auto; padding: 0 15px; padding-bottom: 80px; }
+        .wallet-wrapper { max-width: 500px; margin: 20px auto; padding: 0 15px; padding-bottom: 120px; }
         
         .wallet-card { background: linear-gradient(145deg, #121212, #080808); border-radius: 24px; border: 1px solid #222; padding: 35px 30px; margin-bottom: 25px; text-align: center; position: relative; box-shadow: 0 15px 35px rgba(0,0,0,0.6); }
 
@@ -48,8 +48,6 @@
 
         .btn-submit { width: 100%; padding: 18px; border-radius: 12px; border: none; font-weight: bold; font-family: 'Goldman'; text-transform: uppercase; margin-top: 10px; cursor: pointer; transition: 0.3s; }
         .btn-submit:disabled { opacity: 0.3; cursor: not-allowed; filter: grayscale(1); }
-
-        #p2p-verify-hint { font-size: 0.6rem; margin-top: 5px; font-weight: bold; }
 
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
@@ -94,25 +92,23 @@
             </div>
 
             <button class="btn-submit" id="btn-withdraw" style="background:var(--gold); color:black;">REQUEST SETTLEMENT</button>
-            <p style="font-size:0.55rem; color:#444; text-align:center; margin-top:15px; letter-spacing:0.5px;">* Standard network fees applied per transaction.</p>
         </div>
 
         <div id="p2p" class="panel">
             <div class="form-group">
                 <label>Target Node ID (Username)</label>
                 <input type="text" id="p2p-target" placeholder="Recipient Codename" oninput="verifyP2PTarget(this.value)">
-                <div id="p2p-verify-hint"></div>
+                <div id="p2p-verify-hint" style="font-size: 0.6rem; margin-top: 5px; font-weight: bold;"></div>
             </div>
             <div class="form-group">
                 <label>Transfer Value</label>
                 <input type="number" id="p2p-amount" placeholder="₱0.00">
             </div>
-            <button class="btn-submit" id="btn-p2p" onclick="handleP2P()" style="background:var(--green); color:black;">EXECUTE P2P</button>
+            <button class="btn-submit" id="btn-p2p" onclick="handleP2P()" style="background:var(--green); color:black;" disabled>EXECUTE P2P</button>
         </div>
 
         <div id="history" class="panel">
-            <label style="letter-spacing: 1px; font-size:0.6rem;">FINANCIAL TRAILS (RECENT)</label>
-            <div id="wallet-history-list" style="margin-top:15px; max-height: 400px; overflow-y: auto;"></div>
+            <div id="wallet-history-list" style="max-height: 400px; overflow-y: auto;"></div>
         </div>
 
         <div id="vault" class="panel">
@@ -123,7 +119,6 @@
                     <option value="MAYA">MAYA</option>
                     <option value="BDO">BDO</option>
                     <option value="BPI">BPI</option>
-                    <option value="UNIONBANK">UNIONBANK</option>
                 </select>
             </div>
             <div class="form-group">
@@ -142,31 +137,28 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
-        import { getFirestore, doc, onSnapshot, updateDoc, increment, addDoc, collection, query, where, getDocs, writeBatch, orderBy, limit, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+        import { getFirestore, doc, onSnapshot, updateDoc, increment, addDoc, collection, query, where, getDocs, writeBatch, orderBy, limit, getDoc, setDoc, serverTimestamp, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
         import { injectMenu } from "/menu.js";
 
         const firebaseConfig = { apiKey: "AIzaSyCBvOw8HrMhZD0aYSHqFdE196ZITdYBU3Q", authDomain: "nexus-sabong.firebaseapp.com", projectId: "nexus-sabong", storageBucket: "nexus-sabong.firebasestorage.app", messagingSenderId: "421723311", appId: "1:421723311:web:1780f179e7c2a7cc0e285a" };
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
+
+        // PERSISTENCE ENGINE
+        enableIndexedDbPersistence(db).catch(() => {});
         injectMenu();
 
         let myData = null;
         let selectedAcc = null;
         let targetUid = null;
 
-        // SELF-HEALING PROTOCOL
-        async function checkSystemIntegrity(user) {
-            const userRef = doc(db, "users", user.uid);
-            const snap = await getDoc(userRef);
-            if (!snap.exists()) {
-                await setDoc(userRef, { username: user.email.split('@')[0], level: 6, role: "PLAYER", balance: 100, uplinePath: [], commissionRate: 0, totalCommission: 0, totalTurnover: 0, createdAt: serverTimestamp() });
-            }
-        }
-
-        onAuthStateChanged(auth, async (user) => {
+        onAuthStateChanged(auth, (user) => {
             if (user) {
-                await checkSystemIntegrity(user);
+                // Background Heal
+                checkSystemIntegrity(user);
+
+                // Snapshot Hydration
                 onSnapshot(doc(db, "users", user.uid), (snap) => {
                     if(snap.exists()) {
                         myData = snap.data();
@@ -177,6 +169,14 @@
                 loadRecentActivity(user.uid);
             } else { window.location.href = "/login/"; }
         });
+
+        async function checkSystemIntegrity(user) {
+            const userRef = doc(db, "users", user.uid);
+            const snap = await getDoc(userRef);
+            if (!snap.exists()) {
+                await setDoc(userRef, { username: user.email.split('@')[0], level: 6, role: "PLAYER", balance: 100, uplinePath: [], commissionRate: 0, totalCommission: 0, totalTurnover: 0, createdAt: serverTimestamp() });
+            }
+        }
 
         function updateDisplay() {
             const bal = myData.balance || 0;
@@ -205,23 +205,23 @@
                 btn.disabled = false;
             } else {
                 targetUid = null;
-                hint.innerText = val.toLowerCase() === myData.username ? "× CANNOT SEND TO SELF" : "× UNKNOWN NODE";
+                hint.innerText = val.toLowerCase() === myData.username ? "× SELF-TRANSFER BLOCKED" : "× NODE UNKNOWN";
                 hint.style.color = "var(--red)";
                 btn.disabled = true;
             }
         };
 
-        async function loadRecentActivity(uid) {
+        function loadRecentActivity(uid) {
             const q = query(collection(db, "wallet_logs"), where("uid", "==", uid), orderBy("timestamp", "desc"), limit(15));
             onSnapshot(q, (snap) => {
                 const list = document.getElementById('wallet-history-list');
-                list.innerHTML = snap.empty ? `<p style="text-align:center; color:#222; font-size:0.7rem; font-family:Goldman; margin-top:20px;">NO DATA TRAILS</p>` : "";
+                list.innerHTML = snap.empty ? `<p style="text-align:center; color:#222; font-family:Goldman;">NO DATA TRAILS</p>` : "";
                 snap.forEach(doc => {
-                    const l = d = doc.data();
+                    const l = doc.data();
                     const isNeg = ["TRANSFER_OUT", "WITHDRAWAL"].includes(l.type);
                     list.innerHTML += `
                         <div class="log-item">
-                            <div><div style="font-weight:bold; color:#eee; font-size:0.6rem; letter-spacing:1px; font-family:Goldman;">${l.type.replace("_", " ")}</div><small style="color:#444;">${l.timestamp?.toDate().toLocaleDateString() || 'Pending'}</small></div>
+                            <div><div style="font-weight:bold; color:#eee; font-size:0.6rem; font-family:Goldman;">${l.type.replace("_", " ")}</div><small style="color:#444;">${l.timestamp?.toDate().toLocaleDateString() || 'Pending'}</small></div>
                             <div class="${isNeg ? 'amt-neg' : 'amt-pos'}" style="font-family:'Goldman';">${isNeg ? '-' : '+'}₱${l.amount.toLocaleString()}</div>
                         </div>`;
                 });
@@ -276,34 +276,25 @@
 
         window.handleP2P = async () => {
             const amt = parseFloat(document.getElementById('p2p-amount').value);
-            if(isNaN(amt) || amt <= 0 || amt > myData.balance || !targetUid) return alert("Invalid Protocol Parameters.");
-
-            if(confirm(`AUTHORIZE P2P: ₱${amt} to recipient?`)) {
-                const batch = writeBatch(db);
-                batch.update(doc(db, "users", auth.currentUser.uid), { balance: increment(-amt) });
-                batch.update(doc(db, "users", targetUid), { balance: increment(amt) });
-                batch.set(doc(collection(db, "wallet_logs")), { uid: auth.currentUser.uid, type: "TRANSFER_OUT", toUser: document.getElementById('p2p-target').value, amount: amt, timestamp: serverTimestamp() });
-                batch.set(doc(collection(db, "wallet_logs")), { uid: targetUid, type: "TRANSFER_IN", fromUser: myData.username, amount: amt, timestamp: serverTimestamp() });
-                await batch.commit();
-                alert("Transfer Sync Complete.");
-            }
+            if(isNaN(amt) || amt <= 0 || amt > myData.balance || !targetUid) return alert("Protocol Failure: Verify parameters.");
+            const batch = writeBatch(db);
+            batch.update(doc(db, "users", auth.currentUser.uid), { balance: increment(-amt) });
+            batch.update(doc(db, "users", targetUid), { balance: increment(amt) });
+            batch.set(doc(collection(db, "wallet_logs")), { uid: auth.currentUser.uid, type: "TRANSFER_OUT", toUser: document.getElementById('p2p-target').value, amount: amt, timestamp: serverTimestamp() });
+            batch.set(doc(collection(db, "wallet_logs")), { uid: targetUid, type: "TRANSFER_IN", fromUser: myData.username, amount: amt, timestamp: serverTimestamp() });
+            await batch.commit();
+            alert("Transfer Sync Complete.");
         };
 
         document.getElementById('btn-withdraw').onclick = async () => {
             const amt = parseFloat(document.getElementById('w-amount').value);
-            if(isNaN(amt) || amt < 100 || amt > myData.balance || !selectedAcc) return alert("Incomplete parameters or low balance (Min ₱100).");
-
-            const btn = document.getElementById('btn-withdraw');
-            btn.disabled = true;
-            try {
-                const batch = writeBatch(db);
-                batch.update(doc(db, "users", auth.currentUser.uid), { balance: increment(-amt) });
-                batch.set(doc(collection(db, "withdrawals")), { uid: auth.currentUser.uid, username: myData.username, bank: selectedAcc.bank, accountName: selectedAcc.name, accountNumber: selectedAcc.number, amount: amt, status: "PENDING", timestamp: serverTimestamp() });
-                batch.set(doc(collection(db, "wallet_logs")), { uid: auth.currentUser.uid, type: "WITHDRAWAL", amount: amt, timestamp: serverTimestamp() });
-                await batch.commit();
-                alert("Withdrawal Protocol Initiated.");
-            } catch(e) { alert("Execution Error."); }
-            finally { btn.disabled = false; }
+            if(isNaN(amt) || amt < 100 || amt > myData.balance || !selectedAcc) return alert("Review parameters (Min ₱100).");
+            const batch = writeBatch(db);
+            batch.update(doc(db, "users", auth.currentUser.uid), { balance: increment(-amt) });
+            batch.set(doc(collection(db, "withdrawals")), { uid: auth.currentUser.uid, username: myData.username, bank: selectedAcc.bank, accountName: selectedAcc.name, accountNumber: selectedAcc.number, amount: amt, status: "PENDING", timestamp: serverTimestamp() });
+            batch.set(doc(collection(db, "wallet_logs")), { uid: auth.currentUser.uid, type: "WITHDRAWAL", amount: amt, timestamp: serverTimestamp() });
+            await batch.commit();
+            alert("Withdrawal Protocol Initiated.");
         };
     </script>
 </body>
