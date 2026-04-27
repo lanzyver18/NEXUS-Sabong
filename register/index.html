@@ -3,92 +3,137 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Registration | NEXUS PROTOCOL</title>
+    <title>Register | NEXUS</title>
     <link rel="stylesheet" href="/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Goldman:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        :root { --gold: #D4AF37; --gold-dark: #aa8c2c; --green: #00ff88; --red: #ff4444; }
-        body.auth-page { background: #000; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; font-family: 'Segoe UI', sans-serif; overflow: hidden; }
+        :root { --gold: #D4AF37; --gold-dark: #aa8c2c; }
+        body.auth-page { 
+            background: #050505; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            min-height: 100vh; 
+            margin: 0;
+            font-family: 'Segoe UI', sans-serif;
+        }
+        .auth-card { 
+            background: linear-gradient(145deg, #0f0f0f, #080808);
+            padding: 40px; 
+            border-radius: 24px; 
+            border: 1px solid #222; 
+            width: 100%; 
+            max-width: 380px; 
+            text-align: center; 
+            box-shadow: 0 25px 60px rgba(0,0,0,0.8);
+        }
+        .logo { font-family: 'Goldman', sans-serif; color: var(--gold); font-size: 2.2rem; margin-bottom: 5px; letter-spacing: 2px; }
         
-        /* SCIFI BACKGROUND EFFECT */
-        .bg-grid { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-image: linear-gradient(rgba(212, 175, 55, 0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(212, 175, 55, 0.02) 1px, transparent 1px); background-size: 50px 50px; z-index: -1; }
-
-        .auth-card { background: radial-gradient(circle at top, #0f0f0f, #050505); padding: 45px; border-radius: 28px; border: 1px solid #1a1a1a; width: 100%; max-width: 400px; text-align: center; box-shadow: 0 30px 100px rgba(0,0,0,1); position: relative; }
-        .auth-card::before { content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 40%; height: 2px; background: var(--gold); box-shadow: 0 0 20px var(--gold); }
-
-        .logo { font-family: 'Goldman', sans-serif; color: var(--gold); font-size: 2.5rem; margin-bottom: 5px; letter-spacing: 4px; font-weight: bold; }
+        .input-group { text-align: left; margin-bottom: 18px; position: relative; }
+        .input-group label { font-size: 0.65rem; color: #555; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 8px; }
         
-        .tier-badge { background: rgba(212, 175, 55, 0.05); border: 1px solid rgba(212, 175, 55, 0.2); color: var(--gold); font-size: 0.65rem; padding: 12px; border-radius: 12px; margin-bottom: 25px; font-family: 'Goldman'; letter-spacing: 1px; animation: slideIn 0.5s ease; }
-        #assigned-role-text { color: #fff; font-weight: bold; border-left: 1px solid #333; margin-left: 10px; padding-left: 10px; }
+        input { 
+            width: 100%; padding: 14px; background: #000; border: 1px solid #333; 
+            color: white; border-radius: 10px; box-sizing: border-box; transition: 0.3s;
+            font-size: 0.9rem;
+        }
+        input:focus { border-color: var(--gold); outline: none; box-shadow: 0 0 15px rgba(212, 175, 55, 0.1); }
 
-        .input-group { text-align: left; margin-bottom: 20px; position: relative; }
-        .input-group label { font-size: 0.55rem; color: #444; text-transform: uppercase; letter-spacing: 2px; display: block; margin-bottom: 10px; font-weight: bold; }
+        .availability-hint { font-size: 0.6rem; margin-top: 5px; position: absolute; right: 0; top: 0; }
+        .available { color: #00ff88; }
+        .taken { color: #ff4444; }
+
+        .toggle-pass { position: absolute; right: 12px; bottom: 12px; cursor: pointer; color: #444; font-size: 0.7rem; font-weight: bold; }
+
+        .tier-badge {
+            background: rgba(212, 175, 55, 0.05);
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            color: var(--gold);
+            font-size: 0.7rem;
+            padding: 12px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            display: none;
+            font-family: 'Goldman', sans-serif;
+            letter-spacing: 1px;
+            animation: fadeIn 0.5s ease;
+        }
         
-        input { width: 100%; padding: 16px; background: #000; border: 1px solid #222; color: white; border-radius: 12px; box-sizing: border-box; transition: 0.3s; font-size: 0.95rem; font-family: 'Segoe UI'; }
-        input:focus { border-color: var(--gold); outline: none; background: #080808; }
+        .strength-meter { height: 4px; background: #1a1a1a; margin-top: 8px; border-radius: 2px; overflow: hidden; }
+        .strength-bar { height: 100%; width: 0%; transition: 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
 
-        .availability-hint { font-size: 0.55rem; position: absolute; right: 0; top: 0; font-weight: bold; }
-        .available { color: var(--green); }
-        .taken { color: var(--red); }
+        .btn-action.gold { 
+            width: 100%; padding: 18px; font-weight: bold; font-size: 0.95rem;
+            background: linear-gradient(to right, var(--gold-dark), var(--gold));
+            color: black; border: none; border-radius: 12px;
+            font-family: 'Goldman', sans-serif; cursor: pointer; transition: 0.3s;
+            margin-top: 15px;
+            text-transform: uppercase;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+        .btn-action.gold:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(212, 175, 55, 0.2); }
+        .btn-action.gold:disabled { opacity: 0.4; cursor: not-allowed; filter: grayscale(1); }
 
-        .toggle-pass { position: absolute; right: 15px; bottom: 16px; cursor: pointer; color: #333; font-size: 0.6rem; font-weight: bold; letter-spacing: 1px; }
-        
-        .strength-meter { height: 3px; background: #111; margin-top: 10px; border-radius: 2px; overflow: hidden; }
-        #strength-bar { height: 100%; width: 0%; transition: 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
-
-        .btn-register { width: 100%; padding: 20px; font-weight: bold; font-size: 1rem; background: var(--gold); color: black; border: none; border-radius: 14px; font-family: 'Goldman', sans-serif; cursor: pointer; transition: 0.3s; margin-top: 15px; text-transform: uppercase; letter-spacing: 2px; }
-        .btn-register:hover:not(:disabled) { transform: translateY(-3px); box-shadow: 0 10px 30px rgba(212, 175, 55, 0.3); }
-        .btn-register:disabled { opacity: 0.3; filter: grayscale(1); cursor: not-allowed; }
-
-        @keyframes slideIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body class="auth-page">
-    <div class="bg-grid"></div>
-    
     <div class="auth-card">
         <div class="logo">NEXUS</div>
-        <h2 style="font-size: 0.6rem; letter-spacing: 4px; color: #333; margin-bottom: 30px; text-transform: uppercase;">Security Clearance Required</h2>
+        <h2 style="font-size: 0.7rem; letter-spacing: 3px; color: #444; margin-bottom: 25px; text-transform: uppercase;">Recruitment Center</h2>
         
-        <div id="tier-preview" class="tier-badge" style="display:none;">
-            NODE CLEARANCE: <span id="assigned-role-text">PLAYER</span>
+        <div id="tier-preview" class="tier-badge">
+            JOINING AS: <span id="assigned-role-text">PLAYER</span>
         </div>
 
-        <p id="ref-status" style="font-size: 0.7rem; color: #444; margin-bottom: 25px; line-height: 1.5;"></p>
+        <p id="ref-status" style="font-size: 0.75rem; color: #666; margin-bottom: 20px;">Register a unique Arena ID to begin.</p>
         
         <div class="input-group">
-            <label>Unique Identity (Username)</label>
-            <input type="text" id="reg-username" placeholder="Codename..." maxlength="15" autocomplete="off">
+            <label>Arena Username</label>
+            <input type="text" id="reg-username" placeholder="e.g. NexusWarrior" maxlength="15" autocomplete="off">
             <span id="avail-status" class="availability-hint"></span>
         </div>
 
         <div class="input-group">
-            <label>Access Key (Password)</label>
-            <input type="password" id="reg-pass" placeholder="••••••••">
+            <label>Security Password</label>
+            <input type="password" id="reg-pass" placeholder="Min. 6 characters">
             <span class="toggle-pass" onclick="togglePass()">SHOW</span>
-            <div class="strength-meter"><div id="strength-bar"></div></div>
+            <div class="strength-meter"><div id="strength-bar" class="strength-bar"></div></div>
         </div>
         
-        <button class="btn-register" id="btn-register">INITIALIZE ACCOUNT</button>
+        <button class="btn-action gold" id="btn-register">REGISTER & ENTER</button>
         
-        <p style="margin-top: 35px; font-size: 0.75rem; color: #333;">
-            EXISTING NODE? <a href="/login/" style="color: var(--gold); text-decoration: none; font-weight: bold; margin-left: 8px; letter-spacing: 1px;">SIGN IN →</a>
+        <p class="auth-footer" style="margin-top: 30px; font-size: 0.8rem; color: #555;">
+            Already have an ID? <a href="/login/" style="color: var(--gold); text-decoration: none; font-weight: bold; margin-left: 5px;">Sign In</a>
         </p>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
         import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
-        import { getFirestore, doc, setDoc, getDoc, collection, query, where, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, getDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
 
-        const firebaseConfig = { apiKey: "AIzaSyCBvOw8HrMhZD0aYSHqFdE196ZITdYBU3Q", authDomain: "nexus-sabong.firebaseapp.com", projectId: "nexus-sabong", storageBucket: "nexus-sabong.firebasestorage.app", messagingSenderId: "421723311", appId: "1:421723311:web:1780f179e7c2a7cc0e285a" };
+        const firebaseConfig = {
+            apiKey: "AIzaSyCBvOw8HrMhZD0aYSHqFdE196ZITdYBU3Q",
+            authDomain: "nexus-sabong.firebaseapp.com",
+            projectId: "nexus-sabong",
+            storageBucket: "nexus-sabong.firebasestorage.app",
+            messagingSenderId: "421723311",
+            appId: "1:421723311:web:1780f179e7c2a7cc0e285a"
+        };
+
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
 
+        // UPDATED 6-TIER HIERARCHY
         const TIERS = [
-            { role: "ADMIN", level: 1 }, { role: "OPERATOR", level: 2 }, { role: "INCO", level: 3 },
-            { role: "SUBOP", level: 4 }, { role: "AGENT", level: 5 }, { role: "PLAYER", level: 6 }
+            { role: "ADMIN", level: 1 },
+            { role: "OPERATOR", level: 2 },
+            { role: "INCO", level: 3 },
+            { role: "SUBOP", level: 4 },
+            { role: "AGENT", level: 5 },
+            { role: "PLAYER", level: 6 }
         ];
 
         const urlParams = new URLSearchParams(window.location.search);
@@ -97,42 +142,48 @@
         const passInp = document.getElementById('reg-pass');
         const btn = document.getElementById('btn-register');
 
-        // Verify Recruitment Link
-        async function verifyClearance() {
+        // Check for Referral and set Role
+        async function checkReferral() {
             if (referrerUid) {
-                const refSnap = await getDoc(doc(db, "users", referrerUid));
-                if (refSnap.exists()) {
-                    const refData = refSnap.data();
-                    const nextTier = TIERS.find(t => t.level === (refData.level + 1)) || TIERS[5];
+                try {
+                    const refSnap = await getDoc(doc(db, "users", referrerUid));
+                    if (refSnap.exists()) {
+                        const refData = refSnap.data();
+                        const currentTierIndex = TIERS.findIndex(t => t.role === refData.role);
+                        // Move down 1 level, cap at PLAYER (level 6)
+                        const nextTier = TIERS[currentTierIndex + 1] || TIERS[5];
 
-                    document.getElementById('ref-status').innerHTML = `RECRUITED BY: <b style="color:var(--gold)">${refData.username.toUpperCase()}</b>`;
-                    document.getElementById('tier-preview').style.display = "block";
-                    document.getElementById('assigned-role-text').innerText = nextTier.role;
-                }
-            } else {
-                document.getElementById('ref-status').innerText = "REGISTERING VIA SYSTEM ROOT";
+                        document.getElementById('ref-status').innerHTML = `Recruited by <b>${refData.username.toUpperCase()}</b>`;
+                        document.getElementById('tier-preview').style.display = "block";
+                        document.getElementById('assigned-role-text').innerText = nextTier.role.replace("_", " ");
+                    }
+                } catch (e) { console.error("Referral link verification failed."); }
             }
         }
-        verifyClearance();
+        checkReferral();
 
-        // Real-time Username Guard
+        // Real-time Availability Check
         let checkTimeout;
         userInp.oninput = () => {
-            const val = userInp.value.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
-            userInp.value = val;
+            const val = userInp.value.trim().toLowerCase();
             const hint = document.getElementById('avail-status');
             hint.innerHTML = "";
             clearTimeout(checkTimeout);
+            
             if (val.length < 4) return;
+            
             checkTimeout = setTimeout(async () => {
                 const q = query(collection(db, "users"), where("username", "==", val));
                 const snap = await getDocs(q);
-                if (!snap.empty) { hint.innerHTML = "ID TAKEN"; hint.className = "availability-hint taken"; btn.disabled = true; }
-                else { hint.innerHTML = "ID CLEAR"; hint.className = "availability-hint available"; btn.disabled = false; }
-            }, 400);
+                if (!snap.empty) {
+                    hint.innerHTML = "TAKEN"; hint.className = "availability-hint taken";
+                } else {
+                    hint.innerHTML = "AVAILABLE"; hint.className = "availability-hint available";
+                }
+            }, 500);
         };
 
-        // Strength Logic
+        // Strength Meter
         passInp.oninput = () => {
             const p = passInp.value;
             const bar = document.getElementById('strength-bar');
@@ -141,7 +192,7 @@
             if (/[A-Z]/.test(p)) s += 33;
             if (/[0-9]/.test(p)) s += 34;
             bar.style.width = s + "%";
-            bar.style.background = s < 40 ? "var(--red)" : s < 80 ? "#ffaa00" : "var(--green)";
+            bar.style.background = s < 40 ? "#ff4444" : s < 80 ? "#ffaa00" : "#00ff88";
         };
 
         window.togglePass = () => {
@@ -154,48 +205,56 @@
             const user = userInp.value.trim().toLowerCase();
             const pass = passInp.value;
 
-            if(user.length < 4 || pass.length < 6) return alert("Credentials do not meet protocol standards.");
+            if(user.length < 4) return alert("Username too short (Min 4 characters).");
+            if(pass.length < 6) return alert("Password too weak (Min 6 characters).");
 
             btn.disabled = true;
             btn.innerText = "AUTHENTICATING...";
 
             try {
-                let uId = "SYSTEM", uPath = [], aRole = "PLAYER", aLevel = 6;
+                let uplineId = "SYSTEM";
+                let uplinePath = [];
+                let assignedRole = "PLAYER";
+                let assignedLevel = 6;
 
                 if (referrerUid) {
                     const refSnap = await getDoc(doc(db, "users", referrerUid));
                     if (refSnap.exists()) {
-                        const d = refSnap.data();
-                        uId = referrerUid;
-                        uPath = [...(d.uplinePath || []), referrerUid];
-                        const nextTier = TIERS.find(t => t.level === (d.level + 1)) || TIERS[5];
-                        aRole = nextTier.role;
-                        aLevel = nextTier.level;
+                        const refData = refSnap.data();
+                        uplineId = referrerUid;
+                        uplinePath = [...(refData.uplinePath || []), referrerUid];
+                        
+                        const currentTierIndex = TIERS.findIndex(t => t.role === refData.role);
+                        const nextTier = TIERS[currentTierIndex + 1] || TIERS[5];
+                        assignedRole = nextTier.role;
+                        assignedLevel = nextTier.level;
                     }
                 }
 
-                const fakeEmail = `${user}@nexus-protocol.com`;
-                const userCred = await createUserWithEmailAndPassword(auth, fakeEmail, pass);
+                const fakeEmail = `${user}@nexus-sabong.com`;
+                const userCredential = await createUserWithEmailAndPassword(auth, fakeEmail, pass);
                 
-                await setDoc(doc(db, "users", userCred.user.uid), {
-                    uid: userCred.user.uid,
+                await setDoc(doc(db, "users", userCredential.user.uid), {
+                    uid: userCredential.user.uid,
                     username: user,
-                    role: aRole,
-                    level: aLevel,
-                    commissionRate: 0.00, 
-                    uplineId: uId,
-                    uplinePath: uPath,
+                    role: assignedRole,
+                    level: assignedLevel,
+                    commissionRate: 0, 
+                    uplineId: uplineId,
+                    uplinePath: uplinePath,
                     balance: 0,
                     totalTurnover: 0,
                     totalCommission: 0,
-                    createdAt: serverTimestamp()
+                    isAdmin: (assignedLevel === 1),
+                    createdAt: new Date()
                 });
 
                 window.location.href = "/";
             } catch (error) { 
-                alert("Protocol Error: " + error.message); 
+                console.error(error);
+                alert("This username is already registered. Please try another."); 
                 btn.disabled = false;
-                btn.innerText = "INITIALIZE ACCOUNT";
+                btn.innerText = "REGISTER & ENTER";
             }
         };
     </script>
