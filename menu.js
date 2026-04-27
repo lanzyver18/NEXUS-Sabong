@@ -1,60 +1,71 @@
-// menu.js
 import { doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
 
 export function injectMenu() {
-    if (document.getElementById('nexus-side-menu')) return;
+    if (document.getElementById('nexus-bottom-nav')) return;
 
     const currentPath = window.location.pathname;
 
-    const menuHTML = `
-        <button class="menu-trigger" id="menu-open-btn">☰</button>
+    const bottomNavHTML = `
+        <div class="bottom-nav" id="nexus-bottom-nav">
+            <a href="/" class="nav-item ${currentPath === '/' ? 'active' : ''}">
+                <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+                <span>HOME</span>
+            </a>
+            <a href="/games/" class="nav-item ${currentPath.includes('/games/') ? 'active' : ''}">
+                <svg viewBox="0 0 24 24"><path d="M21 6H3c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-10 7H8v3H6v-3H3v-2h3V8h2v3h3v2zm4.5 2c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm4-3c-.83 0-1.5-.67-1.5-1.5S18.67 9 19.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>
+                <span>GAMES</span>
+            </a>
+            <a href="/wallet/" class="nav-item ${currentPath.includes('/wallet/') ? 'active' : ''}" style="color: #00ff88;">
+                <svg viewBox="0 0 24 24"><path d="M21 18v1c0 1.1-.9 2-2 2H5c-1.11 0-2-.9-2-2V5c0-1.1.89-2 2-2h14c1.1 0 2 .9 2 2v1h-9c-1.11 0-2 .9-2 2v8c0 1.1.89 2 2 2h9zm-9-2h10V8H12v8zm4-2.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>
+                <span>WALLET</span>
+            </a>
+            <a href="/profile/" class="nav-item ${currentPath.includes('/profile/') ? 'active' : ''}">
+                <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+                <span>PROFILE</span>
+            </a>
+            <div class="nav-item" id="menu-open-btn" style="cursor:pointer;">
+                <svg viewBox="0 0 24 24"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
+                <span>MORE</span>
+            </div>
+        </div>
+
         <div class="menu-overlay" id="nexus-menu-overlay"></div>
+        
         <div id="nexus-side-menu" class="sidebar">
-            <div class="sidebar-header" style="padding: 30px 25px 20px;">
-                <div style="color:#D4AF37; font-family:'Goldman'; font-size:1.6rem; font-weight:bold; letter-spacing:3px;">NEXUS</div>
-                <button id="menu-close-btn" style="position:absolute; right:20px; top:25px; background:none; border:none; color:#444; font-size:1.8rem; cursor:pointer;">&times;</button>
+            <div style="padding: 40px 25px 20px; display: flex; justify-content: space-between; align-items: center;">
+                <div style="color:var(--gold); font-family:'Goldman'; font-size:1.2rem; font-weight:bold; letter-spacing:2px;">NEXUS SYSTEM</div>
+                <button id="menu-close-btn" style="background:none; border:none; color:#444; font-size:1.8rem; cursor:pointer;">&times;</button>
             </div>
 
-            <div id="sidebar-user-box" style="padding: 0 25px 25px; border-bottom: 1px solid #1a1a1a; margin-bottom: 15px;">
-                <div style="display:flex; justify-content:space-between; align-items:flex-end;">
-                    <div>
-                        <small style="color: #444; font-size: 0.55rem; text-transform: uppercase; letter-spacing: 1px; display:block; margin-bottom:4px;">Main Wallet</small>
-                        <div id="sidebar-balance" style="color: #00ff88; font-family: 'Goldman'; font-size: 1.3rem; line-height:1;">₱0.00</div>
+            <div id="sidebar-user-box" style="padding: 0 25px 25px; border-bottom: 1px solid #111; margin-bottom: 15px;">
+                <div style="background: #0a0a0a; border: 1px solid #1a1a1a; padding: 15px; border-radius: 12px;">
+                    <small style="color: #444; font-size: 0.5rem; text-transform: uppercase; letter-spacing: 1px;">AVAILABLE BALANCE</small>
+                    <div id="sidebar-balance" style="color: #00ff88; font-family: 'Goldman'; font-size: 1.4rem;">₱0.00</div>
+                    <div style="display:flex; justify-content:space-between; margin-top:10px; font-size:0.6rem; color:#444;">
+                        <span id="sidebar-id">ID: ---</span>
+                        <span id="sidebar-role-badge" style="color:var(--gold);">PLAYER</span>
                     </div>
-                    <div id="sidebar-role-badge" style="font-size:0.5rem; background:#222; color:#D4AF37; padding:3px 8px; border-radius:4px; border:1px solid #333; font-weight:bold;">PLAYER</div>
                 </div>
-                <div id="sidebar-id" style="color: #666; font-size: 0.65rem; margin-top: 10px; font-family:monospace;">ID: LOADING...</div>
             </div>
             
-            <div class="sidebar-links">
-                <a href="/" class="${currentPath === '/' || currentPath === '/index.html' ? 'active' : ''}">Home</a>
-                <a href="/games/" class="${currentPath.includes('/games/') ? 'active' : ''}">Games</a>
-                <a href="/profile/" class="${currentPath.includes('/profile/') ? 'active' : ''}">My Profile</a>
-                
-                <div class="menu-category">FINANCE & LOGS</div>
-                <a href="/wallet/" class="${currentPath.includes('/wallet/') ? 'active' : ''}" style="color:var(--gold);">Nexus Wallet</a>
-                <a href="/history/wallet.html" class="${currentPath.includes('wallet.html') ? 'active' : ''}">Transaction History</a>
-                <a href="/history/bets.html" class="${currentPath.includes('bets.html') ? 'active' : ''}">Betting Records</a>
+            <div class="sidebar-links" style="padding: 0 25px; overflow-y: auto;">
+                <div class="menu-category" style="color:#333; font-size:0.6rem; letter-spacing:2px; margin-bottom:10px;">RECORDS</div>
+                <a href="/history/wallet.html" style="display:block; color:#888; text-decoration:none; padding:12px 0; border-bottom:1px solid #111; font-size:0.8rem;">Financial Logs</a>
+                <a href="/history/bets.html" style="display:block; color:#888; text-decoration:none; padding:12px 0; border-bottom:1px solid #111; font-size:0.8rem;">Betting History</a>
                 
                 <div id="agent-manager-section"></div>
 
-                <div class="menu-category">COMMUNITY</div>
-                <a href="https://t.me/YOUR_CHANNEL" target="_blank">Telegram Channel</a>
-                <a href="https://m.me/YOUR_PAGE" target="_blank">Facebook Support</a>
+                <div class="menu-category" style="color:#333; font-size:0.6rem; letter-spacing:2px; margin: 20px 0 10px;">SUPPORT</div>
+                <a href="https://t.me/" target="_blank" style="display:block; color:#888; text-decoration:none; padding:12px 0; border-bottom:1px solid #111; font-size:0.8rem;">Telegram Official</a>
             </div>
 
-            <div class="sidebar-footer" style="padding: 20px; margin-top:auto;">
-                <button id="nexus-logout" class="logout-btn" style="width:100%; padding:14px; border-radius:10px; background:rgba(255, 68, 68, 0.05); color:#ff4444; border:1px solid rgba(255, 68, 68, 0.1); font-size:0.7rem; font-weight:bold; cursor:pointer; transition: 0.3s; font-family:'Goldman';">LOGOUT SESSION</button>
+            <div style="padding: 20px; margin-top:auto; border-top:1px solid #111;">
+                <button id="nexus-logout" style="width:100%; padding:14px; border-radius:10px; background:rgba(255, 68, 68, 0.05); color:#ff4444; border:1px solid rgba(255, 68, 68, 0.1); font-size:0.7rem; font-weight:bold; cursor:pointer; font-family:'Goldman';">LOGOUT SESSION</button>
             </div>
         </div>
     `;
 
-    const nav = document.querySelector('.top-nav');
-    if (nav) {
-        nav.insertAdjacentHTML('afterbegin', menuHTML);
-    } else {
-        document.body.insertAdjacentHTML('afterbegin', menuHTML);
-    }
+    document.body.insertAdjacentHTML('beforeend', bottomNavHTML);
 
     const menu = document.getElementById('nexus-side-menu');
     const overlay = document.getElementById('nexus-menu-overlay');
@@ -74,7 +85,7 @@ export function injectMenu() {
 
     if (logoutBtn) {
         logoutBtn.onclick = () => {
-            if (confirm("End your NEXUS session?")) {
+            if (confirm("Terminate Nexus Session?")) {
                 if (window.firebaseAuth) window.firebaseAuth.signOut().then(() => window.location.href = "/login/");
                 else window.location.href = "/login/";
             }
@@ -87,51 +98,24 @@ export function injectMenu() {
 async function syncSidebarData() {
     const auth = window.firebaseAuth;
     const db = window.firebaseDb;
+    if (!auth || !db) return setTimeout(syncSidebarData, 500);
 
-    if (!auth || !db) {
-        setTimeout(syncSidebarData, 500);
-        return;
-    }
-
-    auth.onAuthStateChanged(async (user) => {
+    auth.onAuthStateChanged(user => {
         if (user) {
             onSnapshot(doc(db, "users", user.uid), (snap) => {
                 if (snap.exists()) {
                     const data = snap.data();
-                    const level = data.level || 6; 
-                    const bal = data.balance || 0;
-
-                    // Update UI Elements
-                    document.getElementById('sidebar-balance').innerText = `₱${bal.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
+                    document.getElementById('sidebar-balance').innerText = `₱${(data.balance || 0).toLocaleString(undefined, {minimumFractionDigits: 2})}`;
                     document.getElementById('sidebar-id').innerText = `ID: ${data.username.toUpperCase()}`;
                     document.getElementById('sidebar-role-badge').innerText = data.role.replace("_", " ");
-
+                    
                     const container = document.getElementById('agent-manager-section');
-                    if (!container) return;
-
-                    // MANAGEMENT VISIBILITY (Level 1-5)
-                    if (level >= 1 && level <= 5) {
-                        const currentPath = window.location.pathname;
-                        let links = `
-                            <div class="menu-category">MANAGEMENT PULSE</div>
-                            <div style="background:rgba(212, 175, 55, 0.03); border-radius:10px; padding:12px; margin:0 0 10px 0; border:1px solid rgba(212, 175, 55, 0.1);">
-                                <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
-                                    <small style="color:#555; font-size:0.5rem;">EARNINGS</small>
-                                    <span style="color:#D4AF37; font-size:0.6rem; font-weight:bold;">₱${(data.totalCommission || 0).toLocaleString()}</span>
-                                </div>
-                                <div style="display:flex; justify-content:space-between;">
-                                    <small style="color:#555; font-size:0.5rem;">RATE</small>
-                                    <span style="color:#fff; font-size:0.6rem; font-weight:bold;">${data.commissionRate}%</span>
-                                </div>
-                            </div>
-                            <a href="/admin/agents.html" class="${currentPath.includes('agents.html') ? 'active' : ''}">Network Manager</a>
+                    if (container && data.level <= 5) {
+                        container.innerHTML = `
+                            <div class="menu-category" style="color:#333; font-size:0.6rem; letter-spacing:2px; margin:20px 0 10px;">MANAGEMENT</div>
+                            <a href="/admin/agents.html" style="display:block; color:var(--gold); text-decoration:none; padding:12px 0; border-bottom:1px solid #111; font-size:0.8rem; font-weight:bold;">Network Manager</a>
+                            ${data.level === 1 ? `<a href="/admin/index.html" style="display:block; color:#00ff88; text-decoration:none; padding:12px 0; border-bottom:1px solid #111; font-size:0.8rem;">Command Center</a>` : ''}
                         `;
-
-                        if (level === 1) {
-                            links += `<a href="/admin/index.html" class="${currentPath.includes('index.html') ? 'active' : ''}" style="color: #00ff88; border-left: 2px solid #00ff88; background: rgba(0, 255, 136, 0.05); margin-top:5px;">Command Center</a>`;
-                        }
-
-                        container.innerHTML = links;
                     }
                 }
             });
