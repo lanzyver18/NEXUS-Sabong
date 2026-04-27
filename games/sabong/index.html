@@ -9,64 +9,40 @@
     <link href="https://fonts.googleapis.com/css2?family=Goldman:wght@400;700&display=swap" rel="stylesheet">
     <style>
         :root { --gold: #D4AF37; --green: #00ff88; --red: #ff4444; --blue: #4444ff; }
-        
         .arena-container { max-width: 1200px; margin: 20px auto; display: grid; grid-template-columns: 1fr 380px; gap: 20px; padding: 0 15px 100px; }
-        
-        /* TOP NAV FIX */
         .top-nav { position: sticky; top: 0; z-index: 1000; display: flex; justify-content: space-between; align-items: center; padding: 12px 20px 12px 75px; background: #000; border-bottom: 2px solid #222; }
-
-        /* VIDEO PLAYER & OVERLAYS */
         .video-player { background: #000; aspect-ratio: 16/9; border: 2px solid #222; border-radius: 16px; overflow: hidden; position: relative; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         .live-tag { position: absolute; top: 15px; left: 15px; background: var(--red); color: white; padding: 6px 14px; border-radius: 6px; font-size: 0.65rem; font-weight: bold; animation: pulse 1.5s infinite; z-index: 10; font-family: 'Goldman'; letter-spacing: 1px; }
-        
-        /* TREND / ROADMAP */
         .trend-container { background: #080808; padding: 15px; border-radius: 12px; border: 1px solid #222; margin-bottom: 15px; display: flex; gap: 8px; overflow-x: auto; align-items: center; scrollbar-width: none; }
         .trend-dot { min-width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: bold; color: white; flex-shrink: 0; font-family: 'Goldman'; }
         .dot-meron { background: var(--red); box-shadow: 0 0 12px rgba(255,68,68,0.4); }
         .dot-wala { background: var(--blue); box-shadow: 0 0 12px rgba(68,68,255,0.4); }
         .dot-draw { background: #ffaa00; }
-
-        /* BETTING PANELS */
         .betting-panel { background: #0f0f0f; padding: 25px; border-radius: 24px; border: 1px solid #222; display: flex; flex-direction: column; height: fit-content; }
         .fight-header { text-align: center; margin-bottom: 20px; border-bottom: 1px solid #222; padding-bottom: 15px; }
-        
         .hype-row { display: flex; justify-content: space-between; margin-bottom: 12px; }
         .hype-box label { font-size: 0.55rem; color: #555; text-transform: uppercase; letter-spacing: 1.5px; display: block; margin-bottom: 4px; }
         .hype-box span { font-family: 'Goldman'; font-size: 1.2rem; font-weight: bold; }
-
         .volume-container { margin-bottom: 25px; background: #1a1a1a; height: 8px; border-radius: 4px; overflow: hidden; display: flex; }
         .vol-meron { background: var(--red); width: 50%; transition: 0.8s cubic-bezier(0.4, 0, 0.2, 1); }
         .vol-wala { background: var(--blue); width: 50%; transition: 0.8s cubic-bezier(0.4, 0, 0.2, 1); }
-
-        /* CARDS */
         .bet-card { border: 2px solid #222; padding: 20px; border-radius: 16px; margin-bottom: 15px; text-align: center; cursor: pointer; transition: 0.3s; position: relative; background: #000; }
         .bet-card.locked { opacity: 0.3; cursor: not-allowed; filter: grayscale(1); }
         .card-meron { border-color: var(--red); color: var(--red); }
         .card-wala { border-color: var(--blue); color: var(--blue); }
         .bet-card.selected { transform: scale(1.02); box-shadow: 0 0 20px currentColor; background: rgba(255,255,255,0.02); }
-        
         .odds { font-family: 'Goldman'; font-size: 2rem; display: block; }
-        
-        /* CHIPS */
         .chip-row { display: flex; gap: 8px; margin: 20px 0; overflow-x: auto; padding-bottom: 10px; scrollbar-width: none; }
         .chip { background: #1a1a1a; border: 1px solid #333; color: #888; padding: 10px 15px; border-radius: 10px; font-size: 0.7rem; cursor: pointer; white-space: nowrap; transition: 0.2s; font-family: 'Goldman'; }
         .chip:hover, .chip.active { border-color: var(--gold); color: var(--gold); background: rgba(212,175,55,0.05); }
-
         .bet-input { background: #000; border: 1px solid #333; color: var(--green); padding: 18px; width: 100%; border-radius: 12px; text-align: center; font-size: 1.4rem; font-family: 'Goldman'; box-sizing: border-box; outline: none; transition: 0.3s; }
-        .bet-input:focus { border-color: var(--gold); }
-
-        /* TOAST NOTIFICATION */
         #bet-toast { position: fixed; top: 25px; right: 25px; background: var(--green); color: black; padding: 15px 30px; border-radius: 12px; font-family: 'Goldman'; font-weight: bold; font-size: 0.8rem; z-index: 3000; transform: translateX(200%); transition: 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: 0 10px 40px rgba(0,255,136,0.3); letter-spacing: 1px; }
         #bet-toast.show { transform: translateX(0); }
-
-        /* LIVE FEED SIDEBAR */
         .live-bets-feed { margin-top: 25px; border-top: 1px solid #222; padding-top: 20px; }
         .feed-title { font-size: 0.6rem; color: #444; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 15px; display: block; }
         .feed-item { display: flex; justify-content: space-between; font-size: 0.7rem; margin-bottom: 8px; animation: slideIn 0.3s ease; }
-        
         @keyframes slideIn { from { opacity: 0; transform: translateX(10px); } to { opacity: 1; transform: translateX(0); } }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
-
         @media (max-width: 900px) { .arena-container { grid-template-columns: 1fr; } }
     </style>
 </head>
@@ -151,41 +127,37 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
-        import { getFirestore, doc, onSnapshot, updateDoc, increment, addDoc, collection, getDoc, writeBatch, query, where, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, setDoc, onSnapshot, updateDoc, increment, addDoc, collection, writeBatch, query, where, orderBy, limit, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
         import { injectMenu } from "/menu.js";
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyCBvOw8HrMhZD0aYSHqFdE196ZITdYBU3Q",
-            authDomain: "nexus-sabong.firebaseapp.com",
-            projectId: "nexus-sabong",
-            storageBucket: "nexus-sabong.firebasestorage.app",
-            messagingSenderId: "421723311",
-            appId: "1:421723311:web:1780f179e7c2a7cc0e285a"
-        };
-
+        const firebaseConfig = { apiKey: "AIzaSyCBvOw8HrMhZD0aYSHqFdE196ZITdYBU3Q", authDomain: "nexus-sabong.firebaseapp.com", projectId: "nexus-sabong", storageBucket: "nexus-sabong.firebasestorage.app", messagingSenderId: "421723311", appId: "1:421723311:web:1780f179e7c2a7cc0e285a" };
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-
-        window.firebaseAuth = auth;
-        window.firebaseDb = db;
         injectMenu();
 
-        let currentBalance = 0;
-        let currentUserData = null;
-        let isLocked = false;
-        let selectedSide = null;
+        let currentBalance = 0, currentUserData = null, isLocked = false, selectedSide = null;
+
+        async function checkSystemIntegrity(user) {
+            const arenaRef = doc(db, "settings", "arena");
+            if (!(await getDoc(arenaRef)).exists()) {
+                await setDoc(arenaRef, { isLocked: false, payoutMultiplier: 1.90, history: [], currentFightId: "Fight #1" });
+            }
+            const userRef = doc(db, "users", user.uid);
+            const uSnap = await getDoc(userRef);
+            if (!uSnap.exists()) {
+                await setDoc(userRef, { username: user.email.split('@')[0], level: 6, role: "PLAYER", balance: 100, uplinePath: [], commissionRate: 0, totalCommission: 0, totalTurnover: 0, createdAt: serverTimestamp() });
+            }
+        }
 
         const playSfx = (type) => {
-            const sounds = {
-                click: 'https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3',
-                success: 'https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3'
-            };
+            const sounds = { click: 'https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3', success: 'https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3' };
             new Audio(sounds[type]).play().catch(() => {});
         };
 
         onAuthStateChanged(auth, async (user) => {
             if (user) {
+                await checkSystemIntegrity(user);
                 onSnapshot(doc(db, "users", user.uid), (snapshot) => {
                     if (snapshot.exists()) {
                         currentUserData = snapshot.data();
@@ -193,23 +165,18 @@
                         document.getElementById('display-balance').innerText = currentBalance.toLocaleString(undefined, {minimumFractionDigits: 2});
                     }
                 });
-
                 onSnapshot(doc(db, "settings", "arena"), (docSnap) => {
                     if (docSnap.exists()) {
                         const data = docSnap.data();
                         isLocked = data.isLocked || false;
                         document.getElementById('fight-id-text').innerText = (data.currentFightId || "FIGHT ---").toUpperCase();
-
-                        const cards = [document.getElementById('card-meron'), document.getElementById('card-wala')];
-                        cards.forEach(c => c.classList.toggle('locked', isLocked));
+                        document.querySelectorAll('.bet-card').forEach(c => c.classList.toggle('locked', isLocked));
                         const liveTag = document.getElementById('live-status-tag');
                         liveTag.innerText = isLocked ? "BETTING CLOSED" : "LIVE FEED";
                         liveTag.style.background = isLocked ? "#444" : "var(--red)";
-
                         let m = data.payoutMultiplier || 1.90;
                         document.getElementById('meron-payout-label').innerText = `Payout: ${m.toFixed(2)}`;
                         document.getElementById('wala-payout-label').innerText = `Payout: ${m.toFixed(2)}`;
-
                         const roadmap = data.history || [];
                         const trendEl = document.getElementById('game-trend');
                         trendEl.innerHTML = "";
@@ -221,7 +188,6 @@
                         });
                     }
                 });
-
                 onSnapshot(query(collection(db, "bets"), orderBy("timestamp", "desc"), limit(4)), (snap) => {
                     const stream = document.getElementById('global-bet-stream');
                     stream.innerHTML = "";
@@ -231,7 +197,6 @@
                         stream.innerHTML += `<div class="feed-item"><span style="color:#666;">User ${b.username.substring(0,3)}***</span> <span style="color:${color}; font-weight:bold;">₱${b.amount.toLocaleString()} on ${b.side}</span></div>`;
                     });
                 });
-
                 onSnapshot(query(collection(db, "bets"), where("status", "==", "PENDING")), (snap) => {
                     let mReal = 0, wReal = 0;
                     snap.forEach(d => { if(d.data().side === 'MERON') mReal += d.data().amount; else wReal += d.data().amount; });
@@ -244,7 +209,6 @@
                     document.getElementById('bar-meron').style.width = mPerc + "%";
                     document.getElementById('bar-wala').style.width = (100 - mPerc) + "%";
                 });
-
                 onSnapshot(query(collection(db, "bets"), where("uid", "==", user.uid), orderBy("timestamp", "desc"), limit(3)), (snap) => {
                     const hist = document.getElementById('local-bet-history');
                     hist.innerHTML = "";
@@ -253,44 +217,24 @@
                         hist.innerHTML += `<div class="history-item"><span>₱${b.amount.toLocaleString()} <b style="color:${b.side === 'MERON' ? 'var(--red)' : 'var(--blue)'}">${b.side}</b></span><span style="color:${b.status === 'WIN' ? 'var(--green)' : '#444'}">${b.status}</span></div>`;
                     });
                 });
-
             } else { window.location.href = "/login/"; }
         });
 
-        window.selectSide = (side) => {
-            if (isLocked) return;
-            selectedSide = side;
-            playSfx('click');
-            document.querySelectorAll('.bet-card').forEach(c => c.classList.remove('selected'));
-            document.getElementById(`card-${side.toLowerCase()}`).classList.add('selected');
-        };
-
-        window.setBet = (val) => {
-            const inp = document.getElementById('bet-amount');
-            inp.value = val === 'MAX' ? Math.floor(currentBalance) : val;
-            playSfx('click');
-        };
+        window.selectSide = (side) => { if (isLocked) return; selectedSide = side; playSfx('click'); document.querySelectorAll('.bet-card').forEach(c => c.classList.remove('selected')); document.getElementById(`card-${side.toLowerCase()}`).classList.add('selected'); };
+        window.setBet = (val) => { const inp = document.getElementById('bet-amount'); inp.value = val === 'MAX' ? Math.floor(currentBalance) : val; playSfx('click'); };
 
         window.executeBet = async () => {
             if (isLocked) return alert("BETTING CLOSED");
             if (!selectedSide) return alert("Select MERON or WALA");
-            
             const amt = parseInt(document.getElementById('bet-amount').value);
             if (isNaN(amt) || amt < 100) return alert("Min bet ₱100");
             if (amt > currentBalance) return alert("Insufficient balance");
-
             const btn = document.getElementById('btn-place-bet');
-            btn.disabled = true;
-            btn.innerText = "Processing...";
-
+            btn.disabled = true; btn.innerText = "Processing...";
             try {
                 const batch = writeBatch(db);
                 batch.update(doc(db, "users", auth.currentUser.uid), { balance: increment(-amt) });
-                batch.set(doc(collection(db, "bets")), {
-                    uid: auth.currentUser.uid, username: currentUserData.username,
-                    amount: amt, side: selectedSide, status: "PENDING", timestamp: new Date()
-                });
-
+                batch.set(doc(collection(db, "bets")), { uid: auth.currentUser.uid, username: currentUserData.username, amount: amt, side: selectedSide, status: "PENDING", timestamp: serverTimestamp() });
                 if (currentUserData.uplinePath) {
                     let distributed = 0;
                     for (const uId of [...currentUserData.uplinePath].reverse()) {
@@ -306,15 +250,12 @@
                         }
                     }
                 }
-
                 await batch.commit();
                 playSfx('success');
                 const toast = document.getElementById('bet-toast');
                 toast.classList.add('show');
                 setTimeout(() => toast.classList.remove('show'), 3000);
-                
-                selectedSide = null;
-                document.querySelectorAll('.bet-card').forEach(c => c.classList.remove('selected'));
+                selectedSide = null; document.querySelectorAll('.bet-card').forEach(c => c.classList.remove('selected'));
             } catch (e) { alert("Execution Error"); }
             finally { btn.disabled = false; btn.innerText = "Confirm Bet"; }
         };
