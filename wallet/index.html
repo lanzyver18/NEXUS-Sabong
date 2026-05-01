@@ -9,11 +9,11 @@
     <link href="https://fonts.googleapis.com/css2?family=Goldman:wght@400;700&display=swap" rel="stylesheet">
     <style>
         :root { --gold: #D4AF37; --green: #00ff88; --bg-dark: #050505; --panel-bg: #0f0f0f; --red: #ff4444; }
+        body { background: #000; overflow-x: hidden; padding-bottom: 100px; }
         
-        .top-nav { position: sticky; top: 0; z-index: 1000; display: flex; justify-content: space-between; align-items: center; padding: 12px 20px 12px 75px; background: #000; border-bottom: 2px solid #222; }
+        .top-nav { position: sticky; top: 0; z-index: 1000; display: flex; justify-content: space-between; align-items: center; padding: 12px 20px; background: #000; border-bottom: 2px solid #222; }
 
-        .wallet-wrapper { max-width: 500px; margin: 20px auto; padding: 0 15px; padding-bottom: 120px; }
-        
+        .wallet-wrapper { max-width: 500px; margin: 20px auto; padding: 0 15px; }
         .wallet-card { background: linear-gradient(145deg, #121212, #080808); border-radius: 24px; border: 1px solid #222; padding: 35px 30px; margin-bottom: 25px; text-align: center; position: relative; box-shadow: 0 15px 35px rgba(0,0,0,0.6); }
 
         .balance-display { font-family: 'Goldman'; font-size: 2.6rem; color: var(--green); margin: 8px 0; cursor: pointer; transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1); letter-spacing: -1px; filter: blur(15px); }
@@ -49,7 +49,8 @@
         .btn-submit { width: 100%; padding: 18px; border-radius: 12px; border: none; font-weight: bold; font-family: 'Goldman'; text-transform: uppercase; margin-top: 10px; cursor: pointer; transition: 0.3s; }
         .btn-submit:disabled { opacity: 0.3; cursor: not-allowed; filter: grayscale(1); }
 
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @media (min-width: 900px) { .top-nav { padding-left: 20px !important; } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(100px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
@@ -76,10 +77,10 @@
             <div class="w-tab" onclick="switchTab(this, 'vault')">Vault</div>
         </div>
 
+        <!-- WITHDRAW PANEL -->
         <div id="withdraw" class="panel active">
             <label style="font-size: 0.6rem; color: #555; letter-spacing: 1px; display:block; margin-bottom:10px;">TARGET DESTINATION</label>
             <div id="vault-items" style="display:flex; gap:10px; overflow-x:auto; padding-bottom:15px; margin-bottom:10px; scrollbar-width:none;"></div>
-
             <div class="form-group">
                 <label>Liquidation Amount</label>
                 <div class="chip-row">
@@ -90,10 +91,10 @@
                 </div>
                 <input type="number" id="w-amount" placeholder="0.00">
             </div>
-
-            <button class="btn-submit" id="btn-withdraw" style="background:var(--gold); color:black;">REQUEST SETTLEMENT</button>
+            <button class="btn-submit" id="btn-withdraw-action" style="background:var(--gold); color:black;">REQUEST SETTLEMENT</button>
         </div>
 
+        <!-- P2P PANEL -->
         <div id="p2p" class="panel">
             <div class="form-group">
                 <label>Target Node ID (Username)</label>
@@ -107,10 +108,12 @@
             <button class="btn-submit" id="btn-p2p" onclick="handleP2P()" style="background:var(--green); color:black;" disabled>EXECUTE P2P</button>
         </div>
 
+        <!-- HISTORY PANEL -->
         <div id="history" class="panel">
             <div id="wallet-history-list" style="max-height: 400px; overflow-y: auto;"></div>
         </div>
 
+        <!-- VAULT PANEL -->
         <div id="vault" class="panel">
             <div class="form-group">
                 <label>Gateway</label>
@@ -118,7 +121,6 @@
                     <option value="GCASH">GCASH</option>
                     <option value="MAYA">MAYA</option>
                     <option value="BDO">BDO</option>
-                    <option value="BPI">BPI</option>
                 </select>
             </div>
             <div class="form-group">
@@ -135,96 +137,79 @@
     </div>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
-        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
-        import { getFirestore, doc, onSnapshot, updateDoc, increment, addDoc, collection, query, where, getDocs, writeBatch, orderBy, limit, getDoc, setDoc, serverTimestamp, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+        import { supabase } from "/supabase.js";
         import { injectMenu } from "/menu.js";
-
-        const firebaseConfig = { apiKey: "AIzaSyCBvOw8HrMhZD0aYSHqFdE196ZITdYBU3Q", authDomain: "nexus-sabong.firebaseapp.com", projectId: "nexus-sabong", storageBucket: "nexus-sabong.firebasestorage.app", messagingSenderId: "421723311", appId: "1:421723311:web:1780f179e7c2a7cc0e285a" };
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-
-        // PERSISTENCE ENGINE
-        enableIndexedDbPersistence(db).catch(() => {});
-        injectMenu();
 
         let myData = null;
         let selectedAcc = null;
         let targetUid = null;
 
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                // Background Heal
-                checkSystemIntegrity(user);
+        injectMenu();
 
-                // Snapshot Hydration
-                onSnapshot(doc(db, "users", user.uid), (snap) => {
-                    if(snap.exists()) {
-                        myData = snap.data();
-                        updateDisplay();
-                        renderVault();
-                    }
-                });
-                loadRecentActivity(user.uid);
-            } else { window.location.href = "/login/"; }
-        });
+        async function initWallet() {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) { window.location.href = "/login/"; return; }
 
-        async function checkSystemIntegrity(user) {
-            const userRef = doc(db, "users", user.uid);
-            const snap = await getDoc(userRef);
-            if (!snap.exists()) {
-                await setDoc(userRef, { username: user.email.split('@')[0], level: 6, role: "PLAYER", balance: 100, uplinePath: [], commissionRate: 0, totalCommission: 0, totalTurnover: 0, createdAt: serverTimestamp() });
-            }
+            const userId = session.user.id;
+
+            const updateUI = (data) => {
+                myData = data;
+                const bal = parseFloat(data.balance || 0);
+                document.getElementById('main-balance').innerText = `₱${bal.toLocaleString(undefined, {minimumFractionDigits:2})}`;
+                document.getElementById('nav-bal').innerText = `₱${bal.toLocaleString()}`;
+                document.getElementById('player-id').innerText = `ID: ${data.username.toUpperCase()}`;
+                renderVault();
+            };
+
+            // Initial Profile Fetch
+            const { data: profile } = await supabase.from('profiles').select('*').eq('id', userId).single();
+            if (profile) updateUI(profile);
+
+            // Real-time Balance
+            supabase.channel('wallet-sync')
+                .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles', filter: `id=eq.${userId}` }, 
+                    payload => updateUI(payload.new)).subscribe();
+
+            loadRecentActivity(userId);
         }
-
-        function updateDisplay() {
-            const bal = myData.balance || 0;
-            document.getElementById('main-balance').innerText = `₱${bal.toLocaleString(undefined, {minimumFractionDigits:2})}`;
-            document.getElementById('nav-bal').innerText = `₱${bal.toLocaleString()}`;
-            document.getElementById('player-id').innerText = `ID: ${myData.username.toUpperCase()}`;
-        }
-
-        document.getElementById('eye-toggle').onclick = function() {
-            this.classList.toggle('active');
-            document.getElementById('main-balance').classList.toggle('visible');
-        };
 
         window.verifyP2PTarget = async (val) => {
             const hint = document.getElementById('p2p-verify-hint');
             const btn = document.getElementById('btn-p2p');
             if(val.length < 3) { hint.innerText = ""; return; }
             
-            const q = query(collection(db, "users"), where("username", "==", val.toLowerCase()));
-            const snap = await getDocs(q);
+            const { data } = await supabase.from('profiles').select('id, username').eq('username', val.toLowerCase()).single();
             
-            if(!snap.empty && val.toLowerCase() !== myData.username) {
-                targetUid = snap.docs[0].id;
+            if(data && data.username !== myData.username) {
+                targetUid = data.id;
                 hint.innerText = `✓ IDENTIFIED: ${val.toUpperCase()}`;
                 hint.style.color = "var(--green)";
                 btn.disabled = false;
             } else {
                 targetUid = null;
-                hint.innerText = val.toLowerCase() === myData.username ? "× SELF-TRANSFER BLOCKED" : "× NODE UNKNOWN";
+                hint.innerText = data?.username === myData.username ? "× SELF-TRANSFER BLOCKED" : "× NODE UNKNOWN";
                 hint.style.color = "var(--red)";
                 btn.disabled = true;
             }
         };
 
-        function loadRecentActivity(uid) {
-            const q = query(collection(db, "wallet_logs"), where("uid", "==", uid), orderBy("timestamp", "desc"), limit(15));
-            onSnapshot(q, (snap) => {
-                const list = document.getElementById('wallet-history-list');
-                list.innerHTML = snap.empty ? `<p style="text-align:center; color:#222; font-family:Goldman;">NO DATA TRAILS</p>` : "";
-                snap.forEach(doc => {
-                    const l = doc.data();
-                    const isNeg = ["TRANSFER_OUT", "WITHDRAWAL"].includes(l.type);
-                    list.innerHTML += `
-                        <div class="log-item">
-                            <div><div style="font-weight:bold; color:#eee; font-size:0.6rem; font-family:Goldman;">${l.type.replace("_", " ")}</div><small style="color:#444;">${l.timestamp?.toDate().toLocaleDateString() || 'Pending'}</small></div>
-                            <div class="${isNeg ? 'amt-neg' : 'amt-pos'}" style="font-family:'Goldman';">${isNeg ? '-' : '+'}₱${l.amount.toLocaleString()}</div>
-                        </div>`;
-                });
+        async function loadRecentActivity(uid) {
+            const { data: logs } = await supabase.from('wallet_logs').select('*').eq('user_id', uid).order('timestamp', { ascending: false }).limit(15);
+            const list = document.getElementById('wallet-history-list');
+            list.innerHTML = logs?.length ? "" : `<p style="text-align:center; color:#222; font-family:Goldman;">NO DATA TRAILS</p>`;
+            
+            logs?.forEach(l => {
+                const isNeg = ["TRANSFER_OUT", "WITHDRAWAL"].includes(l.type);
+                list.innerHTML += `
+                    <div class="log-item">
+                        <div>
+                            <div style="font-weight:bold; color:#eee; font-size:0.6rem; font-family:Goldman;">${l.type.replace("_", " ")}</div>
+                            <small style="color:#444;">${new Date(l.timestamp).toLocaleDateString()}</small>
+                        </div>
+                        <div class="${isNeg ? 'amt-neg' : 'amt-pos'}" style="font-family:'Goldman';">
+                            ${isNeg ? '-' : '+'}₱${parseFloat(l.amount).toLocaleString()}
+                        </div>
+                    </div>`;
             });
         }
 
@@ -237,15 +222,24 @@
 
         window.setWAmount = (val) => { document.getElementById('w-amount').value = (val === 'MAX') ? Math.floor(myData.balance) : val; };
 
+        document.getElementById('eye-toggle').onclick = function() {
+            this.classList.toggle('active');
+            document.getElementById('main-balance').classList.toggle('visible');
+        };
+
         window.saveToVault = async () => {
             const name = document.getElementById('v-name').value.trim();
             const num = document.getElementById('v-number').value.trim();
             const bank = document.getElementById('v-bank').value;
             if(!name || !num) return alert("All fields required.");
+            
+            // Supabase uses 'vault' JSONB column in profiles
             const vault = myData.vault || [];
             vault.push({ name, number: num, bank });
-            await updateDoc(doc(db, "users", auth.currentUser.uid), { vault });
-            document.getElementById('v-name').value = ""; document.getElementById('v-number').value = "";
+            await supabase.from('profiles').update({ vault }).eq('id', myData.id);
+            
+            document.getElementById('v-name').value = ""; 
+            document.getElementById('v-number').value = "";
         };
 
         function renderVault() {
@@ -271,31 +265,43 @@
 
         window.deleteVaultItem = async (i) => {
             const v = [...myData.vault]; v.splice(i, 1);
-            await updateDoc(doc(db, "users", auth.currentUser.uid), { vault: v });
+            await supabase.from('profiles').update({ vault: v }).eq('id', myData.id);
         };
 
         window.handleP2P = async () => {
             const amt = parseFloat(document.getElementById('p2p-amount').value);
-            if(isNaN(amt) || amt <= 0 || amt > myData.balance || !targetUid) return alert("Protocol Failure: Verify parameters.");
-            const batch = writeBatch(db);
-            batch.update(doc(db, "users", auth.currentUser.uid), { balance: increment(-amt) });
-            batch.update(doc(db, "users", targetUid), { balance: increment(amt) });
-            batch.set(doc(collection(db, "wallet_logs")), { uid: auth.currentUser.uid, type: "TRANSFER_OUT", toUser: document.getElementById('p2p-target').value, amount: amt, timestamp: serverTimestamp() });
-            batch.set(doc(collection(db, "wallet_logs")), { uid: targetUid, type: "TRANSFER_IN", fromUser: myData.username, amount: amt, timestamp: serverTimestamp() });
-            await batch.commit();
-            alert("Transfer Sync Complete.");
+            if(isNaN(amt) || amt <= 0 || amt > myData.balance || !targetUid) return alert("Protocol Failure.");
+            
+            const { error } = await supabase.rpc('p2p_transfer', {
+                sender_uid: myData.id,
+                receiver_uid: targetUid,
+                transfer_amt: amt,
+                sender_name: myData.username,
+                receiver_name: document.getElementById('p2p-target').value
+            });
+
+            if(error) alert(error.message);
+            else { alert("Transfer Complete."); location.reload(); }
         };
 
-        document.getElementById('btn-withdraw').onclick = async () => {
+        document.getElementById('btn-withdraw-action').onclick = async () => {
             const amt = parseFloat(document.getElementById('w-amount').value);
-            if(isNaN(amt) || amt < 100 || amt > myData.balance || !selectedAcc) return alert("Review parameters (Min ₱100).");
-            const batch = writeBatch(db);
-            batch.update(doc(db, "users", auth.currentUser.uid), { balance: increment(-amt) });
-            batch.set(doc(collection(db, "withdrawals")), { uid: auth.currentUser.uid, username: myData.username, bank: selectedAcc.bank, accountName: selectedAcc.name, accountNumber: selectedAcc.number, amount: amt, status: "PENDING", timestamp: serverTimestamp() });
-            batch.set(doc(collection(db, "wallet_logs")), { uid: auth.currentUser.uid, type: "WITHDRAWAL", amount: amt, timestamp: serverTimestamp() });
-            await batch.commit();
-            alert("Withdrawal Protocol Initiated.");
+            if(isNaN(amt) || amt < 100 || amt > myData.balance || !selectedAcc) return alert("Min ₱100 / Select Account.");
+            
+            const { error } = await supabase.rpc('request_withdrawal', {
+                user_uid: myData.id,
+                u_name: myData.username,
+                w_amt: amt,
+                w_bank: selectedAcc.bank,
+                w_acc_name: selectedAcc.name,
+                w_acc_num: selectedAcc.number
+            });
+
+            if(error) alert(error.message);
+            else { alert("Settlement Requested."); location.reload(); }
         };
+
+        initWallet();
     </script>
 </body>
 </html>
