@@ -124,11 +124,11 @@
         .card-info h3 { margin: 0; color: white; font-size: 1.1rem; font-family: 'Goldman'; letter-spacing: 1px; }
         .card-info p { margin: 3px 0 0; color: var(--gold); font-size: 0.7rem; font-weight: bold; text-transform: uppercase; }
 
-        /* QUICK ACTIONS BAR FIX */
+        /* QUICK ACTIONS FIX */
         .quick-actions { 
             display: flex; gap: 10px; padding: 15px 20px; 
             background: #000; position: fixed; 
-            bottom: 70px; /* Default for mobile with bottom nav */
+            bottom: 70px; 
             left: 0; 
             width: 100%; box-sizing: border-box; border-top: 1px solid #222; z-index: 100; 
         }
@@ -141,7 +141,7 @@
             100% { transform: translateX(-100%); }
         }
 
-        /* PC & IPAD FIX: REMOVE THE FLOAT GAP */
+        /* iPad & PC FLOAT FIX */
         @media (min-width: 900px) {
             .quick-actions { bottom: 0 !important; }
             .lobby-grid { padding-bottom: 60px; }
@@ -204,7 +204,6 @@
                 <p>Enter Pit →</p>
             </div>
         </a>
-
         <a href="/games/crash/" class="game-card card-crash">
             <div class="status-tag" style="background:var(--blue)">HOT</div>
             <div class="card-info">
@@ -212,7 +211,6 @@
                 <p>Multiply →</p>
             </div>
         </a>
-
         <a href="/games/mines/" class="game-card card-mines">
             <div class="status-tag tag-new">NEW</div>
             <div class="card-info">
@@ -229,31 +227,19 @@
     </section>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
-        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
-        import { getFirestore, doc, onSnapshot, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
         import { injectMenu } from "/menu.js"; 
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyCBvOw8HrMhZD0aYSHqFdE196ZITdYBU3Q",
-            authDomain: "nexus-sabong.firebaseapp.com",
-            projectId: "nexus-sabong",
-            storageBucket: "nexus-sabong.firebasestorage.app",
-            messagingSenderId: "421723311",
-            appId: "1:421723311:web:1780f179e7c2a7cc0e285a"
-        };
+        const supabaseUrl = 'https://tkyhpwxarksxgjngerkj.supabase.co'
+        const supabaseKey = 'sb_publishable_l0NLXKZyF7OpFrvm34smCw_RG1raxsg'
+        const supabase = createClient(supabaseUrl, supabaseKey)
 
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-        
-        enableIndexedDbPersistence(db).catch(() => {});
-
-        window.firebaseAuth = auth;
-        window.firebaseDb = db; 
+        // Make globally available for menu.js
+        window.supabase = supabase;
 
         injectMenu();
 
+        // Ad Carousel Logic
         let currentSlide = 0;
         const slides = document.querySelectorAll('.ad-slide');
         setInterval(() => {
@@ -264,25 +250,53 @@
             }
         }, 5000);
 
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                const userRef = doc(db, "users", user.uid);
-                onSnapshot(userRef, (snapshot) => {
-                    if (snapshot.exists()) {
-                        const data = snapshot.data();
-                        document.getElementById('user-display').innerText = data.username ? data.username.toUpperCase() : "PLAYER";
-                        document.getElementById('nav-balance').innerText = (data.balance || 0).toLocaleString(undefined, {minimumFractionDigits: 2});
-                        
-                        const level = data.level || 6;
-                        const adminBtn = document.getElementById('admin-btn');
-                        if (adminBtn && level >= 1 && level <= 5) {
-                            adminBtn.style.display = "block";
-                            adminBtn.onclick = () => { window.location.href = (level === 1) ? '/admin/index.html' : '/admin/agents.html'; };
-                        }
-                    }
-                });
-            } else { window.location.href = "/login/"; }
-        });
+        async function initHome() {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) {
+                window.location.href = "/login/";
+                return;
+            }
+
+            const userId = session.user.id;
+
+            // Update UI Helper
+            const updateUI = (data) => {
+                const nameEl = document.getElementById('user-display');
+                const balEl = document.getElementById('nav-balance');
+                const adminBtn = document.getElementById('admin-btn');
+
+                if (nameEl) nameEl.innerText = data.username ? data.username.toUpperCase() : "PLAYER";
+                if (balEl) balEl.innerText = (data.balance || 0).toLocaleString(undefined, {minimumFractionDigits: 2});
+                
+                const level = data.level || 6;
+                if (adminBtn && level >= 1 && level <= 5) {
+                    adminBtn.style.display = "block";
+                    adminBtn.onclick = () => { 
+                        window.location.href = (level === 1) ? '/admin/index.html' : '/admin/agents.html'; 
+                    };
+                }
+            };
+
+            // Initial Profile Fetch
+            const { data: profile } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('id', userId)
+                .single();
+            
+            if (profile) updateUI(profile);
+
+            // Real-time listener for balance changes
+            supabase
+                .channel('home-profile-sync')
+                .on('postgres_changes', 
+                    { event: 'UPDATE', schema: 'public', table: 'profiles', filter: `id=eq.${userId}` }, 
+                    (payload) => { updateUI(payload.new); }
+                )
+                .subscribe();
+        }
+
+        initHome();
     </script>
 </body>
 </html>
