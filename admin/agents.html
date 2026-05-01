@@ -37,6 +37,8 @@
         .ledger-amt { color: var(--green); font-family: 'Goldman'; font-weight: bold; }
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); display: flex; align-items: center; justify-content: center; z-index: 2000; }
         .modal-content { background: #0f0f0f; width: 90%; max-width: 400px; padding: 30px; border-radius: 20px; border: 1px solid var(--gold); }
+        
+        @media (min-width: 900px) { .top-nav { padding-left: 20px !important; } }
         @media (max-width: 900px) { .agent-container { grid-template-columns: 1fr; } .stats-grid { grid-column: span 1; } }
     </style>
 </head>
@@ -120,22 +122,10 @@
     </div>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
-        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
-        import { getFirestore, doc, getDoc, getDocs, setDoc, updateDoc, collection, query, where, onSnapshot, addDoc, orderBy, limit, serverTimestamp, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+        import { supabase } from "/supabase.js";
         import { injectMenu } from "/menu.js";
 
-        const firebaseConfig = { apiKey: "AIzaSyCBvOw8HrMhZD0aYSHqFdE196ZITdYBU3Q", authDomain: "nexus-sabong.firebaseapp.com", projectId: "nexus-sabong", storageBucket: "nexus-sabong.firebasestorage.app", messagingSenderId: "421723311", appId: "1:421723311:web:1780f179e7c2a7cc0e285a" };
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-
-        enableIndexedDbPersistence(db).catch(() => {});
-        
-        window.firebaseAuth = auth;
-        window.firebaseDb = db;
-        injectMenu();
-
+        // Constants
         const TIERS = [
             { role: "ADMIN", level: 1 }, { role: "OPERATOR", level: 2 }, 
             { role: "INCO", level: 3 }, { role: "SUBOP", level: 4 }, 
@@ -145,44 +135,40 @@
         let myData = null;
         let editingUserId = null;
         let verifiedUplineData = null;
-        let allDownlines = [];
 
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                checkSystemIntegrity(user);
-                // SNAPSHOT SYNC: Load immediately from cache
-                onSnapshot(doc(db, "users", user.uid), (snap) => {
-                    if(snap.exists()) {
-                        myData = snap.data();
-                        if(myData.level >= 6) window.location.href = "/";
-                        
-                        // Sync UI & Sidebar Global Elements
-                        document.getElementById('nav-bal').innerText = `₱${(myData.balance || 0).toLocaleString(undefined, {minimumFractionDigits: 2})}`;
-                        const sidebarBal = document.getElementById('sidebar-balance');
-                        if(sidebarBal) sidebarBal.innerText = `₱${(myData.balance || 0).toLocaleString(undefined, {minimumFractionDigits: 2})}`;
-                        
-                        setupUI();
-                        loadDownlines();
-                        loadCommissionLogs();
-                    }
-                });
-            } else { window.location.href = "/login/"; }
-        });
+        injectMenu();
 
-        async function checkSystemIntegrity(user) {
-            const userRef = doc(db, "users", user.uid);
-            const userSnap = await getDoc(userRef);
-            if (!userSnap.exists()) {
-                await setDoc(userRef, { username: user.email.split('@')[0], level: 1, role: "ADMIN", balance: 10000, commissionRate: 10, uplinePath: [], totalCommission: 0, totalTurnover: 0, createdAt: serverTimestamp() });
+        async function init() {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) { window.location.href = "/login/"; return; }
+
+            const userId = session.user.id;
+
+            // 1. Initial Profile Fetch & UI Setup
+            const { data: profile } = await supabase.from('profiles').select('*').eq('id', userId).single();
+            if (profile) {
+                myData = profile;
+                if(myData.level >= 6) window.location.href = "/";
+                setupUI();
+                loadDownlines();
+                loadCommissionLogs();
             }
+
+            // 2. Real-time Profile Sync
+            supabase.channel('agent-profile-sync')
+                .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles', filter: `id=eq.${userId}` }, payload => {
+                    myData = payload.new;
+                    setupUI();
+                }).subscribe();
         }
 
         function setupUI() {
             document.getElementById('my-role-display').innerText = `TIER: ${myData.role}`;
-            document.getElementById('my-comm-rate').innerText = `${myData.commissionRate}%`;
-            document.getElementById('total-earned').innerText = `₱${(myData.totalCommission || 0).toLocaleString()}`;
-            document.getElementById('referral-url').value = `${window.location.origin}/register/?ref=${auth.currentUser.uid}`;
-            
+            document.getElementById('my-comm-rate').innerText = `${myData.commission_rate}%`;
+            document.getElementById('total-earned').innerText = `₱${(myData.total_commission || 0).toLocaleString()}`;
+            document.getElementById('referral-url').value = `${window.location.origin}/register/?ref=${myData.id}`;
+            document.getElementById('nav-bal').innerText = `₱${(myData.balance || 0).toLocaleString(undefined, {minimumFractionDigits: 2})}`;
+
             const select = document.getElementById('new-role');
             select.innerHTML = "";
             TIERS.filter(t => t.level > myData.level).forEach(t => {
@@ -194,42 +180,79 @@
             });
         }
 
-        function loadCommissionLogs() {
-            const q = query(collection(db, "wallet_logs"), where("uid", "==", auth.currentUser.uid), where("type", "==", "COMMISSION"), orderBy("timestamp", "desc"), limit(20));
-            onSnapshot(q, (snap) => {
-                const ledger = document.getElementById('commission-ledger');
-                if (snap.empty) {
-                    ledger.innerHTML = '<p style="text-align:center; color:#333; font-size:0.7rem; padding:20px;">No trails found.</p>';
-                    return;
-                }
-                ledger.innerHTML = "";
-                snap.forEach(d => {
-                    const log = d.data();
-                    ledger.innerHTML += `
-                        <div class="ledger-row">
-                            <div class="ledger-info">
-                                <b>From: ${log.fromUser || 'Node'}</b>
-                                <small>${log.timestamp?.toDate().toLocaleDateString()} • Bet: ₱${log.betAmount || 0}</small>
-                            </div>
-                            <div class="ledger-amt">+₱${log.amount.toFixed(2)}</div>
-                        </div>`;
-                });
+        async function loadDownlines() {
+            // Fetch initial list
+            const { data: downlines } = await supabase.from('profiles').select('*').eq('upline_id', myData.id);
+            renderTable(downlines || []);
+
+            // Real-time Downline sync
+            supabase.channel('downline-list')
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles', filter: `upline_id=eq.${myData.id}` }, async () => {
+                    const { data } = await supabase.from('profiles').select('*').eq('upline_id', myData.id);
+                    renderTable(data || []);
+                }).subscribe();
+        }
+
+        function renderTable(data) {
+            const list = document.getElementById('agent-list');
+            let teamT = 0;
+            list.innerHTML = data.length ? "" : '<tr><td colspan="5" style="text-align:center; padding:30px; color:#333;">No nodes found.</td></tr>';
+            
+            data.forEach(u => {
+                const badgeClass = u.level < 5 ? 'badge-op' : (u.level === 5 ? 'badge-agent' : 'badge-player');
+                teamT += (u.total_turnover || 0);
+                list.innerHTML += `
+                    <tr>
+                        <td><b style="color:#fff;">${u.username.toUpperCase()}</b></td>
+                        <td><span class="role-badge ${badgeClass}">${u.role}</span></td>
+                        <td style="color:var(--gold); font-family:Goldman;">${u.commission_rate}%</td>
+                        <td style="color:var(--green);">₱${(u.total_turnover || 0).toLocaleString()}</td>
+                        <td><button style="background:none; border:none; color:#555; cursor:pointer; font-size:0.6rem;" onclick="openEdit('${u.id}', '${u.username}', ${u.commission_rate})">ADJUST</button></td>
+                    </tr>`;
+            });
+            document.getElementById('count-downlines').innerText = data.length;
+            document.getElementById('team-turnover').innerText = `₱${teamT.toLocaleString()}`;
+        }
+
+        async function loadCommissionLogs() {
+            const { data: logs } = await supabase.from('wallet_logs')
+                .select('*')
+                .eq('user_id', myData.id)
+                .eq('type', 'COMMISSION')
+                .order('timestamp', { ascending: false })
+                .limit(20);
+
+            const ledger = document.getElementById('commission-ledger');
+            if (!logs || logs.length === 0) {
+                ledger.innerHTML = '<p style="text-align:center; color:#333; font-size:0.7rem; padding:20px;">No trails found.</p>';
+                return;
+            }
+            ledger.innerHTML = "";
+            logs.forEach(log => {
+                ledger.innerHTML += `
+                    <div class="ledger-row">
+                        <div class="ledger-info">
+                            <b>From: ${log.from_user || 'Node'}</b>
+                            <small>${new Date(log.timestamp).toLocaleDateString()} • Bet: ₱${log.bet_amount || 0}</small>
+                        </div>
+                        <div class="ledger-amt">+₱${parseFloat(log.amount).toFixed(2)}</div>
+                    </div>`;
             });
         }
 
         window.verifyUpline = async (username) => {
             const status = document.getElementById('upline-verify-status');
             if(!username) return status.innerText = "";
-            const q = query(collection(db, "users"), where("username", "==", username.toLowerCase()));
-            const snap = await getDocs(q);
-            if(!snap.empty) {
-                const data = snap.docs[0].data();
+            
+            const { data } = await supabase.from('profiles').select('*').eq('username', username.toLowerCase()).single();
+            
+            if(data) {
                 if (data.level >= 6) {
                     verifiedUplineData = null;
                     status.innerHTML = `<small style="color:var(--red)">❌ CANNOT PLACE UNDER PLAYER</small>`;
                 } else {
-                    verifiedUplineData = { id: snap.docs[0].id, ...data };
-                    status.innerHTML = `<small style="color:var(--green)">✅ ${data.role} (${data.commissionRate}%)</small>`;
+                    verifiedUplineData = data;
+                    status.innerHTML = `<small style="color:var(--green)">✅ ${data.role} (${data.commission_rate}%)</small>`;
                 }
             } else {
                 verifiedUplineData = null;
@@ -237,66 +260,38 @@
             }
         };
 
-        function loadDownlines() {
-            onSnapshot(query(collection(db, "users"), where("uplineId", "==", auth.currentUser.uid)), (snap) => {
-                allDownlines = [];
-                let teamT = 0;
-                snap.forEach(doc => {
-                    const d = doc.data(); d.id = doc.id;
-                    allDownlines.push(d);
-                    teamT += (d.totalTurnover || 0);
-                });
-                document.getElementById('count-downlines').innerText = snap.size;
-                document.getElementById('team-turnover').innerText = `₱${teamT.toLocaleString()}`;
-                renderTable(allDownlines);
-            });
-        }
-
-        function renderTable(data) {
-            const list = document.getElementById('agent-list');
-            list.innerHTML = data.length ? "" : '<tr><td colspan="5" style="text-align:center; padding:30px; color:#333;">No nodes.</td></tr>';
-            data.forEach(u => {
-                const badgeClass = u.level < 5 ? 'badge-op' : (u.level === 5 ? 'badge-agent' : 'badge-player');
-                list.innerHTML += `
-                    <tr>
-                        <td><b style="color:#fff;">${u.username.toUpperCase()}</b></td>
-                        <td><span class="role-badge ${badgeClass}">${u.role}</span></td>
-                        <td style="color:var(--gold); font-family:Goldman;">${u.commissionRate}%</td>
-                        <td style="color:var(--green);">₱${(u.totalTurnover || 0).toLocaleString()}</td>
-                        <td><button style="background:none; border:none; color:#555; cursor:pointer; font-size:0.6rem;" onclick="openEdit('${u.id}', '${u.username}', ${u.commissionRate})">ADJUST</button></td>
-                    </tr>`;
-            });
-        }
-
         window.handleSave = async () => {
             const comm = parseFloat(document.getElementById('new-comm').value);
             if (!verifiedUplineData && !editingUserId) return;
-            if (isNaN(comm) || comm > (verifiedUplineData ? verifiedUplineData.commissionRate : myData.commissionRate)) return alert("Spread error.");
+            const maxRate = verifiedUplineData ? verifiedUplineData.commission_rate : myData.commission_rate;
+            
+            if (isNaN(comm) || comm > maxRate) return alert("Spread error: Rate exceeds parent capacity.");
 
             const btn = document.getElementById('btn-save');
             btn.innerText = "SYNCING...";
+            
             try {
                 if (editingUserId) {
-                    await updateDoc(doc(db, "users", editingUserId), { commissionRate: comm });
+                    await supabase.from('profiles').update({ commission_rate: comm }).eq('id', editingUserId);
                 } else {
                     const user = document.getElementById('new-username').value.trim().toLowerCase();
                     const roleSelect = document.getElementById('new-role');
-                    await addDoc(collection(db, "users"), {
-                        username: user, role: roleSelect.value, 
+                    
+                    // Recruitment via Supabase usually requires Auth signup first. 
+                    // This creates a manual profile entry for pre-registered users.
+                    const { error } = await supabase.from('profiles').insert([{
+                        username: user, 
+                        role: roleSelect.value, 
                         level: parseInt(roleSelect.options[roleSelect.selectedIndex].dataset.level),
-                        commissionRate: comm, uplineId: verifiedUplineData.id,
-                        uplinePath: [...(verifiedUplineData.uplinePath || []), verifiedUplineData.id],
-                        balance: 0, totalTurnover: 0, totalCommission: 0, createdAt: serverTimestamp()
-                    });
+                        commission_rate: comm, 
+                        upline_id: verifiedUplineData.id,
+                        upline_path: [...(verifiedUplineData.upline_path || []), verifiedUplineData.id]
+                    }]);
+                    if (error) throw error;
                 }
                 toggleModal(false);
             } catch (e) { alert(e.message); }
             finally { btn.innerText = "AUTHORIZE NODE"; }
-        };
-
-        window.copyReferral = () => {
-            navigator.clipboard.writeText(document.getElementById("referral-url").value);
-            alert("Copied.");
         };
 
         window.openEdit = (uid, username, rate) => {
@@ -319,10 +314,17 @@
 
         window.validateInputRate = () => {
             const val = parseFloat(document.getElementById('new-comm').value);
-            const max = verifiedUplineData ? verifiedUplineData.commissionRate : myData.commissionRate;
+            const max = verifiedUplineData ? verifiedUplineData.commission_rate : myData.commission_rate;
             document.getElementById('rate-warning').style.display = val > max ? "block" : "none";
             document.getElementById('btn-save').disabled = val > max;
         };
+
+        window.copyReferral = () => {
+            navigator.clipboard.writeText(document.getElementById("referral-url").value);
+            alert("Copied.");
+        };
+
+        init();
     </script>
 </body>
 </html>
