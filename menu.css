@@ -96,5 +96,12 @@
 @media (min-width: 900px) {
     .bottom-nav { display: none !important; }
     .desktop-links { display: flex; }
-    .top-nav { padding-left: 20px !important; } /* Center the nav since there's no mobile burger */
+    
+    /* Puts the Top Nav padding back to normal on desktop */
+    .top-nav { padding-left: 20px !important; } 
+
+    /* FIX: Prevents the floating bar gap on iPad/PC */
+    .quick-actions { 
+        bottom: 0 !important; 
+    }
 }
