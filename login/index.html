@@ -45,10 +45,12 @@
         .remember-row input { width: auto; margin-right: 8px; }
         
         .btn-action.gold { 
+            width: 100%; padding: 16px; font-weight: bold; font-size: 0.9rem;
             background: var(--gold); color: black; border: none; border-radius: 8px;
             font-family: 'Goldman', sans-serif; cursor: pointer; transition: 0.3s;
         }
         .btn-action.gold:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(212, 175, 55, 0.3); }
+        .btn-action:disabled { opacity: 0.5; cursor: not-allowed; }
     </style>
 </head>
 <body class="auth-page">
@@ -57,8 +59,8 @@
         <h2 style="font-size: 0.8rem; letter-spacing: 3px; color: #444; margin-bottom: 30px; text-transform: uppercase;">Secure Access</h2>
         
         <div class="input-group">
-            <label>Username</label>
-            <input type="text" id="login-username" placeholder="Enter your ID" autocomplete="username">
+            <label>Username / Email</label>
+            <input type="text" id="login-id" placeholder="Enter your ID or Email" autocomplete="username">
         </div>
 
         <div class="input-group">
@@ -74,7 +76,7 @@
             <a href="#" style="color: #444; text-decoration: none;">Forgot?</a>
         </div>
         
-        <button class="btn-action gold" id="btn-login" style="width: 100%; padding: 16px; font-weight: bold; font-size: 0.9rem;">SIGN IN</button>
+        <button class="btn-action gold" id="btn-login">SIGN IN</button>
         
         <p class="auth-footer" style="margin-top: 25px; font-size: 0.8rem; color: #555;">
             New to the Arena? <a href="/register/" style="color: var(--gold); text-decoration: none; font-weight: bold;">Register Now</a>
@@ -82,74 +84,58 @@
     </div>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword, setPersistence, browserLocalPersistence, browserSessionPersistence } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyCBvOw8HrMhZD0aYSHqFdE196ZITdYBU3Q",
-            authDomain: "nexus-sabong.firebaseapp.com",
-            projectId: "nexus-sabong",
-            storageBucket: "nexus-sabong.firebasestorage.app",
-            messagingSenderId: "421723311",
-            appId: "1:421723311:web:1780f179e7c2a7cc0e285a"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
+        import { supabase } from "/supabase.js";
 
         const loginBtn = document.getElementById('btn-login');
-        const userField = document.getElementById('login-username');
+        const idField = document.getElementById('login-id');
+        const passField = document.getElementById('login-pass');
         const rememberCheck = document.getElementById('remember-me');
 
-        // Check for remembered ID
+        // Restore remembered ID
         const savedID = localStorage.getItem('nexus_remembered_user');
         if (savedID) {
-            userField.value = savedID;
+            idField.value = savedID;
             rememberCheck.checked = true;
         }
 
         window.togglePassword = () => {
-            const passField = document.getElementById('login-pass');
-            const toggleBtn = document.querySelector('.toggle-pass');
-            if (passField.type === "password") {
-                passField.type = "text";
-                toggleBtn.innerText = "HIDE";
-            } else {
-                passField.type = "password";
-                toggleBtn.innerText = "SHOW";
-            }
+            const type = passField.type === "password" ? "text" : "password";
+            passField.type = type;
+            document.querySelector('.toggle-pass').innerText = type === "password" ? "SHOW" : "HIDE";
         };
 
         loginBtn.onclick = async () => {
-            const user = userField.value.trim().toLowerCase();
-            const pass = document.getElementById('login-pass').value;
+            const userInput = idField.value.trim();
+            const password = passField.value;
 
-            if (!user || !pass) return alert("Please fill in all fields.");
+            if (!userInput || !password) return alert("Please fill in all fields.");
 
             loginBtn.innerText = "VERIFYING...";
             loginBtn.disabled = true;
 
-            try {
-                // Set persistence based on "Remember Me"
-                const persistence = rememberCheck.checked ? browserLocalPersistence : browserSessionPersistence;
-                await setPersistence(auth, persistence);
+            // Handle ID remembering
+            if (rememberCheck.checked) {
+                localStorage.setItem('nexus_remembered_user', userInput);
+            } else {
+                localStorage.removeItem('nexus_remembered_user');
+            }
 
-                // Handle ID remembering
-                if (rememberCheck.checked) {
-                    localStorage.setItem('nexus_remembered_user', user);
-                } else {
-                    localStorage.removeItem('nexus_remembered_user');
-                }
+            // Supabase Auth Logic
+            // If you use 'fake emails' like Firebase (user@nexus.com), we append it here
+            const email = userInput.includes('@') ? userInput : `${userInput.toLowerCase()}@nexus-sabong.com`;
 
-                const fakeEmail = `${user}@nexus-sabong.com`;
-                await signInWithEmailAndPassword(auth, fakeEmail, pass);
-                
-                window.location.href = "/";
-            } catch (error) { 
-                console.error(error);
+            const { data, error } = await supabase.auth.signInWithPassword({
+                email: email,
+                password: password,
+            });
+
+            if (error) {
+                console.error(error.message);
                 alert("Invalid Credentials. Please try again.");
                 loginBtn.innerText = "SIGN IN";
                 loginBtn.disabled = false;
+            } else {
+                window.location.href = "/";
             }
         };
 
