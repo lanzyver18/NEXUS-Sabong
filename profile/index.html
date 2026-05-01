@@ -136,75 +136,87 @@
     </div>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
-        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
-        import { getFirestore, doc, onSnapshot, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+        import { supabase } from "/supabase.js";
         import { injectMenu } from "/menu.js";
 
-        const firebaseConfig = { apiKey: "AIzaSyCBvOw8HrMhZD0aYSHqFdE196ZITdYBU3Q", authDomain: "nexus-sabong.firebaseapp.com", projectId: "nexus-sabong", storageBucket: "nexus-sabong.firebasestorage.app", messagingSenderId: "421723311", appId: "1:421723311:web:1780f179e7c2a7cc0e285a" };
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-
-        // PERSISTENCE ENGINE: Instant load from device memory
-        enableIndexedDbPersistence(db).catch(() => {});
         injectMenu();
 
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                const userRef = doc(db, "users", user.uid);
-                
-                // SNAPSHOT SYNC: Non-blocking, instant UI population
-                onSnapshot(userRef, (snap) => {
-                    if (snap.exists()) {
-                        const data = snap.data();
-                        const username = data.username || "User";
-                        const level = data.level || 6;
-                        const role = data.role || "PLAYER";
-
-                        // Profile Core
-                        document.getElementById('display-username').innerText = username.toUpperCase();
-                        document.getElementById('user-initial').innerText = username.charAt(0).toUpperCase();
-                        document.getElementById('level-display').innerText = `NODE ${level}`;
-                        document.getElementById('bonus-rate').innerText = `${(data.commissionRate || 0).toFixed(2)}%`;
-                        document.getElementById('role-badge-container').innerHTML = `<span class="badge-role">${role.replace('_', ' ')}</span>`;
-                        document.getElementById('nav-bal').innerText = `₱${(data.balance || 0).toLocaleString(undefined, {minimumFractionDigits: 2})}`;
-                        
-                        // Performance Stats
-                        document.getElementById('stat-commission').innerText = `₱${(data.totalCommission || 0).toLocaleString(undefined, {minimumFractionDigits: 2})}`;
-                        document.getElementById('stat-turnover').innerText = `₱${(data.totalTurnover || 0).toLocaleString()}`;
-                        
-                        if (data.createdAt) {
-                            const dateStr = data.createdAt.toDate ? data.createdAt.toDate().toLocaleDateString() : 'Active';
-                            document.getElementById('join-date').innerText = dateStr;
-                        }
-
-                        // Hierarchy Logic Visibility
-                        if (level <= 5) {
-                            document.getElementById('management-section').style.display = "block";
-                            const mngText = document.getElementById('mng-text');
-                            const adminLink = document.getElementById('admin-link');
-                            
-                            if (level === 1) {
-                                mngText.innerText = "Command Center";
-                                adminLink.href = "/admin/index.html";
-                            } else {
-                                mngText.innerText = "Network Manager";
-                                adminLink.href = "/admin/agents.html";
-                            }
-                        }
-                    }
-                });
-            } else { 
-                window.location.href = "/login/"; 
+        async function initProfile() {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) {
+                window.location.href = "/login/";
+                return;
             }
-        });
 
-        document.getElementById('btn-logout').onclick = () => {
+            const userId = session.user.id;
+
+            // Helper to update UI
+            const updateUI = (data) => {
+                const username = data.username || "User";
+                const level = data.level || 6;
+                const role = data.role || "PLAYER";
+
+                // Profile Core
+                document.getElementById('display-username').innerText = username.toUpperCase();
+                document.getElementById('user-initial').innerText = username.charAt(0).toUpperCase();
+                document.getElementById('level-display').innerText = `NODE ${level}`;
+                document.getElementById('bonus-rate').innerText = `${(data.commission_rate || 0).toFixed(2)}%`;
+                document.getElementById('role-badge-container').innerHTML = `<span class="badge-role">${role.replace('_', ' ')}</span>`;
+                document.getElementById('nav-bal').innerText = `₱${(data.balance || 0).toLocaleString(undefined, {minimumFractionDigits: 2})}`;
+                
+                // Performance Stats
+                document.getElementById('stat-commission').innerText = `₱${(data.total_commission || 0).toLocaleString(undefined, {minimumFractionDigits: 2})}`;
+                document.getElementById('stat-turnover').innerText = `₱${(data.total_turnover || 0).toLocaleString()}`;
+                
+                if (data.created_at) {
+                    document.getElementById('join-date').innerText = new Date(data.created_at).toLocaleDateString();
+                }
+
+                // Hierarchy Logic Visibility
+                if (level <= 5) {
+                    document.getElementById('management-section').style.display = "block";
+                    const mngText = document.getElementById('mng-text');
+                    const adminLink = document.getElementById('admin-link');
+                    
+                    if (level === 1) {
+                        mngText.innerText = "Command Center";
+                        adminLink.href = "/admin/index.html";
+                    } else {
+                        mngText.innerText = "Network Manager";
+                        adminLink.href = "/admin/agents.html";
+                    }
+                }
+            };
+
+            // Initial Fetch
+            const { data: profile } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('id', userId)
+                .single();
+            
+            if (profile) updateUI(profile);
+
+            // Real-time listener for balance/profile changes
+            supabase
+                .channel('profile-hud-sync')
+                .on('postgres_changes', 
+                    { event: 'UPDATE', schema: 'public', table: 'profiles', filter: `id=eq.${userId}` }, 
+                    (payload) => {
+                        updateUI(payload.new);
+                    }
+                )
+                .subscribe();
+        }
+
+        document.getElementById('btn-logout').onclick = async () => {
             if(confirm("TERMINATE NEXUS SESSION?")) {
-                signOut(auth).then(() => window.location.href = "/login/");
+                await supabase.auth.signOut();
+                window.location.href = "/login/";
             }
         };
+
+        initProfile();
     </script>
 </body>
 </html>
