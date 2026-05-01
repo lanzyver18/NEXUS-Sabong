@@ -109,24 +109,9 @@
     </div>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
-        import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
-        import { getFirestore, doc, setDoc, getDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+        import { supabase } from "/supabase.js";
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyCBvOw8HrMhZD0aYSHqFdE196ZITdYBU3Q",
-            authDomain: "nexus-sabong.firebaseapp.com",
-            projectId: "nexus-sabong",
-            storageBucket: "nexus-sabong.firebasestorage.app",
-            messagingSenderId: "421723311",
-            appId: "1:421723311:web:1780f179e7c2a7cc0e285a"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-
-        // UPDATED 6-TIER HIERARCHY
+        // 6-TIER HIERARCHY
         const TIERS = [
             { role: "ADMIN", level: 1 },
             { role: "OPERATOR", level: 2 },
@@ -137,32 +122,43 @@
         ];
 
         const urlParams = new URLSearchParams(window.location.search);
-        const referrerUid = urlParams.get('ref');
+        const referrerId = urlParams.get('ref');
         const userInp = document.getElementById('reg-username');
         const passInp = document.getElementById('reg-pass');
         const btn = document.getElementById('btn-register');
 
-        // Check for Referral and set Role
+        let assignedRole = "PLAYER";
+        let assignedLevel = 6;
+        let uplinePath = [];
+
+        // Verify Referral and determine Rank
         async function checkReferral() {
-            if (referrerUid) {
+            if (referrerId) {
                 try {
-                    const refSnap = await getDoc(doc(db, "users", referrerUid));
-                    if (refSnap.exists()) {
-                        const refData = refSnap.data();
+                    const { data: refData, error } = await supabase
+                        .from('profiles')
+                        .select('username, role, level, upline_path')
+                        .eq('id', referrerId)
+                        .single();
+
+                    if (refData) {
                         const currentTierIndex = TIERS.findIndex(t => t.role === refData.role);
-                        // Move down 1 level, cap at PLAYER (level 6)
                         const nextTier = TIERS[currentTierIndex + 1] || TIERS[5];
+                        
+                        assignedRole = nextTier.role;
+                        assignedLevel = nextTier.level;
+                        uplinePath = [...(refData.upline_path || []), referrerId];
 
                         document.getElementById('ref-status').innerHTML = `Recruited by <b>${refData.username.toUpperCase()}</b>`;
                         document.getElementById('tier-preview').style.display = "block";
-                        document.getElementById('assigned-role-text').innerText = nextTier.role.replace("_", " ");
+                        document.getElementById('assigned-role-text').innerText = assignedRole.replace("_", " ");
                     }
-                } catch (e) { console.error("Referral link verification failed."); }
+                } catch (e) { console.warn("Referral ID inactive."); }
             }
         }
         checkReferral();
 
-        // Real-time Availability Check
+        // Real-time Username Availability
         let checkTimeout;
         userInp.oninput = () => {
             const val = userInp.value.trim().toLowerCase();
@@ -173,9 +169,13 @@
             if (val.length < 4) return;
             
             checkTimeout = setTimeout(async () => {
-                const q = query(collection(db, "users"), where("username", "==", val));
-                const snap = await getDocs(q);
-                if (!snap.empty) {
+                const { data } = await supabase
+                    .from('profiles')
+                    .select('username')
+                    .eq('username', val)
+                    .maybeSingle();
+
+                if (data) {
                     hint.innerHTML = "TAKEN"; hint.className = "availability-hint taken";
                 } else {
                     hint.innerHTML = "AVAILABLE"; hint.className = "availability-hint available";
@@ -183,7 +183,7 @@
             }, 500);
         };
 
-        // Strength Meter
+        // Password Strength Logic
         passInp.oninput = () => {
             const p = passInp.value;
             const bar = document.getElementById('strength-bar');
@@ -207,54 +207,34 @@
 
             if(user.length < 4) return alert("Username too short (Min 4 characters).");
             if(pass.length < 6) return alert("Password too weak (Min 6 characters).");
+            if(document.getElementById('avail-status').innerText === "TAKEN") return alert("Username taken.");
 
             btn.disabled = true;
             btn.innerText = "AUTHENTICATING...";
 
-            try {
-                let uplineId = "SYSTEM";
-                let uplinePath = [];
-                let assignedRole = "PLAYER";
-                let assignedLevel = 6;
-
-                if (referrerUid) {
-                    const refSnap = await getDoc(doc(db, "users", referrerUid));
-                    if (refSnap.exists()) {
-                        const refData = refSnap.data();
-                        uplineId = referrerUid;
-                        uplinePath = [...(refData.uplinePath || []), referrerUid];
-                        
-                        const currentTierIndex = TIERS.findIndex(t => t.role === refData.role);
-                        const nextTier = TIERS[currentTierIndex + 1] || TIERS[5];
-                        assignedRole = nextTier.role;
-                        assignedLevel = nextTier.level;
+            // Create Supabase Auth User
+            const { data, error } = await supabase.auth.signUp({
+                email: `${user}@nexus-sabong.com`,
+                password: pass,
+                options: {
+                    data: {
+                        username: user,
+                        role: assignedRole,
+                        level: assignedLevel,
+                        upline_id: referrerId || null,
+                        upline_path: uplinePath
                     }
                 }
+            });
 
-                const fakeEmail = `${user}@nexus-sabong.com`;
-                const userCredential = await createUserWithEmailAndPassword(auth, fakeEmail, pass);
-                
-                await setDoc(doc(db, "users", userCredential.user.uid), {
-                    uid: userCredential.user.uid,
-                    username: user,
-                    role: assignedRole,
-                    level: assignedLevel,
-                    commissionRate: 0, 
-                    uplineId: uplineId,
-                    uplinePath: uplinePath,
-                    balance: 0,
-                    totalTurnover: 0,
-                    totalCommission: 0,
-                    isAdmin: (assignedLevel === 1),
-                    createdAt: new Date()
-                });
-
-                window.location.href = "/";
-            } catch (error) { 
-                console.error(error);
-                alert("This username is already registered. Please try another."); 
+            if (error) {
+                alert(error.message);
                 btn.disabled = false;
                 btn.innerText = "REGISTER & ENTER";
+            } else {
+                // Success - the PostgreSQL trigger 'handle_new_user' will automatically 
+                // handle the creation of the public.profiles entry.
+                window.location.href = "/";
             }
         };
     </script>
