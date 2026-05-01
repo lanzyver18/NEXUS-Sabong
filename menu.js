@@ -1,4 +1,4 @@
-import { doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+import { supabase } from "/supabase.js"; // Ensure your supabase.js is initialized
 
 export function injectMenu() {
     if (document.getElementById('nexus-bottom-nav')) return;
@@ -59,12 +59,12 @@ export function injectMenu() {
     }
 
     // Toggle Logic
-    const menu = document.getElementById('nexus-side-menu');
+    const menuElement = document.getElementById('nexus-side-menu');
     const overlay = document.getElementById('nexus-menu-overlay');
     const closeBtn = document.getElementById('menu-close-btn');
 
     const toggleMenu = (isOpen) => {
-        menu.classList.toggle('active', isOpen);
+        menuElement.classList.toggle('active', isOpen);
         overlay.classList.toggle('active', isOpen);
     };
 
@@ -75,60 +75,78 @@ export function injectMenu() {
     if (closeBtn) closeBtn.onclick = () => toggleMenu(false);
     if (overlay) overlay.onclick = () => toggleMenu(false);
 
-    document.getElementById('nexus-logout').onclick = () => {
-        if (confirm("Terminate Session?") && window.firebaseAuth) window.firebaseAuth.signOut().then(() => window.location.href = "/login/");
+    document.getElementById('nexus-logout').onclick = async () => {
+        if (confirm("Terminate Session?")) {
+            await supabase.auth.signOut();
+            window.location.href = "/login/";
+        }
     };
 
     syncSidebarData();
 }
 
 async function syncSidebarData() {
-    const auth = window.firebaseAuth;
-    const db = window.firebaseDb;
-    if (!auth || !db) return setTimeout(syncSidebarData, 500);
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session) return;
 
-    auth.onAuthStateChanged(user => {
-        if (user) {
-            onSnapshot(doc(db, "users", user.uid), (snap) => {
-                if (snap.exists()) {
-                    const data = snap.data();
-                    const formattedBal = `₱${(data.balance || 0).toLocaleString(undefined, {minimumFractionDigits: 2})}`;
-                    const username = data.username.toUpperCase();
+    const userId = session.user.id;
 
-                    // 1. Update Sidebar HUD
-                    const sbBal = document.getElementById('sidebar-balance');
-                    const sbId = document.getElementById('sidebar-id');
-                    const sbRole = document.getElementById('sidebar-role-badge');
-                    if (sbBal) sbBal.innerText = formattedBal;
-                    if (sbId) sbId.innerText = `ID: ${username}`;
-                    if (sbRole) sbRole.innerText = data.role.replace("_", " ");
+    // Helper to update DOM
+    const updateUI = (data) => {
+        const formattedBal = `₱${(data.balance || 0).toLocaleString(undefined, {minimumFractionDigits: 2})}`;
+        const username = (data.username || 'User').toUpperCase();
 
-                    // 2. Update Top Navigation (For ALL pages)
-                    // Targets nav-bal (wallet), nav-balance (home), nav-bal (admin)
-                    const navElements = ['nav-bal', 'nav-balance', 'display-balance'];
-                    navElements.forEach(id => {
-                        const el = document.getElementById(id);
-                        if (el) el.innerText = id.includes('display') ? (data.balance || 0).toLocaleString(undefined, {minimumFractionDigits: 2}) : formattedBal;
-                    });
+        // 1. Update Sidebar HUD
+        const sbBal = document.getElementById('sidebar-balance');
+        const sbId = document.getElementById('sidebar-id');
+        const sbRole = document.getElementById('sidebar-role-badge');
+        if (sbBal) sbBal.innerText = formattedBal;
+        if (sbId) sbId.innerText = `ID: ${username}`;
+        if (sbRole) sbRole.innerText = (data.role || 'PLAYER').replace("_", " ");
 
-                    // 3. Update User Display Names (home, profile)
-                    const nameElements = ['user-display', 'display-username'];
-                    nameElements.forEach(id => {
-                        const el = document.getElementById(id);
-                        if (el) el.innerText = username;
-                    });
+        // 2. Update Top Navigation (For ALL pages)
+        const navElements = ['nav-bal', 'nav-balance', 'display-balance'];
+        navElements.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.innerText = id.includes('display') ? (data.balance || 0).toLocaleString(undefined, {minimumFractionDigits: 2}) : formattedBal;
+        });
 
-                    // 4. Update Agent Section
-                    const container = document.getElementById('agent-manager-section');
-                    if (container && data.level <= 5) {
-                        container.innerHTML = `
-                            <div class="menu-category" style="color:#333; font-size:0.6rem; letter-spacing:2px; margin:20px 0 10px;">MANAGEMENT</div>
-                            <a href="/admin/agents.html" style="display:block; color:var(--gold); text-decoration:none; padding:12px 0; border-bottom:1px solid #111; font-size:0.8rem; font-weight:bold;">Network Manager</a>
-                            ${data.level === 1 ? `<a href="/admin/index.html" style="display:block; color:#00ff88; text-decoration:none; padding:12px 0; border-bottom:1px solid #111; font-size:0.8rem;">Command Center</a>` : ''}
-                        `;
-                    }
-                }
-            });
+        // 3. Update User Display Names
+        const nameElements = ['user-display', 'display-username'];
+        nameElements.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.innerText = username;
+        });
+
+        // 4. Update Agent Section
+        const container = document.getElementById('agent-manager-section');
+        if (container && data.level <= 5) {
+            container.innerHTML = `
+                <div class="menu-category" style="color:#333; font-size:0.6rem; letter-spacing:2px; margin:20px 0 10px;">MANAGEMENT</div>
+                <a href="/admin/agents.html" style="display:block; color:var(--gold); text-decoration:none; padding:12px 0; border-bottom:1px solid #111; font-size:0.8rem; font-weight:bold;">Network Manager</a>
+                ${data.level === 1 ? `<a href="/admin/index.html" style="display:block; color:#00ff88; text-decoration:none; padding:12px 0; border-bottom:1px solid #111; font-size:0.8rem;">Command Center</a>` : ''}
+            `;
         }
-    });
+    };
+
+    // Initial Fetch
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+    
+    if (profile) updateUI(profile);
+
+    // Real-time listener for balance/profile changes
+    supabase
+        .channel('public:profiles')
+        .on('postgres_changes', 
+            { event: 'UPDATE', schema: 'public', table: 'profiles', filter: `id=eq.${userId}` }, 
+            (payload) => {
+                updateUI(payload.new);
+            }
+        )
+        .subscribe();
 }
