@@ -3,376 +3,328 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Command Center | NEXUS OS</title>
+    <title>Agent Manager | NEXUS PRO</title>
     <link rel="stylesheet" href="../style.css">
-    <link rel="stylesheet" href="/menu.css">
+    <link rel="stylesheet" href="../menu.css">
     <link href="https://fonts.googleapis.com/css2?family=Goldman:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        :root { --gold: #D4AF37; --green: #00ff88; --red: #ff4444; --panel: #0a0a0a; --bg: #050505; }
-        body { background: var(--bg); color: #fff; overflow-x: hidden; padding-bottom: 100px; font-family: 'Segoe UI', sans-serif; }
+        :root { --gold: #D4AF37; --green: #00ff88; --red: #ff4444; }
+        body { background: #000; color: #fff; overflow-x: hidden; padding-bottom: 100px; }
+        .top-nav { position: sticky; top: 0; z-index: 1000; display: flex; justify-content: space-between; align-items: center; padding: 12px 20px; background: #000; border-bottom: 2px solid #222; }
+        .btn-nexus { font-family: 'Goldman', sans-serif; font-weight: bold; text-transform: uppercase; border: none; border-radius: 8px; cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center; letter-spacing: 1px; height: 45px; }
+        .btn-gold { background: var(--gold); color: black; min-width: 120px; }
+        .btn-gold:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(212, 175, 55, 0.4); }
+        .agent-container { max-width: 1200px; margin: 20px auto; padding: 0 20px; display: grid; grid-template-columns: 1fr 350px; gap: 20px; }
+        .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-bottom: 25px; grid-column: span 2; }
+        .stat-card { background: linear-gradient(145deg, #111, #080808); padding: 20px; border-radius: 12px; border: 1px solid #222; text-align: center; }
+        .stat-card h4 { font-size: 0.6rem; color: #555; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 1px; }
+        .stat-card .val { font-family: 'Goldman', sans-serif; font-size: 1.5rem; color: var(--gold); }
+        .panel { background: #0a0a0a; border-radius: 15px; border: 1px solid #222; padding: 25px; }
+        .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #1a1a1a; padding-bottom: 15px; }
+        .ref-panel { background: #050505; border: 1px dashed var(--gold); border-radius: 12px; padding: 20px; text-align: center; }
+        .ref-input-group { display: flex; gap: 10px; margin-top: 15px; }
+        .ref-input-group input { flex: 1; background: #000; border: 1px solid #333; color: var(--gold); padding: 0 15px; border-radius: 8px; height: 40px; font-size: 0.8rem; }
+        .agent-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+        .agent-table th { text-align: left; color: #444; padding: 12px; border-bottom: 1px solid #222; text-transform: uppercase; font-size: 0.6rem; }
+        .agent-table td { padding: 12px; border-bottom: 1px solid #111; }
+        .role-badge { padding: 3px 6px; border-radius: 4px; font-size: 0.6rem; font-weight: bold; border: 1px solid #333; background: #000; }
+        .badge-op { color: #ffaa00; border-color: #ffaa00; }
+        .badge-agent { color: var(--gold); border-color: var(--gold); }
+        .badge-player { color: #888; border-color: #444; }
+        .ledger-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #111; font-size: 0.75rem; }
+        .ledger-info b { color: #eee; display: block; }
+        .ledger-info small { color: #555; }
+        .ledger-amt { color: var(--green); font-family: 'Goldman'; font-weight: bold; }
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); display: flex; align-items: center; justify-content: center; z-index: 2000; }
+        .modal-content { background: #0f0f0f; width: 90%; max-width: 400px; padding: 30px; border-radius: 20px; border: 1px solid var(--gold); }
         
-        .top-nav { display: flex; justify-content: space-between; align-items: center; padding: 15px 25px; background: #000; border-bottom: 2px solid #111; position: sticky; top: 0; z-index: 1000; }
-
-        .admin-grid { display: grid; grid-template-columns: 1fr 380px; gap: 25px; max-width: 1400px; margin: 25px auto; padding: 0 20px; }
-        
-        /* DATA HUB */
-        .insight-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px; }
-        .insight-card { background: linear-gradient(145deg, #111, #080808); padding: 25px; border-radius: 18px; border: 1px solid #1a1a1a; text-align: left; position: relative; overflow: hidden; }
-        .insight-card::after { content: ''; position: absolute; bottom: 0; left: 0; width: 100%; height: 2px; background: var(--gold); opacity: 0.3; }
-        .insight-card h4 { color: #444; font-size: 0.55rem; margin: 0; text-transform: uppercase; letter-spacing: 2px; font-weight: bold; }
-        .insight-card .val { color: #eee; font-size: 1.6rem; font-weight: bold; margin-top: 10px; display: block; font-family: 'Goldman'; }
-        .insight-card .sub { font-size: 0.6rem; color: #333; margin-top: 5px; display: block; }
-
-        .panel { background: var(--panel); border-radius: 20px; border: 1px solid #111; padding: 25px; margin-bottom: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        .panel-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #151515; margin-bottom: 20px; padding-bottom: 15px; }
-        
-        /* TABLES */
-        .log-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
-        .log-table th { text-align: left; color: #333; padding: 12px; border-bottom: 1px solid #111; text-transform: uppercase; font-size: 0.6rem; letter-spacing: 2px; }
-        .log-table td { padding: 16px 12px; border-bottom: 1px solid #080808; vertical-align: middle; }
-
-        .status-pill { padding: 5px 10px; border-radius: 6px; font-size: 0.55rem; font-weight: bold; text-transform: uppercase; font-family: 'Goldman'; }
-        .pill-in { background: rgba(0, 255, 136, 0.05); color: var(--green); border: 1px solid rgba(0, 255, 136, 0.1); }
-        .pill-out { background: rgba(255, 68, 68, 0.05); color: var(--red); border: 1px solid rgba(255, 68, 68, 0.1); }
-
-        /* WITHDRAWAL TICKETS */
-        .w-section-title { font-family: 'Goldman'; color: var(--gold); font-size: 0.9rem; letter-spacing: 2px; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
-        .w-request { background: #000; padding: 20px; border-radius: 18px; border: 1px solid #151515; margin-bottom: 15px; transition: 0.3s; border-left: 4px solid var(--gold); }
-        .w-request:hover { border-color: #333; transform: translateX(5px); }
-        .w-meta { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; }
-        .w-user { font-family: 'Goldman'; font-size: 1rem; color: #fff; }
-        .w-amt { color: var(--green); font-family: 'Goldman'; font-size: 1.1rem; }
-        .w-bank-info { background: #080808; padding: 12px; border-radius: 10px; font-size: 0.7rem; color: #666; font-family: monospace; line-height: 1.6; }
-        
-        .w-btn-group { display: flex; gap: 10px; margin-top: 15px; }
-        .w-btn { flex: 1; padding: 14px; border-radius: 10px; border: none; font-family: 'Goldman'; font-size: 0.65rem; font-weight: bold; cursor: pointer; transition: 0.3s; text-transform: uppercase; letter-spacing: 1px; }
-        .w-approve { background: var(--green); color: #000; box-shadow: 0 0 15px rgba(0, 255, 136, 0.2); }
-        .w-reject { background: rgba(255, 68, 68, 0.1); color: var(--red); border: 1px solid rgba(255, 68, 68, 0.2); }
-        .w-btn:hover { filter: brightness(1.2); transform: translateY(-2px); }
-
-        .custom-scroll::-webkit-scrollbar { width: 4px; }
-        .custom-scroll::-webkit-scrollbar-track { background: #000; }
-        .custom-scroll::-webkit-scrollbar-thumb { background: #1a1a1a; border-radius: 10px; }
-
-        @media (max-width: 1100px) { .admin-grid { grid-template-columns: 1fr; } }
+        @media (min-width: 900px) { .top-nav { padding-left: 20px !important; } }
+        @media (max-width: 900px) { .agent-container { grid-template-columns: 1fr; } .stats-grid { grid-column: span 1; } }
     </style>
 </head>
 <body>
 
     <nav class="top-nav">
-        <div class="logo" style="color:var(--gold); font-family:'Goldman'; font-weight:bold; font-size:1.3rem; letter-spacing:4px;">NEXUS<span style="color:#fff; opacity:0.2;">OS</span></div>
+        <div class="logo" style="color:var(--gold); font-family:'Goldman'; font-weight:bold; font-size:1.2rem;">AGENT MANAGER</div>
         <div style="text-align: right;">
-            <div id="nav-bal" style="color: var(--green); font-weight: bold; font-family: 'Goldman'; font-size: 1.1rem;">₱0.00</div>
-            <div id="session-status" style="color: #333; font-size: 0.5rem; font-weight:bold; letter-spacing:1px;">SECURE OPERATOR NODE</div>
+            <div id="nav-bal" style="color: var(--green); font-weight: bold; font-family: 'Goldman'; font-size: 1rem;">₱0.00</div>
+            <div id="my-role-display" style="color: #444; font-size: 0.5rem; text-transform: uppercase;">TIER: ---</div>
         </div>
     </nav>
 
-    <div class="admin-grid">
-        <div class="main-admin">
-            
-            <div class="insight-row">
-                <div class="insight-card" id="global-liquidity-card" style="display:none;">
-                    <h4>Total Exposure</h4>
-                    <span class="val" id="stat-system-liquidity" style="color:var(--green);">₱0</span>
-                    <span class="sub">GLOBAL USER LIQUIDITY</span>
-                </div>
-                <div class="insight-card">
-                    <h4>Direct Float</h4>
-                    <span class="val" id="stat-total-bank">₱0</span>
-                    <span class="sub">IMMEDIATE DOWNLINE CAPITAL</span>
-                </div>
-                <div class="insight-card">
-                    <h4>Payout Liability</h4>
-                    <span class="val" id="stat-pending-w" style="color:#ffaa00;">₱0</span>
-                    <span class="sub">PENDING WITHDRAWAL QUEUE</span>
-                </div>
-            </div>
+    <div class="agent-container">
+        <div class="stats-grid">
+            <div class="stat-card"><h4>Spread Rate</h4><span class="val" id="my-comm-rate">0%</span></div>
+            <div class="stat-card"><h4>Network Size</h4><span class="val" id="count-downlines">0</span></div>
+            <div class="stat-card"><h4>Team Turnover</h4><span class="val" id="team-turnover" style="color:var(--green);">₱0</span></div>
+            <div class="stat-card"><h4>Net Commission</h4><span class="val" id="total-earned">₱0</span></div>
+        </div>
 
+        <div class="main-column">
             <div class="panel">
                 <div class="panel-header">
-                    <h3 style="margin:0; color: var(--gold); font-family: 'Goldman'; font-size: 0.9rem; letter-spacing:2px;">HIERARCHY PROTOCOL</h3>
-                    <input type="text" id="downline-search" placeholder="FILTER BY ID..." oninput="filterDownlines()" style="width: 200px; margin: 0; padding: 10px 15px; font-size: 0.6rem; border-radius: 8px; border: 1px solid #1a1a1a; background:#000;">
+                    <h3 style="margin:0; color: var(--gold); font-family: 'Goldman'; font-size: 1rem;">NETWORK HIERARCHY</h3>
+                    <button class="btn-nexus btn-gold" style="font-size: 0.65rem; height: 35px; padding: 0 15px;" onclick="toggleModal(true)">+ RECRUIT</button>
                 </div>
-                <div style="max-height: 450px; overflow-y: auto;" class="custom-scroll">
-                    <table class="log-table">
+                <div style="overflow-x: auto;">
+                    <table class="agent-table">
                         <thead>
                             <tr>
-                                <th>Node Identity</th>
-                                <th>Liquid Balance</th>
-                                <th>Net Yield</th>
-                                <th>Action</th>
-                            </tr>
-                        </thead>
-                        <tbody id="downline-table-body"></tbody>
-                    </table>
-                </div>
-            </div>
-
-            <div class="panel">
-                <div class="panel-header">
-                    <h3 style="margin:0; color: var(--gold); font-family: 'Goldman'; font-size: 0.9rem; letter-spacing:2px;">AUDIT TELEMETRY</h3>
-                    <span style="color:#222; font-size: 0.5rem; font-weight:bold;">LIVE FEED VERIFIED</span>
-                </div>
-                <div style="max-height: 400px; overflow-y: auto;" class="custom-scroll">
-                    <table class="log-table">
-                        <thead>
-                            <tr>
-                                <th>Sync Time</th>
+                                <th>Identity</th>
+                                <th>Role</th>
+                                <th>Rate</th>
+                                <th>Turnover</th>
                                 <th>Protocol</th>
-                                <th>Parties</th>
-                                <th>Magnitude</th>
                             </tr>
                         </thead>
-                        <tbody id="audit-log-body">
-                            <tr><td colspan="4" style="text-align:center; color:#222; padding:40px;">INITIALIZING AUDIT FEED...</td></tr>
-                        </tbody>
+                        <tbody id="agent-list"></tbody>
                     </table>
                 </div>
             </div>
         </div>
 
-        <div class="sidebar-admin">
-            
-            <div class="w-section-title"><span>◈</span> PAYOUT QUEUE</div>
-            <div id="withdrawal-list" style="max-height: 600px; overflow-y: auto; padding-right: 5px;" class="custom-scroll">
-                <p style="text-align:center; color:#222; font-size:0.7rem; padding:40px;">No pending tickets in queue.</p>
-            </div>
-
-            <div class="panel" style="margin-top:25px;">
-                <h3 style="margin-top:0; font-size: 0.8rem; color: var(--gold); font-family: 'Goldman'; letter-spacing:1px;">CREDIT DISPATCHER</h3>
-                <input type="text" id="target-username" placeholder="TARGET NODE ID">
-                <button onclick="checkUser()" style="width:100%; margin-bottom:15px; background:#000; color:var(--gold); padding:12px; border:1px solid #1a1a1a; border-radius:10px; font-family: 'Goldman'; cursor:pointer; font-size: 0.65rem;">VERIFY IDENTITY</button>
-                
-                <div id="player-preview" style="display:none; background:#050505; padding:20px; border-radius:15px; margin-bottom:20px; border:1px solid rgba(212,175,55,0.2);">
-                    <div style="font-size: 0.55rem; color: #444; text-transform: uppercase; letter-spacing:1px;">Target Node Identified</div>
-                    <div id="res-name" style="font-weight:bold; color:white; font-size: 1.1rem; margin: 5px 0;">---</div>
-                    <div id="res-bal" style="color:var(--green); font-weight:bold; font-family: 'Goldman'; font-size: 1.2rem;">₱0.00</div>
+        <div class="side-column">
+            <div class="ref-panel">
+                <h4 style="margin:0; color: var(--gold); font-size: 0.65rem; letter-spacing: 2px;">RECRUITMENT PROTOCOL</h4>
+                <div class="ref-input-group">
+                    <input type="text" id="referral-url" readonly>
+                    <button class="btn-nexus btn-gold" style="height:40px; min-width:60px;" onclick="copyReferral()">COPY</button>
                 </div>
-
-                <input type="number" id="load-amt" placeholder="CREDIT MAGNITUDE (₱)">
-                <button onclick="confirmLoad()" style="width:100%; background:var(--gold); color: #000; padding:18px; border:none; border-radius:12px; font-weight:bold; font-family: 'Goldman'; cursor:pointer; letter-spacing: 2px;">EXECUTE TRANSFER</button>
             </div>
 
-            <div class="panel" id="fight-control-panel" style="display:none; border: 1px solid rgba(212, 175, 55, 0.2);">
-                <h3 style="margin:0; color: var(--gold); margin-bottom:15px; font-size: 0.8rem; font-family: 'Goldman';">FIGHT PROTOCOL</h3>
-                <button id="btn-lock-betting" onclick="toggleBettingLock()" style="width:100%; margin-bottom:12px; background:#111; color:white; border: 1px solid #222; padding:14px; border-radius:10px; font-family:'Goldman'; cursor:pointer;">LOADING STATE...</button>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                    <button onclick="settleFight('MERON')" style="background:var(--red); color:white; padding:12px; border:none; border-radius:8px; font-weight:bold; cursor:pointer;">MERON</button>
-                    <button onclick="settleFight('WALA')" style="background:#2b58ff; color:white; padding:12px; border:none; border-radius:8px; font-weight:bold; cursor:pointer;">WALA</button>
-                    <button onclick="settleFight('DRAW')" style="background:#222; color:#eee; padding:12px; border:1px solid #333; border-radius:8px; font-weight:bold; cursor:pointer; grid-column: span 2;">CANCEL / DRAW</button>
+            <div class="panel" style="padding: 20px; margin-top: 20px;">
+                <h3 style="margin:0 0 15px; color: var(--gold); font-family: 'Goldman'; font-size: 0.8rem; border-bottom: 1px solid #222; padding-bottom: 10px;">COMMISSION LOGS</h3>
+                <div id="commission-ledger" style="max-height: 400px; overflow-y: auto;">
+                    <p style="text-align:center; color:#333; font-size:0.7rem; padding:20px;">No transaction trails found.</p>
                 </div>
             </div>
         </div>
     </div>
 
+    <div id="create-modal" class="modal" style="display:none;">
+        <div class="modal-content">
+            <h3 id="modal-title" style="margin-top:0; color:var(--gold); font-family: 'Goldman'; text-align:center; font-size:1rem;">INITIALIZE NODE</h3>
+            <div id="create-only-fields">
+                <label style="font-size:0.6rem; color:#555; text-transform:uppercase;">Node ID (Username)</label>
+                <input type="text" id="new-username" style="width:100%; padding:12px; background:#000; border:1px solid #333; color:white; border-radius:8px; margin-bottom:15px;">
+                <label style="font-size:0.6rem; color:#555; text-transform:uppercase;">Protocol Rank</label>
+                <select id="new-role" style="width:100%; padding:12px; background:#000; border:1px solid #333; color:white; border-radius:8px; margin-bottom:15px;"></select>
+                <label style="font-size:0.6rem; color:#555; text-transform:uppercase;">Parent Node (Upline)</label>
+                <input type="text" id="new-upline" oninput="verifyUpline(this.value)" style="width:100%; padding:12px; background:#000; border:1px solid #333; color:white; border-radius:8px;">
+                <div id="upline-verify-status" style="margin-bottom:15px;"></div>
+            </div>
+            <label style="font-size:0.6rem; color:#555; text-transform:uppercase;">Yield Rate (%)</label>
+            <input type="number" id="new-comm" step="0.01" oninput="validateInputRate()" style="width:100%; padding:12px; background:#000; border:1px solid #333; color:white; border-radius:8px;">
+            <div id="rate-warning" style="color: var(--red); font-size: 0.65rem; display: none; margin-top: 10px; text-align: center;">Rate exceeds parent node capacity!</div>
+            <button class="btn-nexus btn-gold" id="btn-save" style="width:100%; margin-top:25px;" onclick="handleSave()">AUTHORIZE NODE</button>
+            <button class="btn-nexus" style="width:100%; margin-top:10px; background:transparent; color:#444;" onclick="toggleModal(false)">ABORT</button>
+        </div>
+    </div>
+
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
-        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc, updateDoc, increment, collection, query, where, onSnapshot, writeBatch, getDocs, limit, orderBy, addDoc, serverTimestamp, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+        import { supabase } from "/supabase.js";
         import { injectMenu } from "/menu.js";
 
-        const firebaseConfig = { apiKey: "AIzaSyCBvOw8HrMhZD0aYSHqFdE196ZITdYBU3Q", authDomain: "nexus-sabong.firebaseapp.com", projectId: "nexus-sabong", storageBucket: "nexus-sabong.firebasestorage.app", messagingSenderId: "421723311", appId: "1:421723311:web:1780f179e7c2a7cc0e285a" };
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
+        // Constants
+        const TIERS = [
+            { role: "ADMIN", level: 1 }, { role: "OPERATOR", level: 2 }, 
+            { role: "INCO", level: 3 }, { role: "SUBOP", level: 4 }, 
+            { role: "AGENT", level: 5 }, { role: "PLAYER", level: 6 }
+        ];
 
-        enableIndexedDbPersistence(db).catch(() => {});
+        let myData = null;
+        let editingUserId = null;
+        let verifiedUplineData = null;
+
         injectMenu();
 
-        let myTierData = null;
-        let activePlayerId = null;
-        let allDownlines = [];
+        async function init() {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) { window.location.href = "/login/"; return; }
 
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                checkSystemIntegrity(user);
-                onSnapshot(doc(db, "users", user.uid), (snap) => {
-                    if (snap.exists()) {
-                        myTierData = snap.data();
-                        document.getElementById('nav-bal').innerText = `₱${(myTierData.balance || 0).toLocaleString(undefined, {minimumFractionDigits: 2})}`;
-                        if (myTierData.level <= 5) {
-                            initManagement();
-                            syncAuditLog();
-                        } else { window.location.href = "/"; }
-                    }
-                });
-            } else { window.location.href = "/login/"; }
-        });
+            const userId = session.user.id;
 
-        async function checkSystemIntegrity(user) {
-            const userRef = doc(db, "users", user.uid);
-            const userSnap = await getDoc(userRef);
-            if (!userSnap.exists()) {
-                await setDoc(userRef, { username: user.email.split('@')[0], level: 1, role: "ADMIN", balance: 100000, commissionRate: 10.0, uplinePath: [], totalCommission: 0, totalTurnover: 0, createdAt: serverTimestamp() });
+            // 1. Initial Profile Fetch & UI Setup
+            const { data: profile } = await supabase.from('profiles').select('*').eq('id', userId).single();
+            if (profile) {
+                myData = profile;
+                if(myData.level >= 6) window.location.href = "/";
+                setupUI();
+                loadDownlines();
+                loadCommissionLogs();
             }
+
+            // 2. Real-time Profile Sync
+            supabase.channel('agent-profile-sync')
+                .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles', filter: `id=eq.${userId}` }, payload => {
+                    myData = payload.new;
+                    setupUI();
+                }).subscribe();
         }
 
-        function initManagement() {
-            // Live Hierarchy Stats
-            onSnapshot(query(collection(db, "users"), where("uplineId", "==", auth.currentUser.uid)), (snap) => {
-                let totalBank = 0; allDownlines = [];
-                snap.forEach(uDoc => {
-                    const u = { id: uDoc.id, ...uDoc.data() };
-                    totalBank += (u.balance || 0); allDownlines.push(u);
-                });
-                document.getElementById('stat-total-bank').innerText = "₱" + totalBank.toLocaleString();
-                renderDownlineTable(allDownlines);
-            });
+        function setupUI() {
+            document.getElementById('my-role-display').innerText = `TIER: ${myData.role}`;
+            document.getElementById('my-comm-rate').innerText = `${myData.commission_rate}%`;
+            document.getElementById('total-earned').innerText = `₱${(myData.total_commission || 0).toLocaleString()}`;
+            document.getElementById('referral-url').value = `${window.location.origin}/register/?ref=${myData.id}`;
+            document.getElementById('nav-bal').innerText = `₱${(myData.balance || 0).toLocaleString(undefined, {minimumFractionDigits: 2})}`;
 
-            // Admin Power Zone (Withdrawals and Global Stats)
-            if (myTierData.level === 1) {
-                document.getElementById('global-liquidity-card').style.display = "block";
-                document.getElementById('fight-control-panel').style.display = "block";
-                onSnapshot(collection(db, "users"), (snap) => {
-                    let globalExposure = 0; snap.forEach(d => { globalExposure += (d.data().balance || 0); });
-                    document.getElementById('stat-system-liquidity').innerText = "₱" + globalExposure.toLocaleString();
-                });
-                loadWithdrawals();
-                syncArenaState();
-            }
-        }
-
-        function syncAuditLog() {
-            const q = myTierData.level === 1 
-                ? query(collection(db, "wallet_logs"), orderBy("timestamp", "desc"), limit(25))
-                : query(collection(db, "wallet_logs"), where("uid", "==", auth.currentUser.uid), orderBy("timestamp", "desc"), limit(25));
-
-            onSnapshot(q, (snap) => {
-                const body = document.getElementById('audit-log-body');
-                body.innerHTML = "";
-                snap.forEach(d => {
-                    const log = d.data();
-                    const date = log.timestamp?.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) || "SYNCING";
-                    const isPlus = ["LOAD_IN", "CRASH_WIN", "REFUND", "COMMISSION"].includes(log.type);
-                    body.innerHTML += `
-                        <tr>
-                            <td style="color:#444; font-size:0.65rem;">${date}</td>
-                            <td><span class="status-pill ${isPlus ? 'pill-in' : 'pill-out'}">${log.type.replace('_',' ')}</span></td>
-                            <td style="font-size:0.7rem;"><strong style="color:var(--gold)">${log.fromUser || 'SYS'}</strong> ➔ ${log.toUser || 'NODE'}</td>
-                            <td style="font-family:'Goldman'; color:${isPlus ? 'var(--green)' : 'var(--red)'};">₱${log.amount.toLocaleString()}</td>
-                        </tr>`;
-                });
+            const select = document.getElementById('new-role');
+            select.innerHTML = "";
+            TIERS.filter(t => t.level > myData.level).forEach(t => {
+                let opt = document.createElement('option');
+                opt.value = t.role;
+                opt.dataset.level = t.level;
+                opt.innerText = t.role;
+                select.appendChild(opt);
             });
         }
 
-        function renderDownlineTable(data) {
-            const table = document.getElementById('downline-table-body');
-            table.innerHTML = "";
+        async function loadDownlines() {
+            // Fetch initial list
+            const { data: downlines } = await supabase.from('profiles').select('*').eq('upline_id', myData.id);
+            renderTable(downlines || []);
+
+            // Real-time Downline sync
+            supabase.channel('downline-list')
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles', filter: `upline_id=eq.${myData.id}` }, async () => {
+                    const { data } = await supabase.from('profiles').select('*').eq('upline_id', myData.id);
+                    renderTable(data || []);
+                }).subscribe();
+        }
+
+        function renderTable(data) {
+            const list = document.getElementById('agent-list');
+            let teamT = 0;
+            list.innerHTML = data.length ? "" : '<tr><td colspan="5" style="text-align:center; padding:30px; color:#333;">No nodes found.</td></tr>';
+            
             data.forEach(u => {
-                table.innerHTML += `
+                const badgeClass = u.level < 5 ? 'badge-op' : (u.level === 5 ? 'badge-agent' : 'badge-player');
+                teamT += (u.total_turnover || 0);
+                list.innerHTML += `
                     <tr>
-                        <td><strong>${u.username.toUpperCase()}</strong><br><span style="font-size:0.55rem; color:#444;">${u.role}</span></td>
-                        <td style="color:var(--green); font-family:'Goldman';">₱${(u.balance || 0).toLocaleString()}</td>
-                        <td style="color:#666; font-size:0.7rem;">₱${(u.totalCommission || 0).toLocaleString()}</td>
-                        <td><button style="background:#000; color:var(--gold); border:1px solid #1a1a1a; padding:8px 12px; cursor:pointer; font-size:0.55rem; border-radius:6px; font-family:Goldman;" onclick="quickSelectUser('${u.username}')">DISPATCH</button></td>
+                        <td><b style="color:#fff;">${u.username.toUpperCase()}</b></td>
+                        <td><span class="role-badge ${badgeClass}">${u.role}</span></td>
+                        <td style="color:var(--gold); font-family:Goldman;">${u.commission_rate}%</td>
+                        <td style="color:var(--green);">₱${(u.total_turnover || 0).toLocaleString()}</td>
+                        <td><button style="background:none; border:none; color:#555; cursor:pointer; font-size:0.6rem;" onclick="openEdit('${u.id}', '${u.username}', ${u.commission_rate})">ADJUST</button></td>
                     </tr>`;
             });
+            document.getElementById('count-downlines').innerText = data.length;
+            document.getElementById('team-turnover').innerText = `₱${teamT.toLocaleString()}`;
         }
 
-        function loadWithdrawals() {
-            onSnapshot(query(collection(db, "withdrawals"), where("status", "==", "PENDING"), orderBy("timestamp", "desc")), (snap) => {
-                const list = document.getElementById('withdrawal-list');
-                let totalLiability = 0; 
-                list.innerHTML = snap.empty ? `<p style="text-align:center; color:#222; font-size:0.7rem; padding:50px;">NO ACTIVE TICKETS</p>` : "";
-                
-                snap.forEach(ticketDoc => {
-                    const d = ticketDoc.data();
-                    totalLiability += d.amount;
-                    const id = ticketDoc.id;
-                    const card = document.createElement('div');
-                    card.className = 'w-request';
-                    card.innerHTML = `
-                        <div class="w-meta">
-                            <div><div class="w-user">${d.username.toUpperCase()}</div><small style="color:#444;">ID: ${d.uid.substring(0,8)}</small></div>
-                            <div class="w-amt">₱${d.amount.toLocaleString()}</div>
-                        </div>
-                        <div class="w-bank-info">
-                            DESTINATION: ${d.bank}<br>ACCOUNT: ${d.accountNumber}<br>NAME: ${d.accountName}
-                        </div>
-                        <div class="w-btn-group">
-                            <button class="w-btn w-approve" onclick="handleWithdraw('${id}', 'APPROVED', '${d.uid}', ${d.amount})">APPROVE & PAY</button>
-                            <button class="w-btn w-reject" onclick="handleWithdraw('${id}', 'REJECTED', '${d.uid}', ${d.amount})">DENY & REFUND</button>
-                        </div>`;
-                    list.appendChild(card);
-                });
-                document.getElementById('stat-pending-w').innerText = "₱" + totalLiability.toLocaleString();
-            });
-        }
+        async function loadCommissionLogs() {
+            const { data: logs } = await supabase.from('wallet_logs')
+                .select('*')
+                .eq('user_id', myData.id)
+                .eq('type', 'COMMISSION')
+                .order('timestamp', { ascending: false })
+                .limit(20);
 
-        window.handleWithdraw = async (id, status, pUid, amt) => {
-            const confirmMsg = status === 'APPROVED' ? `Settle Payout for ₱${amt}?` : `Reject payout and REFUND ₱${amt} to player?`;
-            if(!confirm(confirmMsg)) return;
-
-            const batch = writeBatch(db);
-            if (status === 'REJECTED') {
-                batch.update(doc(db, "users", pUid), { balance: increment(amt) });
-                batch.set(doc(collection(db, "wallet_logs")), { uid: pUid, type: "REFUND", amount: amt, fromUser: "SYSTEM", toUser: "USER", timestamp: serverTimestamp() });
-            } else {
-                batch.set(doc(collection(db, "wallet_logs")), { uid: pUid, type: "WITHDRAWAL_PAID", amount: amt, fromUser: "SYSTEM", toUser: "USER", timestamp: serverTimestamp() });
+            const ledger = document.getElementById('commission-ledger');
+            if (!logs || logs.length === 0) {
+                ledger.innerHTML = '<p style="text-align:center; color:#333; font-size:0.7rem; padding:20px;">No trails found.</p>';
+                return;
             }
-            batch.update(doc(db, "withdrawals", id), { status: status, processedAt: serverTimestamp() });
-            await batch.commit();
-            alert(`Protocol: ${status}`);
-        };
-
-        window.checkUser = async () => {
-            const username = document.getElementById('target-username').value.trim().toLowerCase();
-            const q = query(collection(db, "users"), where("username", "==", username));
-            const snap = await getDocs(q);
-            if (!snap.empty) {
-                const p = snap.docs[0];
-                activePlayerId = p.id;
-                document.getElementById('res-name').innerText = p.data().username.toUpperCase();
-                document.getElementById('res-bal').innerText = "₱" + (p.data().balance || 0).toLocaleString(undefined, {minimumFractionDigits: 2});
-                document.getElementById('player-preview').style.display = "block";
-            } else alert("Unknown Node ID.");
-        };
-
-        window.confirmLoad = async () => {
-            const amt = parseFloat(document.getElementById('load-amt').value);
-            if (!activePlayerId || isNaN(amt) || amt <= 0) return alert("Invalid Credit Magnitude.");
-            if (amt > myTierData.balance && myTierData.level !== 1) return alert("Insufficient Floating Credits.");
-
-            const batch = writeBatch(db);
-            batch.update(doc(db, "users", activePlayerId), { balance: increment(amt) });
-            if(myTierData.level !== 1) batch.update(doc(db, "users", auth.currentUser.uid), { balance: increment(-amt) });
-            batch.set(doc(collection(db, "wallet_logs")), { uid: activePlayerId, type: "LOAD_IN", fromUser: myTierData.username, toUser: document.getElementById('res-name').innerText, amount: amt, timestamp: serverTimestamp() });
-            await batch.commit();
-            document.getElementById('player-preview').style.display = "none";
-            document.getElementById('load-amt').value = "";
-            document.getElementById('target-username').value = "";
-        };
-
-        async function syncArenaState() {
-            onSnapshot(doc(db, "settings", "arena"), (snap) => {
-                if(snap.exists()) {
-                    const data = snap.data();
-                    const btn = document.getElementById('btn-lock-betting');
-                    btn.innerText = data.isLocked ? "ARENA: LOCKED" : "ARENA: OPEN";
-                    btn.style.borderColor = data.isLocked ? "var(--red)" : "var(--green)";
-                    btn.style.color = data.isLocked ? "var(--red)" : "var(--green)";
-                }
+            ledger.innerHTML = "";
+            logs.forEach(log => {
+                ledger.innerHTML += `
+                    <div class="ledger-row">
+                        <div class="ledger-info">
+                            <b>From: ${log.from_user || 'Node'}</b>
+                            <small>${new Date(log.timestamp).toLocaleDateString()} • Bet: ₱${log.bet_amount || 0}</small>
+                        </div>
+                        <div class="ledger-amt">+₱${parseFloat(log.amount).toFixed(2)}</div>
+                    </div>`;
             });
         }
 
-        window.toggleBettingLock = async () => {
-            const ref = doc(db, "settings", "arena");
-            const snap = await getDoc(ref);
-            await updateDoc(ref, { isLocked: !snap.data().isLocked });
+        window.verifyUpline = async (username) => {
+            const status = document.getElementById('upline-verify-status');
+            if(!username) return status.innerText = "";
+            
+            const { data } = await supabase.from('profiles').select('*').eq('username', username.toLowerCase()).single();
+            
+            if(data) {
+                if (data.level >= 6) {
+                    verifiedUplineData = null;
+                    status.innerHTML = `<small style="color:var(--red)">❌ CANNOT PLACE UNDER PLAYER</small>`;
+                } else {
+                    verifiedUplineData = data;
+                    status.innerHTML = `<small style="color:var(--green)">✅ ${data.role} (${data.commission_rate}%)</small>`;
+                }
+            } else {
+                verifiedUplineData = null;
+                status.innerHTML = `<small style="color:var(--red)">❌ ID NOT FOUND</small>`;
+            }
         };
 
-        window.settleFight = async (winner) => {
-            if(!confirm(`Settle Arena with result: ${winner}?`)) return;
-            const ref = doc(db, "settings", "arena");
-            await updateDoc(ref, { lastWinner: winner, isLocked: true });
-            alert(`Fight results dispatched: ${winner}`);
+        window.handleSave = async () => {
+            const comm = parseFloat(document.getElementById('new-comm').value);
+            if (!verifiedUplineData && !editingUserId) return;
+            const maxRate = verifiedUplineData ? verifiedUplineData.commission_rate : myData.commission_rate;
+            
+            if (isNaN(comm) || comm > maxRate) return alert("Spread error: Rate exceeds parent capacity.");
+
+            const btn = document.getElementById('btn-save');
+            btn.innerText = "SYNCING...";
+            
+            try {
+                if (editingUserId) {
+                    await supabase.from('profiles').update({ commission_rate: comm }).eq('id', editingUserId);
+                } else {
+                    const user = document.getElementById('new-username').value.trim().toLowerCase();
+                    const roleSelect = document.getElementById('new-role');
+                    
+                    // Recruitment via Supabase usually requires Auth signup first. 
+                    // This creates a manual profile entry for pre-registered users.
+                    const { error } = await supabase.from('profiles').insert([{
+                        username: user, 
+                        role: roleSelect.value, 
+                        level: parseInt(roleSelect.options[roleSelect.selectedIndex].dataset.level),
+                        commission_rate: comm, 
+                        upline_id: verifiedUplineData.id,
+                        upline_path: [...(verifiedUplineData.upline_path || []), verifiedUplineData.id]
+                    }]);
+                    if (error) throw error;
+                }
+                toggleModal(false);
+            } catch (e) { alert(e.message); }
+            finally { btn.innerText = "AUTHORIZE NODE"; }
         };
 
-        window.quickSelectUser = (u) => { document.getElementById('target-username').value = u; checkUser(); };
-        window.filterDownlines = () => {
-            const term = document.getElementById('downline-search').value.toLowerCase();
-            renderDownlineTable(allDownlines.filter(u => u.username.toLowerCase().includes(term)));
+        window.openEdit = (uid, username, rate) => {
+            editingUserId = uid;
+            document.getElementById('modal-title').innerText = `ADJUST: ${username.toUpperCase()}`;
+            document.getElementById('create-only-fields').style.display = "none";
+            document.getElementById('new-comm').value = rate;
+            toggleModal(true);
         };
+
+        window.toggleModal = (show) => {
+            if(!show) editingUserId = null;
+            document.getElementById('create-modal').style.display = show ? 'flex' : 'none';
+            if(show && !editingUserId) {
+                document.getElementById('new-upline').value = myData.username;
+                verifyUpline(myData.username);
+                setupUI();
+            }
+        };
+
+        window.validateInputRate = () => {
+            const val = parseFloat(document.getElementById('new-comm').value);
+            const max = verifiedUplineData ? verifiedUplineData.commission_rate : myData.commission_rate;
+            document.getElementById('rate-warning').style.display = val > max ? "block" : "none";
+            document.getElementById('btn-save').disabled = val > max;
+        };
+
+        window.copyReferral = () => {
+            navigator.clipboard.writeText(document.getElementById("referral-url").value);
+            alert("Copied.");
+        };
+
+        init();
     </script>
 </body>
 </html>
