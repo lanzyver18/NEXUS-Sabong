@@ -9,41 +9,44 @@
     <link href="https://fonts.googleapis.com/css2?family=Goldman:wght@400;700&display=swap" rel="stylesheet">
     <style>
         :root { --gold: #D4AF37; --green: #00ff88; --red: #ff4444; }
-        body { background: #000; color: #fff; overflow-x: hidden; }
-        .top-nav { position: relative; display: flex; justify-content: space-between; align-items: center; padding: 12px 20px 12px 75px; background: #000; border-bottom: 2px solid #222; }
+        body { background: #000; color: #fff; overflow-x: hidden; padding-bottom: 100px; }
+        
+        .top-nav { position: sticky; top: 0; z-index: 1000; display: flex; justify-content: space-between; align-items: center; padding: 12px 20px; background: #000; border-bottom: 2px solid #222; }
 
-        .history-container { max-width: 850px; margin: 40px auto; padding: 0 20px 100px; }
+        .history-container { max-width: 850px; margin: 20px auto; padding: 0 15px; }
         
         /* Summary Grid */
-        .summary-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 25px; }
-        .summary-card { background: linear-gradient(145deg, #111, #080808); padding: 18px; border-radius: 14px; border: 1px solid #222; text-align: center; }
-        .summary-card small { font-size: 0.55rem; color: #555; text-transform: uppercase; letter-spacing: 1.5px; display: block; margin-bottom: 6px; }
-        .summary-card span { font-family: 'Goldman'; font-size: 1.1rem; color: var(--gold); }
+        .summary-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 25px; }
+        .summary-card { background: linear-gradient(145deg, #111, #080808); padding: 18px; border-radius: 14px; border: 1px solid #1a1a1a; text-align: center; }
+        .summary-card small { font-size: 0.5rem; color: #444; text-transform: uppercase; letter-spacing: 1.5px; display: block; margin-bottom: 6px; font-weight: bold; }
+        .summary-card span { font-family: 'Goldman'; font-size: 1rem; color: var(--gold); }
 
         /* Tabs */
         .filter-tabs { display: flex; gap: 8px; margin-bottom: 25px; overflow-x: auto; padding-bottom: 5px; scrollbar-width: none; }
-        .tab { background: #0a0a0a; border: 1px solid #222; color: #555; padding: 10px 16px; border-radius: 10px; font-size: 0.7rem; cursor: pointer; white-space: nowrap; transition: 0.2s; font-family: 'Goldman'; }
-        .tab.active { border-color: var(--gold); color: var(--gold); background: rgba(212, 175, 55, 0.1); }
+        .tab { background: #0a0a0a; border: 1px solid #222; color: #555; padding: 10px 16px; border-radius: 10px; font-size: 0.65rem; cursor: pointer; white-space: nowrap; transition: 0.2s; font-family: 'Goldman'; text-transform: uppercase; }
+        .tab.active { border-color: var(--gold); color: var(--gold); background: rgba(212, 175, 55, 0.05); }
 
         /* Items */
-        .history-item { background: #0a0a0a; border: 1px solid #1a1a1a; border-radius: 16px; padding: 20px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; border-left: 5px solid transparent; transition: 0.3s; }
-        .history-item:hover { border-color: #333; transform: scale(1.01); }
+        .history-item { background: #0a0a0a; border: 1px solid #1a1a1a; border-radius: 16px; padding: 18px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; border-left: 5px solid transparent; transition: 0.3s; }
+        .history-item:hover { border-color: #333; transform: translateX(5px); }
         .history-item.income { border-left-color: var(--green); }
         .history-item.expense { border-left-color: var(--red); }
         .history-item.comm { border-left-color: var(--gold); }
 
         .item-left { display: flex; flex-direction: column; }
-        .type-label { font-weight: bold; color: #eee; font-size: 0.85rem; font-family: 'Goldman'; letter-spacing: 1px; }
-        .sub-text { color: #444; font-size: 0.65rem; margin-top: 5px; display: flex; flex-direction: column; gap: 3px; }
+        .type-label { font-weight: bold; color: #eee; font-size: 0.8rem; font-family: 'Goldman'; letter-spacing: 1px; text-transform: uppercase; }
+        .sub-text { color: #444; font-size: 0.6rem; margin-top: 5px; display: flex; flex-direction: column; gap: 3px; font-weight: bold; }
         
         .item-right { text-align: right; }
-        .amount { font-family: 'Goldman', sans-serif; font-weight: bold; font-size: 1.1rem; }
-        .status-badge { font-size: 0.55rem; padding: 3px 8px; border-radius: 4px; text-transform: uppercase; font-weight: bold; margin-top: 6px; display: inline-block; border: 1px solid transparent; }
+        .amount { font-family: 'Goldman', sans-serif; font-weight: bold; font-size: 1rem; }
+        .status-badge { font-size: 0.5rem; padding: 3px 8px; border-radius: 4px; text-transform: uppercase; font-weight: bold; margin-top: 6px; display: inline-block; border: 1px solid transparent; letter-spacing: 1px; }
         
-        .badge-approved { background: rgba(0, 255, 136, 0.05); color: var(--green); border-color: rgba(0, 255, 136, 0.2); }
-        .badge-rejected { background: rgba(255, 68, 68, 0.05); color: var(--red); border-color: rgba(255, 68, 68, 0.2); }
-        .badge-pending { background: rgba(212, 175, 55, 0.05); color: var(--gold); border-color: rgba(212, 175, 55, 0.2); }
+        .badge-approved { background: rgba(0, 255, 136, 0.05); color: var(--green); border-color: rgba(0, 255, 136, 0.1); }
+        .badge-rejected { background: rgba(255, 68, 68, 0.05); color: var(--red); border-color: rgba(255, 68, 68, 0.1); }
+        .badge-pending { background: rgba(212, 175, 55, 0.05); color: var(--gold); border-color: rgba(212, 175, 55, 0.1); }
+        .badge-success { background: rgba(0, 255, 136, 0.05); color: var(--green); border-color: rgba(0, 255, 136, 0.1); }
 
+        @media (min-width: 900px) { .top-nav { padding-left: 20px !important; } }
         @media (max-width: 700px) { .summary-grid { grid-template-columns: 1fr; } }
     </style>
 </head>
@@ -62,65 +65,76 @@
         </div>
 
         <div class="filter-tabs">
-            <div class="tab active" onclick="setFilter('ALL')">ALL LOGS</div>
-            <div class="tab" onclick="setFilter('COMMISSION')">COMMISSIONS</div>
-            <div class="tab" onclick="setFilter('LOAD_IN')">CASH-IN</div>
-            <div class="tab" onclick="setFilter('LOAD_OUT')">CASH-OUT</div>
-            <div class="tab" onclick="setFilter('WITHDRAWAL')">WITHDRAWALS</div>
-            <div class="tab" onclick="setFilter('REFUND')">REFUNDS</div>
+            <div class="tab active" onclick="setFilter('ALL')">All Logs</div>
+            <div class="tab" onclick="setFilter('COMMISSION')">Commissions</div>
+            <div class="tab" onclick="setFilter('LOAD_IN')">Cash-In</div>
+            <div class="tab" onclick="setFilter('TRANSFER_OUT')">Transfers</div>
+            <div class="tab" onclick="setFilter('WITHDRAWAL')">Withdrawals</div>
+            <div class="tab" onclick="setFilter('REFUND')">Refunds</div>
         </div>
 
         <div id="wallet-history-list">
-            <p style="color: #222; text-align: center; margin-top: 50px; font-family: 'Goldman';">DECRYPTING FINANCIAL STRAINS...</p>
+            <p style="color: #222; text-align: center; margin-top: 50px; font-family: 'Goldman'; letter-spacing: 2px;">DECRYPTING LEDGER...</p>
         </div>
     </div>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
-        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc, collection, query, where, orderBy, onSnapshot, serverTimestamp, limit } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+        import { supabase } from "/supabase.js";
         import { injectMenu } from "/menu.js";
-
-        const firebaseConfig = { apiKey: "AIzaSyCBvOw8HrMhZD0aYSHqFdE196ZITdYBU3Q", authDomain: "nexus-sabong.firebaseapp.com", projectId: "nexus-sabong", storageBucket: "nexus-sabong.firebasestorage.app", messagingSenderId: "421723311", appId: "1:421723311:web:1780f179e7c2a7cc0e285a" };
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-        injectMenu();
 
         let currentFilter = 'ALL';
         let allLogs = [];
+        let userId = null;
 
-        async function checkSystemIntegrity(user) {
-            const userRef = doc(db, "users", user.uid);
-            const snap = await getDoc(userRef);
-            if (!snap.exists()) {
-                await setDoc(userRef, { username: user.email.split('@')[0], level: 6, role: "PLAYER", balance: 100, uplinePath: [], commissionRate: 0, totalCommission: 0, totalTurnover: 0, createdAt: serverTimestamp() });
-            }
+        injectMenu();
+
+        async function initHistory() {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) { window.location.href = "/login/"; return; }
+            userId = session.user.id;
+
+            // 1. Sync Nav Balance
+            const { data: profile } = await supabase.from('profiles').select('balance').eq('id', userId).single();
+            if(profile) document.getElementById('nav-bal').innerText = `₱${parseFloat(profile.balance).toLocaleString(undefined, {minimumFractionDigits: 2})}`;
+
+            // 2. Real-time Balance Sync
+            supabase.channel('history-nav-sync')
+                .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles', filter: `id=eq.${userId}` }, 
+                    payload => {
+                        document.getElementById('nav-bal').innerText = `₱${parseFloat(payload.new.balance).toLocaleString(undefined, {minimumFractionDigits: 2})}`;
+                    }).subscribe();
+
+            // 3. Load Wallet Logs
+            loadLogs();
+
+            // 4. Real-time Log Updates
+            supabase.channel('wallet-logs-sync')
+                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'wallet_logs', filter: `user_id=eq.${userId}` }, () => loadLogs())
+                .subscribe();
         }
 
-        onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                await checkSystemIntegrity(user);
-                onSnapshot(doc(db, "users", user.uid), (snap) => {
-                    if (snap.exists()) document.getElementById('nav-bal').innerText = `₱${snap.data().balance.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
-                });
+        async function loadLogs() {
+            const { data: logs, error } = await supabase
+                .from('wallet_logs')
+                .select('*')
+                .eq('user_id', userId)
+                .order('timestamp', { ascending: false })
+                .limit(100);
 
-                const q = query(collection(db, "wallet_logs"), where("uid", "==", user.uid), orderBy("timestamp", "desc"), limit(100));
-                onSnapshot(q, (snap) => {
-                    allLogs = [];
-                    snap.forEach(d => allLogs.push(d.data()));
-                    calculateStats();
-                    renderLogs();
-                });
-            } else { window.location.href = "/login/"; }
-        });
+            if (logs) {
+                allLogs = logs;
+                calculateStats();
+                renderLogs();
+            }
+        }
 
         function calculateStats() {
             let totalIn = 0, totalOut = 0, comms = 0;
             allLogs.forEach(l => {
-                if(l.type === "LOAD_IN" || l.type === "REFUND") totalIn += l.amount;
-                if(l.type === "LOAD_OUT" || l.type === "WITHDRAWAL") totalOut += l.amount;
-                if(l.type === "COMMISSION") comms += l.amount;
+                const amt = parseFloat(l.amount || 0);
+                if(l.type === "LOAD_IN" || l.type === "REFUND" || l.type === "TRANSFER_IN") totalIn += amt;
+                if(l.type === "TRANSFER_OUT" || l.type === "WITHDRAWAL") totalOut += amt;
+                if(l.type === "COMMISSION") comms += amt;
             });
             document.getElementById('sum-in').innerText = `₱${totalIn.toLocaleString()}`;
             document.getElementById('sum-out').innerText = `₱${totalOut.toLocaleString()}`;
@@ -130,7 +144,7 @@
         window.setFilter = (f) => {
             currentFilter = f;
             document.querySelectorAll('.tab').forEach(t => {
-                t.classList.toggle('active', t.innerText.includes(f) || (f === 'ALL' && t.innerText.includes('ALL')));
+                t.classList.toggle('active', t.innerText.toUpperCase().includes(f.replace('_',' ')) || (f === 'ALL' && t.innerText.toUpperCase().includes('ALL')));
             });
             renderLogs();
         };
@@ -141,23 +155,23 @@
             const filtered = allLogs.filter(l => currentFilter === 'ALL' || l.type === currentFilter);
 
             if (filtered.length === 0) {
-                list.innerHTML = `<p style="text-align:center; color:#222; margin-top:50px; font-family:Goldman; font-size:0.7rem;">NO TRANSACTION TRAILS FOUND</p>`;
+                list.innerHTML = `<p style="text-align:center; color:#222; margin-top:50px; font-family:Goldman; font-size:0.7rem; text-transform:uppercase; letter-spacing:2px;">No transaction trails found</p>`;
                 return;
             }
 
             filtered.forEach(d => {
-                const isIncome = (d.type === "LOAD_IN" || d.type === "COMMISSION" || d.type === "REFUND");
+                const isIncome = ["LOAD_IN", "COMMISSION", "REFUND", "TRANSFER_IN"].includes(d.type);
                 const borderClass = d.type === "COMMISSION" ? "comm" : (isIncome ? "income" : "expense");
                 const status = d.status || 'SUCCESS';
-                const date = d.timestamp?.toDate().toLocaleString([], {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'}) || 'Syncing...';
+                const date = new Date(d.timestamp).toLocaleString([], {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'});
                 
                 list.innerHTML += `
                     <div class="history-item ${borderClass}">
                         <div class="item-left">
                             <span class="type-label">${d.type.replace('_',' ')}</span>
                             <div class="sub-text">
-                                ${d.fromUser ? `<span>FROM: ${d.fromUser.toUpperCase()}</span>` : ''}
-                                ${d.toUser ? `<span>TO: ${d.toUser.toUpperCase()}</span>` : ''}
+                                ${d.from_user ? `<span>SOURCE: ${d.from_user.toUpperCase()}</span>` : ''}
+                                ${d.to_user ? `<span>TARGET: ${d.to_user.toUpperCase()}</span>` : ''}
                                 <small>${date}</small>
                             </div>
                         </div>
@@ -171,6 +185,8 @@
                 `;
             });
         }
+
+        initHistory();
     </script>
 </body>
 </html>
